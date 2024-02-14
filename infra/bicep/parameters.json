@@ -1,0 +1,36 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmUsername": {
+            "value": "vmadmin"
+        },
+        "vmPassword": {
+            "value": "Linuxmall123!"
+        },
+        "accountName": {
+            "value": "none"
+        },
+        "personalAccessToken": {
+            "value": "none"
+        },
+        "workloadName" :{ 
+            "value": "moreirao"
+        },
+        "CICDAgentType": {
+            "value": "none"
+        },
+        "environment" :{ 
+            "value": "dev"
+        },
+        "appGatewayFqdn" :{ 
+            "value": "api.moreirao.dev.com"
+        },
+        "appGatewayCertType" :{
+            "value": "selfsigned"
+        },
+        "certificatePassword" :{
+            "value": "Linuxmall123!"
+        }
+    }
+}
