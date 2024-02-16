@@ -16,20 +16,32 @@ param appGatewaySubnetId            string
 @description('Set to selfsigned if self signed certificates should be used for the Application Gateway. Set to custom and copy the pfx file to deployment/bicep/gateway/certs/appgw.pfx if custom certificates are to be used')
 param appGatewayCertType string
 
-@description('The backend URL of the APIM.')
-param apimBackendEndFQDN         string = 'apim-example.azure-api.net'
+@description('The backend URL of the Api Gateway.')
+param apiGatewayFQDN string
 
-@description('The backend URL of the APIM Deprecated Dev Portal.')
-param oldDevPortalBackendEndFQDN         string = 'apim-rmor-dev-westeurope-001.portal.azure-api.net'
+@description('The backend URL of the API Deprecated Dev Portal.')
+param oldDevPortalFQDN string
 
 @description('The backend URL of the Developer Portal.')
-param devPortalBackendEndFQDN         string = 'apim-rmor-dev-westeurope-001.developer.azure-api.net'
+param devPortalFQDN string
 
-@description('The backend URL of the APIM Management.')
-param managementBackendEndFQDN         string = 'apim-rmor-dev-westeurope-001.management.azure-api.net'
+@description('The backend URL of the API Management.')
+param managementFQDN string
 
-param keyVaultName                  string
-param keyVaultResourceGroupName     string
+@description('The custom hostname of the API Gateway.')
+param apiGatewayCustomHostname string
+
+@description('The custom hostname of the Developer Portal.')
+param oldDevPortalCustomHostname string
+
+@description('The custom hostname of the Developer Portal.')
+param devPortalCustomHostname string
+
+@description('The custom hostname of the API Management.')
+param managementBackendEndCustomHostname string
+
+param keyVaultName string
+param keyVaultResourceGroupName string
 
 @secure()
 param certPassword                  string  
@@ -42,7 +54,7 @@ resource appGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@20
   location: location
 }
 
-module certificate './modules/certificate.bicep' = {
+module apiGatewayCertificate './modules/certificate.bicep' = {
   name: 'certificate'
   scope: resourceGroup(keyVaultResourceGroupName)
   params: {
@@ -71,7 +83,7 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
   name: appGatewayName
   location: location
   dependsOn: [
-    certificate
+    apiGatewayCertificate
   ]
   identity: {
     type: 'UserAssigned'
@@ -98,7 +110,7 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
       {
         name: appGatewayFQDN
         properties: {
-          keyVaultSecretId:  certificate.outputs.secretUri
+          keyVaultSecretId:  apiGatewayCertificate.outputs.secretUri
         }
       }
     ]
@@ -144,11 +156,11 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
     ]
     backendAddressPools: [
       {
-        name: 'apim'
+        name: 'apigateway'
         properties: {
           backendAddresses: [
             {
-              fqdn: apimBackendEndFQDN
+              fqdn: apiGatewayFQDN
             }
           ]
         }
@@ -158,7 +170,7 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
         properties: {
           backendAddresses: [
             {
-              fqdn: oldDevPortalBackendEndFQDN
+              fqdn: oldDevPortalFQDN
             }
           ]
         }
@@ -168,7 +180,7 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
         properties: {
           backendAddresses: [
             {
-              fqdn: devPortalBackendEndFQDN
+              fqdn: devPortalFQDN
             }
           ]
         }
@@ -178,7 +190,7 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
         properties: {
           backendAddresses: [
             {
-              fqdn: managementBackendEndFQDN
+              fqdn: managementFQDN
             }
           ]
         }
@@ -197,16 +209,16 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
         }
       }
       {
-        name: 'https'
+        name: 'httpsapigateway'
         properties: {
           port: 443
           protocol: 'Https'
           cookieBasedAffinity: 'Disabled'
-          hostName: apimBackendEndFQDN
+          hostName: apiGatewayFQDN
           pickHostNameFromBackendAddress: false
           requestTimeout: 20
           probe: {
-            id: resourceId('Microsoft.Network/applicationGateways/probes', appGatewayName, 'apimprobe')
+            id: resourceId('Microsoft.Network/applicationGateways/probes', appGatewayName, 'apigatewayprobe')
           }
         }
       }
@@ -216,7 +228,7 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
           port: 443
           protocol: 'Https'
           cookieBasedAffinity: 'Disabled'
-          hostName: oldDevPortalBackendEndFQDN
+          hostName: oldDevPortalFQDN
           pickHostNameFromBackendAddress: false
           requestTimeout: 20
           probe: {
@@ -230,7 +242,7 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
           port: 443
           protocol: 'Https'
           cookieBasedAffinity: 'Disabled'
-          hostName: devPortalBackendEndFQDN
+          hostName: devPortalFQDN
           pickHostNameFromBackendAddress: false
           requestTimeout: 20
           probe: {
@@ -244,7 +256,7 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
           port: 443
           protocol: 'Https'
           cookieBasedAffinity: 'Disabled'
-          hostName: managementBackendEndFQDN
+          hostName: managementFQDN
           pickHostNameFromBackendAddress: false
           requestTimeout: 20
           probe: {
@@ -269,7 +281,7 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
         }
       }
       {
-        name: 'https'
+        name: 'httpsapigateway'
         properties: {
           frontendIPConfiguration: {
             id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGatewayName, 'appGwPublicFrontendIp')
@@ -281,8 +293,7 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
           sslCertificate: {
             id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGatewayName, appGatewayFQDN)
           }
-          // TODO: to change to the FQDN of the APIM
-          hostName: 'api.rmoreirao.net'
+          hostName: apiGatewayCustomHostname
           hostnames: []
           requireServerNameIndication: true
         }
@@ -300,8 +311,7 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
           sslCertificate: {
             id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGatewayName, appGatewayFQDN)
           }
-          // TODO: To be replaced with the FQDN of the old developer portal
-          hostName: 'devportalold.rmoreirao.net'
+          hostName: oldDevPortalCustomHostname
           hostnames: []
           requireServerNameIndication: true
         }
@@ -319,8 +329,7 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
           sslCertificate: {
             id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGatewayName, appGatewayFQDN)
           }
-          // TODO: To be replaced with the FQDN of the old developer portal
-          hostName: 'devportal.rmoreirao.net'
+          hostName: devPortalCustomHostname
           hostnames: []
           requireServerNameIndication: true
         }
@@ -338,8 +347,7 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
           sslCertificate: {
             id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGatewayName, appGatewayFQDN)
           }
-          // TODO: To be replaced with the FQDN of the management endpoint of the APIM
-          hostName: 'management.rmoreirao.net'
+          hostName: managementBackendEndCustomHostname
           hostnames: []
           requireServerNameIndication: true
         }
@@ -348,17 +356,17 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
     urlPathMaps: []
     requestRoutingRules: [
       {
-        name: 'apim'
+        name: 'apigateway'
         properties: {
           ruleType: 'Basic'
           httpListener: {
-            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGatewayName, 'https')
+            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGatewayName, 'httpsapigateway')
           }
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGatewayName, 'apim')
+            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGatewayName, 'apigateway')
           }
           backendHttpSettings: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGatewayName, 'https')
+            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGatewayName, 'httpsapigateway')
           }
         }
       }
@@ -410,10 +418,10 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
     ]
     probes: [
       {
-        name: 'apimprobe'
+        name: 'apigatewayprobe'
         properties: {
           protocol: 'Https'
-          host: apimBackendEndFQDN
+          host: apiGatewayFQDN
           path: '/status-0123456789abcdef'
           interval: 30
           timeout: 30
@@ -431,7 +439,7 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
         name: 'devportaloldprobe'
         properties: {
           protocol: 'Https'
-          host: oldDevPortalBackendEndFQDN
+          host: oldDevPortalFQDN
           path: '/signin'
           interval: 30
           timeout: 30
@@ -449,7 +457,7 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
         name: 'devportalprobe'
         properties: {
           protocol: 'Https'
-          host: devPortalBackendEndFQDN
+          host: devPortalFQDN
           path: '/signin-sso'
           interval: 30
           timeout: 30
@@ -467,7 +475,7 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
         name: 'apimanagementprobe'
         properties: {
           protocol: 'Https'
-          host: managementBackendEndFQDN
+          host: managementFQDN
           path: '/ServiceStatus'
           interval: 30
           timeout: 30

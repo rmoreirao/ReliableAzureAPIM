@@ -1,23 +1,3 @@
-//
-//   ***@microsoft.com, 2021
-//
-// Deploy as
-//
-// # Script start
-//
-// $RESOURCE_GROUP = "rgAPIMCSBackend"
-// $LOCATION = "westeurope"
-// $BICEP_FILE="networking.bicep"
-//
-// # delete a deployment
-//
-// az deployment group  delete --name testnetworkingdeployment -g $RESOURCE_GROUP 
-// 
-// # deploy the bicep file directly
-//
-// az deployment group create --name testnetworkingdeployment --template-file $BICEP_FILE --parameters parameters.json -g $RESOURCE_GROUP -o json
-// 
-// # Script end
 
 
 // Parameters
@@ -40,30 +20,21 @@ param devOpsNameAddressPrefix string = '10.2.2.0/24'
 param jumpBoxAddressPrefix string = '10.2.3.0/24'
 param appGatewayAddressPrefix string = '10.2.4.0/24'
 param privateEndpointAddressPrefix string = '10.2.5.0/24'
-param backEndAddressPrefix string = '10.2.6.0/24'
+param functionsOutboundAddressPrefix string = '10.2.6.0/24'
 param apimAddressPrefix string = '10.2.7.0/24'
+param firewallAddressPrefix string = '10.2.8.0/24'
 param location string
 
-/*
-@description('A short name for the PL that will be created between Funcs')
-param privateLinkName string = 'myPL'
-@description('Func id for PL to create')
-param functionId string = '123131'
-*/
-
-// Variables
-var owner = 'APIM Const Set'
-
-
-var apimCSVNetName = 'vnet-apim-cs-${workloadName}-${deploymentEnvironment}-${location}'
+var apimVNetName = 'vnet-apim-${workloadName}-${deploymentEnvironment}-${location}'
 
 var bastionSubnetName = 'AzureBastionSubnet' // Azure Bastion subnet must have AzureBastionSubnet name, not 'snet-bast-${workloadName}-${deploymentEnvironment}-${location}'
 var devOpsSubnetName = 'snet-devops-${workloadName}-${deploymentEnvironment}-${location}'
 var jumpBoxSubnetName = 'snet-jbox-${workloadName}-${deploymentEnvironment}-${location}-001'
 var appGatewaySubnetName = 'snet-apgw-${workloadName}-${deploymentEnvironment}-${location}-001'
-var privateEndpointSubnetName = 'snet-prep-${workloadName}-${deploymentEnvironment}-${location}-001'
-var backEndSubnetName = 'snet-bcke-${workloadName}-${deploymentEnvironment}-${location}-001'
+var functionsInboundPrivateEndpointSubnetName = 'snet-func-in-${workloadName}-${deploymentEnvironment}-${location}-001'
+var functionsOutboundSubnetName = 'snet-func-out-${workloadName}-${deploymentEnvironment}-${location}-001'
 var apimSubnetName = 'snet-apim-${workloadName}-${deploymentEnvironment}-${location}-001'
+var firewallSubnetName = 'AzureFirewallSubnet'
 var bastionName = 'bastion-${workloadName}-${deploymentEnvironment}-${location}'	
 var bastionIPConfigName = 'bastionipcfg-${workloadName}-${deploymentEnvironment}-${location}'
 
@@ -71,21 +42,29 @@ var bastionSNNSG = 'nsg-bast-${workloadName}-${deploymentEnvironment}-${location
 var devOpsSNNSG = 'nsg-devops-${workloadName}-${deploymentEnvironment}-${location}'
 var jumpBoxSNNSG = 'nsg-jbox-${workloadName}-${deploymentEnvironment}-${location}'
 var appGatewaySNNSG = 'nsg-apgw-${workloadName}-${deploymentEnvironment}-${location}'
-var privateEndpointSNNSG = 'nsg-prep-${workloadName}-${deploymentEnvironment}-${location}'
-var backEndSNNSG = 'nsg-bcke-${workloadName}-${deploymentEnvironment}-${location}'
+var functionsInboundPrivateEndpointSNNSG = 'nsg-func-in-${workloadName}-${deploymentEnvironment}-${location}'
+var functionsOutboundSNNSG = 'nsg-func-out-${workloadName}-${deploymentEnvironment}-${location}'
 var apimSNNSG = 'nsg-apim-${workloadName}-${deploymentEnvironment}-${location}'
 
 var publicIPAddressName = 'pip-apimcs-${workloadName}-${deploymentEnvironment}-${location}' // 'publicIp'
 var publicIPAddressNameBastion = 'pip-bastion-${workloadName}-${deploymentEnvironment}-${location}'
 
+var udrApimFirewallName = 'udr-apim-fw-${workloadName}-${deploymentEnvironment}-${location}'
+
+// This is created here, and updated in the firewall module because there's a cycle dependency between the firewall and the VNet
+resource udrApimFirewall 'Microsoft.Network/routeTables@2023-06-01' = {
+  name: udrApimFirewallName
+  location: location
+  properties: {
+    disableBgpRoutePropagation: true
+  }
+}
+
 // Resources - VNet - SubNets
 resource vnetApimCs 'Microsoft.Network/virtualNetworks@2021-02-01' = {
-  name: apimCSVNetName
+  name: apimVNetName
   location: location
-  tags: {
-    Owner: owner
-    // CostCenter: costCenter
-  }
+  
   properties: {
     addressSpace: {
       addressPrefixes: [
@@ -133,19 +112,19 @@ resource vnetApimCs 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         }
       }
       {
-        name: privateEndpointSubnetName
+        name: functionsInboundPrivateEndpointSubnetName
         properties: {
           addressPrefix: privateEndpointAddressPrefix
           networkSecurityGroup: {
-            id: privateEndpointNSG.id
+            id: functionsInboundPrivateEndpointNSG.id
           }
           privateEndpointNetworkPolicies: 'Disabled'
         }
       }
       {
-        name: backEndSubnetName
+        name: functionsOutboundSubnetName
         properties: {
-          addressPrefix: backEndAddressPrefix
+          addressPrefix: functionsOutboundAddressPrefix
           delegations: [
             {
               name: 'delegation'
@@ -156,7 +135,7 @@ resource vnetApimCs 'Microsoft.Network/virtualNetworks@2021-02-01' = {
           ]
           privateEndpointNetworkPolicies: 'Enabled'
           networkSecurityGroup: {
-            id: backEndNSG.id
+            id: functionsOutboundNSG.id
           }
         }
       }
@@ -167,6 +146,42 @@ resource vnetApimCs 'Microsoft.Network/virtualNetworks@2021-02-01' = {
           networkSecurityGroup: {
             id: apimNSG.id
           }
+          // this is required due to the Force Tunneling - Azure Firewall
+          serviceEndpoints: [
+            {
+              service: 'Microsoft.Storage'
+              locations: [
+                location
+              ]
+            }
+            {
+              service: 'Microsoft.Sql'
+              locations: [
+                location
+              ]
+            }
+            {
+              service: 'Microsoft.EventHub'
+              locations: [
+                location
+              ]
+            }
+            {
+              service: 'Microsoft.KeyVault'
+              locations: [
+                location
+              ]
+            }
+          ]
+          routeTable: {
+            id: udrApimFirewall.id
+          }
+        }
+      }
+      {
+        name: firewallSubnetName
+        properties: {
+          addressPrefix: firewallAddressPrefix
         }
       }
     ]
@@ -374,8 +389,8 @@ resource appGatewayNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
     ]
   }
 }
-resource privateEndpointNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
-  name: privateEndpointSNNSG
+resource functionsInboundPrivateEndpointNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+  name: functionsInboundPrivateEndpointSNNSG
   location: location
   properties: {
     securityRules: [
@@ -383,8 +398,8 @@ resource privateEndpointNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01'
   }
 }
 
-resource backEndNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
-  name: backEndSNNSG
+resource functionsOutboundNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+  name: functionsOutboundSNNSG
   location: location
   properties: {
     securityRules: [
@@ -469,9 +484,19 @@ resource apimNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
 resource pip 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
   name: publicIPAddressName
   location: location
-  properties: {
-    publicIPAllocationMethod: 'Dynamic'
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
   }
+  
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    publicIPAddressVersion: 'IPv4'
+    dnsSettings: {
+      domainNameLabel: toLower('${publicIPAddressName}-${uniqueString(resourceGroup().id)}')
+    }
+  } 
+  
 }
 
 // Mind the PIP for bastion being Standard SKU, Static IP
@@ -485,15 +510,15 @@ resource pipBastion 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
   properties: {
     publicIPAllocationMethod: 'Static'
     publicIPAddressVersion: 'IPv4'
+    dnsSettings: {
+      domainNameLabel: toLower('${publicIPAddressNameBastion}-${uniqueString(resourceGroup().id)}')
+    }
   }  
 }
 
 resource bastion 'Microsoft.Network/bastionHosts@2020-07-01' = {
   name: bastionName
   location: location 
-  tags:  {
-    Owner: owner
-  }
   properties: {
     ipConfigurations: [
       {
@@ -512,26 +537,40 @@ resource bastion 'Microsoft.Network/bastionHosts@2020-07-01' = {
   }
 } 
 
-
+module networking './firewall.bicep' = {
+  name: 'networkingresources'
+  scope: resourceGroup()
+  params: {
+    workloadName: workloadName
+    deploymentEnvironment: deploymentEnvironment
+    location: location
+    apimVNetName: apimVNetName
+    firewallSubnetName: firewallSubnetName
+    udrApimFirewallName: udrApimFirewallName
+  }
+  dependsOn: [
+    vnetApimCs
+  ]
+}
 
 // Output section
-output apimCSVNetName string = apimCSVNetName
+output apimCSVNetName string = apimVNetName
 output apimCSVNetId string = vnetApimCs.id
 
 output bastionSubnetName string = bastionSubnetName  
 output devOpsSubnetName string = devOpsSubnetName  
 output jumpBoxSubnetName string = jumpBoxSubnetName  
 output appGatewaySubnetName string = appGatewaySubnetName  
-output privateEndpointSubnetName string = privateEndpointSubnetName  
-output backEndSubnetName string = backEndSubnetName  
+output functionsInboundPrivateEndpointSubnetName string = functionsInboundPrivateEndpointSubnetName  
+output functionsOutboundSubnetName string = functionsOutboundSubnetName  
 output apimSubnetName string = apimSubnetName
 
 output bastionSubnetid string = '${vnetApimCs.id}/subnets/${bastionSubnetName}'  
 output CICDAgentSubnetId string = '${vnetApimCs.id}/subnets/${devOpsSubnetName}'  
 output jumpBoxSubnetid string = '${vnetApimCs.id}/subnets/${jumpBoxSubnetName}'  
 output appGatewaySubnetid string = '${vnetApimCs.id}/subnets/${appGatewaySubnetName}'  
-output privateEndpointSubnetid string = '${vnetApimCs.id}/subnets/${privateEndpointSubnetName}'  
-output backEndSubnetid string = '${vnetApimCs.id}/subnets/${backEndSubnetName}'  
+output privateEndpointSubnetid string = '${vnetApimCs.id}/subnets/${functionsInboundPrivateEndpointSubnetName}'  
+output functionsOutboundSubnetid string = '${vnetApimCs.id}/subnets/${functionsOutboundSubnetName}'  
 output apimSubnetid string = '${vnetApimCs.id}/subnets/${apimSubnetName}'  
 
 output publicIp string = pip.id

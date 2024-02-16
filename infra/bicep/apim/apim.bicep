@@ -1,9 +1,5 @@
 targetScope='resourceGroup'
 
-/*
- * Input parameters
-*/
-
 @description('The name of the API Management resource to be created.')
 param apimName string
 
@@ -11,13 +7,16 @@ param apimName string
 @minLength(1)
 param apimSubnetId string
 
+@description('The public IP address resource id to use for APIM.  In internal VNet mode, this public IP address is used only for management operations.')
+param publicIpAddressId string
+
 @description('The email address of the publisher of the APIM resource.')
 @minLength(1)
-param publisherEmail string = 'apim@contoso.com'
+param publisherEmail string
 
 @description('Company name of the publisher of the APIM resource.')
 @minLength(1)
-param publisherName string = 'Contoso'
+param publisherName string
 
 @description('The pricing tier of the APIM resource.')
 param skuName string = 'Developer'
@@ -36,7 +35,7 @@ param appInsightsInstrumentationKey string
  * Resources
 */
 
-resource apimName_resource 'Microsoft.ApiManagement/service@2020-12-01' = {
+resource apim 'Microsoft.ApiManagement/service@2021-08-01' = {
   name: apimName
   location: location
   sku:{
@@ -47,14 +46,15 @@ resource apimName_resource 'Microsoft.ApiManagement/service@2020-12-01' = {
     virtualNetworkType: 'Internal'
     publisherEmail: publisherEmail
     publisherName: publisherName
+    publicIpAddressId: publicIpAddressId
     virtualNetworkConfiguration: {
       subnetResourceId: apimSubnetId
     }
   }
 }
 
-resource apimName_appInsightsLogger_resource 'Microsoft.ApiManagement/service/loggers@2019-01-01' = {
-  parent: apimName_resource
+resource appInsightsLogger 'Microsoft.ApiManagement/service/loggers@2019-01-01' = {
+  parent: apim
   name: appInsightsName
   properties: {
     loggerType: 'applicationInsights'
@@ -65,11 +65,11 @@ resource apimName_appInsightsLogger_resource 'Microsoft.ApiManagement/service/lo
   }
 }
 
-resource apimName_applicationinsights 'Microsoft.ApiManagement/service/diagnostics@2019-01-01' = {
-  parent: apimName_resource
+resource applicationinsights 'Microsoft.ApiManagement/service/diagnostics@2019-01-01' = {
+  parent: apim
   name: 'applicationinsights'
   properties: {
-    loggerId: apimName_appInsightsLogger_resource.id
+    loggerId: appInsightsLogger.id
     alwaysLog: 'allErrors'
     sampling: {
       percentage: 100

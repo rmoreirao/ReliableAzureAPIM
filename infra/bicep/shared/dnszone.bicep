@@ -1,8 +1,17 @@
-
 param vnetName                  string
 param vnetRG                    string
 param apimName                  string
 param apimRG                    string
+
+/*
+Createa a Private DNS ZOne, A Record and Vnet Link for each of the below endpoints
+
+API Gateway	                {APIM Name}.azure-api.net
+Developer portal	          {APIM Name}.portal.azure-api.net
+The new developer portal	  {APIM Name}.developer.azure-api.net
+Direct management endpoint	{APIM Name}.management.azure-api.net
+
+*/
 
 /*
  Retrieve APIM and Virtual Network
@@ -17,16 +26,6 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
   name: vnetName
   scope: resourceGroup(vnetRG)
 }
-
-/*
-Createa a Private DNS ZOne, A Record and Vnet Link for each of the below endpoints
-
-API Gateway	                contosointernalvnet.azure-api.net
-Developer portal	          contosointernalvnet.portal.azure-api.net
-The new developer portal	  contosointernalvnet.developer.azure-api.net
-Direct management endpoint	contosointernalvnet.management.azure-api.net
-Git	                        contosointernalvnet.scm.azure-api.net
-*/
 
 // DNS Zones
 
@@ -66,14 +65,14 @@ resource managementDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   properties: {}
 }
 
-resource scmDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-  name: 'scm.azure-api.net'
-  location: 'global'
-  dependsOn: [
-    vnet
-  ]
-  properties: {}
-}
+// resource scmDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+//   name: 'scm.azure-api.net'
+//   location: 'global'
+//   dependsOn: [
+//     vnet
+//   ]
+//   properties: {}
+// }
 
 // A Records
 
@@ -141,21 +140,21 @@ resource managementRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
   }
 }
 
-resource scmRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
-  name: 'scm.azure-api.net/${apimName}'
-  dependsOn: [
-    apim
-    scmDnsZone
-  ]
-  properties: {
-    aRecords: [
-      {
-        ipv4Address: apim.properties.privateIPAddresses[0]
-      }
-    ]
-    ttl: 36000
-  }
-}
+// resource scmRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
+//   name: 'scm.azure-api.net/${apimName}'
+//   dependsOn: [
+//     apim
+//     scmDnsZone
+//   ]
+//   properties: {
+//     aRecords: [
+//       {
+//         ipv4Address: apim.properties.privateIPAddresses[0]
+//       }
+//     ]
+//     ttl: 36000
+//   }
+// }
 
 // Vnet Links
 
@@ -215,16 +214,16 @@ resource managementVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLin
   }
 }
 
-resource scmVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  name: 'scm.azure-api.net/gateway-vnet-dns-link'
-  location: 'global'
-  dependsOn: [
-    scmDnsZone
-  ]
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: vnet.id
-    }
-  }
-}
+// resource scmVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+//   name: 'scm.azure-api.net/gateway-vnet-dns-link'
+//   location: 'global'
+//   dependsOn: [
+//     scmDnsZone
+//   ]
+//   properties: {
+//     registrationEnabled: false
+//     virtualNetwork: {
+//       id: vnet.id
+//     }
+//   }
+// }

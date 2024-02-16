@@ -15,88 +15,60 @@ param workloadName string
 ])
 param environment string
 
-@description('Backend subnet id')
-param backendSubnetId string
-param privateEndpointSubnetid string
+@description('Functions Outbound subnet id')
+param functiounsOutboundSubnetId string
+param functionsInboundPrivateEndpointSubnetid string
 param vnetName string
 param vnetRG string
 
 param location string
 
 //
-// Variables
-//
-var owner = 'APIM Const Set'
-
-//
 // Azure Storage
 //
-// Azure Storage Sizing
-//
-// - name: must be globally unique
-var storageAccounts_saapimcsbackend_name  = toLower(take(replace('stbknd${workloadName}${environment}${location}', '-',''), 24))
-// - location
-var storageAccounts_location = location
-// - SKU name
-var storageAccounts_skuName  = 'Standard_LRS'
-// - SKU tier
-// var storageAccounts_skuTier  = 'Standard'
-// - kind
-var storageAccounts_kind  = 'StorageV2'
+var storageAccountName  = toLower(take(replace('stbknd${workloadName}${environment}${location}', '-',''), 24))
+
+var storageAccountSku  = 'Standard_LRS'
+var storageAccountKind  = 'StorageV2'
 var functionContentShareName = 'func-contents'
 
-//
-// Azure Storage connectivity and security
-//
-// - min TLS version
-var storageAccounts_minTLSVersion = 'TLS1_2'
-var privateEndpoint_storageaccount_queue_Name = 'pep-sa-queue-${workloadName}-${environment}-${location}'
-var privateEndpoint_storageaccount_blob_Name = 'pep-sa-blob-${workloadName}-${environment}-${location}'
-var privateEndpoint_storageaccount_file_Name = 'pep-sa-file-${workloadName}-${environment}-${location}'
-var privateEndpoint_storageaccount_table_Name = 'pep-sa-table-${workloadName}-${environment}-${location}'
 
-//
+var storageAccounts_minTLSVersion = 'TLS1_2'
+var privateEndpointStorageAccountQueueName = 'pep-sa-queue-${workloadName}-${environment}-${location}'
+var privateEndpointStorageaccountBlobName = 'pep-sa-blob-${workloadName}-${environment}-${location}'
+var privateEndpointStorageAccountFileName = 'pep-sa-file-${workloadName}-${environment}-${location}'
+var privateEndpointStorageAccountTableName = 'pep-sa-table-${workloadName}-${environment}-${location}'
+
+
 // Azure Application Service Plan
 //
 // - name
-var serverfarms_appsvcplanAPIMCSBackend_name  = 'plan-be-${workloadName}-${environment}-${location}'
-// - location
-var serverfarms_appsvcplanAPIMCSBackend_location  = location
-// Azure Application Service Plan sizing
-// - SKU name
-var serverfarms_appsvcplanAPIMCSBackend_skuName  = 'P2v2' // dev - 'B1'
-// - SKU tier
-var serverfarms_appsvcplanAPIMCSBackend_skuTier  = 'PremiumV2' // dev - 'Basic'
-// - SKU size
-var serverfarms_appsvcplanAPIMCSBackend_skuSize  = 'P2v2' // dev - 'B1'
-// - SKU family
-var serverfarms_appsvcplanAPIMCSBackend_skuFamily  = 'Pv2' // dev - 'B'
-// - SKU capacity
-var serverfarms_appsvcplanAPIMCSBackend_skuCapacity  = 1
+var appServicePlanFunctionName  = 'plan-func-${workloadName}-${environment}-${location}'
 
+var appServicePlanFunctionSku  = 'EP1' // dev - 'B1'
+var appServicePlanFunctionSkuTier  = 'ElasticPremium' // dev - 'Basic'
+var appServicePlanFunctionSkuSize  = 'P2v2' // dev - 'B1'
+var appServicePlanFunctionSkuFamily  = 'Pv2' // dev - 'B'
+var appServicePlanFunctionSkuCapacity  = 1
 
-var sites_funcappAPIMCSBackendMicroServiceA_name = 'func-code-be-${workloadName}-${environment}-${location}'
-var sites_funcappAPIMCSBackendMicroServiceA_location  = location
-var sites_funcappAPIMCSBackendMicroServiceA_siteHostname   = 'func-code-be-${workloadName}-${environment}-${location}.azurewebsites.net'
-var sites_funcappAPIMCSBackendMicroServiceA_repositoryHostname   = 'func-code-be-${workloadName}-${environment}-${location}.scm.azurewebsites.net'
-var sites_funcappAPIMCSBackendMicroServiceA_siteName   = 'funccodebe${workloadName}${environment}${location}'
-var privateEndpoint_funcappAPIMCSBackendMicroServiceA_name   = 'pep-func-code-be-${workloadName}-${environment}-${location}'
+var functionsAppServiceName = 'func-code-be-${workloadName}-${environment}-${location}'
+var functionsAppServiceHostname   = 'func-code-be-${workloadName}-${environment}-${location}.azurewebsites.net'
+var functionsAppServiceRepoHostname   = 'func-code-be-${workloadName}-${environment}-${location}.scm.azurewebsites.net'
+var functionsAppServiceHostnameBindingName   = 'funccodebe${workloadName}${environment}${location}'
+var functionsAppServiceHostnamePrivateEndpointName   = 'pep-func-code-be-${workloadName}-${environment}-${location}'
 
 
 //
 // Definitions
 //
 // Azure Storage Account
-resource storageAccounts_saapimcsbackend_name_resource 'Microsoft.Storage/storageAccounts@2021-06-01' = {
-  name: storageAccounts_saapimcsbackend_name
-  location: storageAccounts_location
-  tags: {
-    Owner: owner
-  }
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
+  name: storageAccountName
+  location: location
   sku: {
-    name: storageAccounts_skuName
+    name: storageAccountSku
   }
-  kind: storageAccounts_kind
+  kind: storageAccountKind
   properties: {
     minimumTlsVersion: storageAccounts_minTLSVersion
     allowBlobPublicAccess: true
@@ -126,83 +98,80 @@ resource storageAccounts_saapimcsbackend_name_resource 'Microsoft.Storage/storag
 }
 
 
-module queueStoragePrivateEndpoint './networking.bicep' = {
-  name: privateEndpoint_storageaccount_queue_Name
+module queueStoragePrivateEndpoint './backendnetworking.bicep' = {
+  name: privateEndpointStorageAccountQueueName
   params: {
     location: location
-    privateEndpointName: privateEndpoint_storageaccount_queue_Name
-    privateDnsZoneName: 'queueDnsZone'
-    storageAcountName: storageAccounts_saapimcsbackend_name
+    privateEndpointName: privateEndpointStorageAccountQueueName
+    // privateDnsZoneName: 'queueDnsZone'
+    storageAcountName: storageAccountName
     groupId: 'queue'
-    storageAccountId: storageAccounts_saapimcsbackend_name_resource.id
+    storageAccountId: storageAccount.id
     vnetName: vnetName
     vnetRG: vnetRG
-    subnetId: privateEndpointSubnetid
+    subnetId: functionsInboundPrivateEndpointSubnetid
   }
 }
 
-module blobStoragePrivateEndpoint './networking.bicep' = {
-  name: privateEndpoint_storageaccount_blob_Name
+module blobStoragePrivateEndpoint './backendnetworking.bicep' = {
+  name: privateEndpointStorageaccountBlobName
   params: {
     location: location
-    privateEndpointName: privateEndpoint_storageaccount_blob_Name
-    privateDnsZoneName: 'blobDnsZone'
-    storageAcountName: storageAccounts_saapimcsbackend_name
+    privateEndpointName: privateEndpointStorageaccountBlobName
+    // privateDnsZoneName: 'blobDnsZone'
+    storageAcountName: storageAccountName
     groupId: 'blob'
-    storageAccountId: storageAccounts_saapimcsbackend_name_resource.id
+    storageAccountId: storageAccount.id
     vnetName: vnetName
     vnetRG: vnetRG
-    subnetId: privateEndpointSubnetid
+    subnetId: functionsInboundPrivateEndpointSubnetid
   }
 }
 
-module tableStoragePrivateEndpoint './networking.bicep' = {
-  name: privateEndpoint_storageaccount_table_Name
+module tableStoragePrivateEndpoint './backendnetworking.bicep' = {
+  name: privateEndpointStorageAccountTableName
   params: {
     location: location
-    privateEndpointName: privateEndpoint_storageaccount_table_Name
-    privateDnsZoneName: 'tableDnsZone'
-    storageAcountName: storageAccounts_saapimcsbackend_name
+    privateEndpointName: privateEndpointStorageAccountTableName
+    // privateDnsZoneName: 'tableDnsZone'
+    storageAcountName: storageAccountName
     groupId: 'table'
-    storageAccountId: storageAccounts_saapimcsbackend_name_resource.id
+    storageAccountId: storageAccount.id
     vnetName: vnetName
     vnetRG: vnetRG
-    subnetId: privateEndpointSubnetid
+    subnetId: functionsInboundPrivateEndpointSubnetid
   }
 }
 
-module fileStoragePrivateEndpoint './networking.bicep' = {
-  name: privateEndpoint_storageaccount_file_Name
+module fileStoragePrivateEndpoint './backendnetworking.bicep' = {
+  name: privateEndpointStorageAccountFileName
   params: {
     location: location
-    privateEndpointName: privateEndpoint_storageaccount_file_Name
-    privateDnsZoneName: 'fileDnsZone'
-    storageAcountName: storageAccounts_saapimcsbackend_name
+    privateEndpointName: privateEndpointStorageAccountFileName
+    // privateDnsZoneName: 'fileDnsZone'
+    storageAcountName: storageAccountName
     groupId: 'file'
-    storageAccountId: storageAccounts_saapimcsbackend_name_resource.id
+    storageAccountId: storageAccount.id
     vnetName: vnetName
     vnetRG: vnetRG
-    subnetId: privateEndpointSubnetid
+    subnetId: functionsInboundPrivateEndpointSubnetid
   }
 }
 
 resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2021-04-01' = {
-  name: '${storageAccounts_saapimcsbackend_name_resource.name}/default/${functionContentShareName}'
+  name: '${storageAccount.name}/default/${functionContentShareName}'
 }
 
 // Azure Application Service Plan
-resource serverfarms_appsvcplanAPIMCSBackend_name_resource 'Microsoft.Web/serverfarms@2018-02-01' = {
-  name: serverfarms_appsvcplanAPIMCSBackend_name
-  location: serverfarms_appsvcplanAPIMCSBackend_location
-  tags: {
-    Owner: owner
-  }
+resource appServicePlanFunction 'Microsoft.Web/serverfarms@2018-02-01' = {
+  name: appServicePlanFunctionName
+  location: location
   sku: {
-    name:  serverfarms_appsvcplanAPIMCSBackend_skuName
-    tier: serverfarms_appsvcplanAPIMCSBackend_skuTier
-    size: serverfarms_appsvcplanAPIMCSBackend_skuSize
-    family: serverfarms_appsvcplanAPIMCSBackend_skuFamily
-    capacity: serverfarms_appsvcplanAPIMCSBackend_skuCapacity
+    name:  appServicePlanFunctionSku
+    tier: appServicePlanFunctionSkuTier
+    // size: appServicePlanFunctionSkuSize
+    // family: appServicePlanFunctionSkuFamily
+    // capacity: appServicePlanFunctionSkuCapacity
   }
   kind: 'linux'
   properties: {
@@ -217,53 +186,66 @@ resource serverfarms_appsvcplanAPIMCSBackend_name_resource 'Microsoft.Web/server
   }
 }
 
-// Azure Function App (Linux, .NET Core 3.1)
-resource sites_funcappAPIMCSBackendMicroServiceA_name_resource 'Microsoft.Web/sites@2018-11-01' = {
-  name: sites_funcappAPIMCSBackendMicroServiceA_name
-  location: sites_funcappAPIMCSBackendMicroServiceA_location // 'West Europe'
-  tags: {
-    Owner: owner
-  }
+
+resource functionsAppService 'Microsoft.Web/sites@2022-09-01' = {
+  name: functionsAppServiceName
+  location: location
   kind: 'functionapp,linux'
   properties: {
     enabled: true
     hostNameSslStates: [
       {
-        name: sites_funcappAPIMCSBackendMicroServiceA_siteHostname
+        name: functionsAppServiceHostname
         sslState: 'Disabled'
         hostType: 'Standard'
       }
       {
-        name: sites_funcappAPIMCSBackendMicroServiceA_repositoryHostname
+        name: functionsAppServiceRepoHostname
         sslState: 'Disabled'
         hostType: 'Repository'
       }
     ]
-    serverFarmId: serverfarms_appsvcplanAPIMCSBackend_name_resource.id
-    reserved: true
-    isXenon: false
-    hyperV: false
+    serverFarmId: appServicePlanFunction.id
+    scmSiteAlsoStopped: false
+    clientAffinityEnabled: false
+
+    clientCertEnabled: false
+    hostNamesDisabled: false
+    dailyMemoryTimeQuota: 0
+    httpsOnly: true
+    redundancyMode: 'None'
+    virtualNetworkSubnetId: functiounsOutboundSubnetId
+    publicNetworkAccess: 'Disabled'
+    vnetRouteAllEnabled: true
+
     siteConfig: {
       numberOfWorkers: 1
-      linuxFxVersion: 'dotnet|3.1'
-      alwaysOn: true
+      linuxFxVersion: 'DOTNET-ISOLATED|8.0'
+      alwaysOn: false
       http20Enabled: false
+      cors: {
+        allowedOrigins: ['https://portal.azure.com']
+      }
       appSettings: [
         {
           name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccounts_saapimcsbackend_name};AccountKey=${storageAccounts_saapimcsbackend_name_resource.listKeys().keys[0].value}'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageAccount.listKeys().keys[0].value}'
         }
         {
           name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccounts_saapimcsbackend_name};AccountKey=${storageAccounts_saapimcsbackend_name_resource.listKeys().keys[0].value}'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageAccount.listKeys().keys[0].value}'
         }
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
-          value: '~3'
+          value: '~4'
         }
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
-          value: 'dotnet'
+          value: 'dotnet-isolated'
+        }
+        {
+          name: 'WEBSITE_USE_PLACEHOLDER_DOTNETISOLATED'
+          value: '1'
         }
         {
           name: 'WEBSITE_CONTENTOVERVNET'
@@ -273,20 +255,11 @@ resource sites_funcappAPIMCSBackendMicroServiceA_name_resource 'Microsoft.Web/si
           name: 'WEBSITE_CONTENTSHARE'
           value: functionContentShareName
         }
-        {
-          name: 'WEBSITE_VNET_ROUTE_ALL'
-          value: '1'
-        }
       ]      
+
     }
-    scmSiteAlsoStopped: false
-    clientAffinityEnabled: false
-    clientCertEnabled: false
-    hostNamesDisabled: false
-    containerSize: 1536
-    dailyMemoryTimeQuota: 0
-    httpsOnly: true
-    redundancyMode: 'None'
+    
+    
   }
   dependsOn: [
     queueStoragePrivateEndpoint
@@ -297,20 +270,20 @@ resource sites_funcappAPIMCSBackendMicroServiceA_name_resource 'Microsoft.Web/si
 }
 
 // Hostname binding for Azure Function App (Linux, .NET Core 3.1)
-resource sites_funcappAPIMCSBackendMicroServiceA_name_sites_funcappAPIMCSBackendMicroServiceA_name_azurewebsites_net 'Microsoft.Web/sites/hostNameBindings@2018-11-01' = {
-  parent: sites_funcappAPIMCSBackendMicroServiceA_name_resource
-  name: '${sites_funcappAPIMCSBackendMicroServiceA_name}.azurewebsites.net'
+resource functionsAppServiceHostnameBinding 'Microsoft.Web/sites/hostNameBindings@2018-11-01' = {
+  parent: functionsAppService
+  name: '${functionsAppServiceName}.azurewebsites.net'
   properties: {
-    siteName: sites_funcappAPIMCSBackendMicroServiceA_siteName
+    siteName: functionsAppServiceHostnameBindingName
     hostNameType: 'Verified'
   }
 }
 
 resource planNetworkConfig 'Microsoft.Web/sites/networkConfig@2021-01-01' = {
-  parent: sites_funcappAPIMCSBackendMicroServiceA_name_resource
+  parent: functionsAppService
   name: 'virtualNetwork'
   properties: {
-    subnetResourceId: backendSubnetId
+    subnetResourceId: functiounsOutboundSubnetId
     swiftSupported: true
   }
 }
@@ -323,17 +296,17 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
 }
 
 resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-03-01' = {
-  name: privateEndpoint_funcappAPIMCSBackendMicroServiceA_name
+  name: functionsAppServiceHostnamePrivateEndpointName
   location: location
   properties: {
     subnet: {
-      id: privateEndpointSubnetid
+      id: functionsInboundPrivateEndpointSubnetid
     }
     privateLinkServiceConnections: [
       {
-        name: privateEndpoint_funcappAPIMCSBackendMicroServiceA_name
+        name: functionsAppServiceHostnamePrivateEndpointName
         properties: {
-          privateLinkServiceId: sites_funcappAPIMCSBackendMicroServiceA_name_resource.id
+          privateLinkServiceId: functionsAppService.id
           groupIds: [
             'sites'
           ]
@@ -349,7 +322,8 @@ resource privateDnsZones 'Microsoft.Network/privateDnsZones@2018-09-01' = {
 }
 
 resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
-  name: '${privateDNSZoneName}/${uniqueString(vnet.id)}'
+  parent: privateDnsZones
+  name: uniqueString(vnet.id)
   location: 'global'
   properties: {
     registrationEnabled: false
@@ -358,17 +332,17 @@ resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLin
     }
   }
   dependsOn: [
-    privateDnsZones
     privateEndpoint
   ]
 }
 
 resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-03-01' = {
-  name: '${privateEndpoint_funcappAPIMCSBackendMicroServiceA_name}/default'
+  parent: privateEndpoint
+  name: 'default'
   properties: {
     privateDnsZoneConfigs: [
       {
-        name: '${sites_funcappAPIMCSBackendMicroServiceA_siteHostname}-azurewebsites-net'
+        name: '${functionsAppServiceHostname}-azurewebsites-net'
         properties: {
           privateDnsZoneId: privateDnsZones.id
         }

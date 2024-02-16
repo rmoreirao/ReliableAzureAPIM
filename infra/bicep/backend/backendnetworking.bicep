@@ -1,10 +1,34 @@
-param vnetName string
-param vnetRG string
 param privateEndpointName string
 param groupId string
-param storageName string 
+param location string
+param vnetName string
+param vnetRG string
+param subnetId string
+param storageAccountId string
+param storageAcountName string
 param standardDomain string = 'windows.net'
 param domain string = 'privatelink.${groupId}.core.${standardDomain}'
+
+resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-03-01' = {
+  name: privateEndpointName
+  location: location
+  properties: {
+    subnet: {
+      id: subnetId
+    }
+    privateLinkServiceConnections: [
+      {
+        name: privateEndpointName
+        properties: {
+          privateLinkServiceId: storageAccountId
+          groupIds: [
+            groupId
+          ]
+        }
+      }
+    ]
+  }
+}
 
 resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
   name: vnetName
@@ -17,7 +41,8 @@ resource dnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
 }
 
 resource vnetLinks 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  name: '${domain}/${uniqueString(vnet.id)}'
+  parent: dnsZone
+  name: uniqueString(vnet.id)
   location: 'global'
   properties: {
     virtualNetwork: {
@@ -25,9 +50,6 @@ resource vnetLinks 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-0
     }
     registrationEnabled: false
   }
-  dependsOn: [
-    dnsZone
-  ]
 }
 
 resource dnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-03-01' = {
@@ -35,7 +57,7 @@ resource dnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2
   properties: {
     privateDnsZoneConfigs: [
       {      
-        name: '${storageName}-${groupId}-core-windows-net'
+        name: '${storageAcountName}-${groupId}-core-windows-net'
         properties: {
           privateDnsZoneId: dnsZone.id          
         }
@@ -47,6 +69,7 @@ resource dnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2
   ]
 }
 
+output privateEndpointId string = privateEndpoint.id
 output dnsZoneId string = dnsZone.id
-output vnetLinksLink string = vnetLinks.id
 output dnsZoneGroupId string = dnsZoneGroup.id
+output vnetLinksId string = vnetLinks.id

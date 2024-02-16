@@ -1,41 +1,25 @@
 # ReliableAzureAPIM
 
-### For today:
-	Check the Custom Domains for API Management Portal on the Powershell deployment!!!
-	Start with the Firewall configuration
-	Functions deploy & test the flow
-
-
-az deployment sub create --location westeurope --name rmor --template-file main.bicep --parameters workloadName=rmor environment=dev
-
-C:\Windows\system32\drivers\etc\hosts
-
-
-	Firewall: [API Management - Networking FAQs (Demystifying Series II) - Microsoft Community Hub](https://techcommunity.microsoft.com/t5/azure-paas-blog/api-management-networking-faqs-demystifying-series-ii/ba-p/1502056#b1)
-		https://learn.microsoft.com/en-us/azure/app-service/network-secure-outbound-traffic-azure-firewall
-			Subnet address range, accept the default or specify a range that's at least /26 in size.
-
+## For today:
 	
-To implement:
-	Developer Portal via App Gateway [(Use API Management in a virtual network with Azure Application Gateway - Azure API Management | Microsoft Learn)](https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-integrate-internal-vnet-appgateway)
-		[Create Serf-service Certificate: Application Gateway with internal API Management and Web App - Code Samples | Microsoft Learn](https://learn.microsoft.com/en-us/samples/azure/azure-quickstart-templates/private-webapp-with-app-gateway-and-apim/)
-		[Sample Bicep: azure-quickstart-templates/quickstarts/microsoft.web/private-webapp-with-app-gateway-and-apim at master · Azure/azure-quickstart-templates (github.com)](https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.web/private-webapp-with-app-gateway-and-apim)
-		[Generate self-signed certificate with a custom root CA - Azure Application Gateway | Microsoft Learn](https://learn.microsoft.com/en-us/azure/application-gateway/self-signed-certificates)
-		[Tutorial: Create and configure an application gateway to host multiple web sites using the Azure portal - Azure Application Gateway | Microsoft Learn](https://learn.microsoft.com/en-us/azure/application-gateway/create-multiple-sites-portal)
-		[Test An API With HTTP Files In VSCode | Tutorial (kenslearningcurve.com)](https://kenslearningcurve.com/tutorials/test-an-api-with-http-files-in-vscode/)
+	Logic Apps - deploy & test the flow
+	Azure DevOps Agent
+	Functions - test the flow (Deploy to the External Subscription)
+	Log Analytics Workspace - to all resources
+	
+	Developer Portal Styling
+	
+## To Access the APIM locally:
+	C:\Windows\system32\drivers\etc\hosts
 
-## To publish the Developer Portal:
-		1) Go to the Portal via APIM: Developer portal-> Portal overview
-		2) Click on "Developer Portal" link on the top of the page
-		3) Adjust the url to the App Gateway url
-		4) Login and open the Portal
-		5) From the Developer Portal, click on "Operations" -> "Publish"
- 
-Stv2: [Azure-Orbital-STAC/deploy/bicep/modules/apim.bicep at 105c1af9c0b5d4749c4c94fa059fdf84b6f2c811 · Azure/Azure-Orbital-STAC (github.com)](https://github.com/Azure/Azure-Orbital-STAC/blob/105c1af9c0b5d4749c4c94fa059fdf84b6f2c811/deploy/bicep/modules/apim.bicep#L67)
+	20.73.209.255 api.rmoreirao.net
+	20.73.209.255 devportalold.rmoreirao.net
+	20.73.209.255 devportal.rmoreirao.net
+	20.73.209.255 management.rmoreirao.net
 
+## Pending to be Discussed
 
-
-Open Points for Sandbox: 
+**Open Points for Sandbox: **
  
 - Access to Azure DevOps project
 - Have non-prod Subscription with access to it to test / deploy the solution
@@ -66,6 +50,10 @@ Open Points for Sandbox:
 		•	Developer Portal
 		•	Certificate is stored in the KeyVault
 		•	For the Sandbox, will start with Self-signed certificate – at least for now
+
+	- **Custom Domain Names**
+		- What are the requirements for Custom Domain Names? Check the endpoints
+		- Custom Domain names on APIM and App Gateway
  
 •	**Where to put the DNS Zones?**
 	•	[Not so urgent for now] How do we connect to om-prem / other subscriptions?
@@ -73,3 +61,62 @@ Open Points for Sandbox:
  
 - Are there naming conventions to be used? Work together on the name of the components
 - Decision on which other services to be installed - Azure Functions or Logic Apps – both there to start with
+
+
+# References
+
+## APIM Landing Zone
+	- Add the Github Link here!!!
+
+## App Gateway 
+	- [(Use API Management in a virtual network with Azure Application Gateway - Azure API Management | Microsoft Learn)](https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-integrate-internal-vnet-appgateway)
+	- [Create Serf-service Certificate: Application Gateway with internal API Management and Web App - Code Samples | Microsoft Learn](https://learn.microsoft.com/en-us/samples/azure/azure-quickstart-templates/private-webapp-with-app-gateway-and-apim/)
+	- [Sample Bicep: azure-quickstart-templates/quickstarts/microsoft.web/private-webapp-with-app-gateway-and-apim at master · Azure/azure-quickstart-templates (github.com)](https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.web/private-webapp-with-app-gateway-and-apim)
+	- [Generate self-signed certificate with a custom root CA - Azure Application Gateway | Microsoft Learn](https://learn.microsoft.com/en-us/azure/application-gateway/self-signed-certificates)
+	- [Tutorial: Create and configure an application gateway to host multiple web sites using the Azure portal - Azure Application Gateway | Microsoft Learn](https://learn.microsoft.com/en-us/azure/application-gateway/create-multiple-sites-portal)
+
+	- https://learn.microsoft.com/en-us/answers/questions/1006626/application-gateway-backend-end-pool-not-getting-u
+
+		- stop: az network application-gateway stop -n appgw-rmor2-dev-westeurope-001 -g rg-apim-rmor2-dev-westeurope-001
+		- start: az network application-gateway start -n appgw-rmor2-dev-westeurope-001 -g rg-apim-rmor2-dev-westeurope-001
+
+## Stv2 
+	- [Azure-Orbital-STAC/deploy/bicep/modules/apim.bicep at 105c1af9c0b5d4749c4c94fa059fdf84b6f2c811 · Azure/Azure-Orbital-STAC (github.com)](https://github.com/Azure/Azure-Orbital-STAC/blob/105c1af9c0b5d4749c4c94fa059fdf84b6f2c811/deploy/bicep/modules/apim.bicep#L67)
+
+	- Have the Public IP set on APIM!
+
+## Firewall
+	- https://techcommunity.microsoft.com/t5/azure-paas-blog/api-management-networking-faqs-demystifying-series-ii/ba-p/1502056
+	- Look for "Force tunneling": https://learn.microsoft.com/en-us/azure/api-management/api-management-using-with-internal-vnet?tabs=stv2
+	- https://github.com/nehalineogi/azure-cross-solution-network-architectures/blob/main/apim/README-firewall.md
+	- https://learn.microsoft.com/en-us/azure/app-service/network-secure-outbound-traffic-azure-firewall
+
+	Firewall: [API Management - Networking FAQs (Demystifying Series II) - Microsoft Community Hub](https://techcommunity.microsoft.com/t5/azure-paas-blog/api-management-networking-faqs-demystifying-series-ii/ba-p/1502056#b1)
+		https://learn.microsoft.com/en-us/azure/app-service/network-secure-outbound-traffic-azure-firewall
+			Subnet address range, accept the default or specify a range that's at least /26 in size.
+	- Create UDR like this to route all Internet Traffic to Firewall and Allow APIM to connect internally:
+
+		| Name                  | Address prefix | Next hop type   | Next hop IP address |
+		|-----------------------|----------------|-----------------|---------------------|
+		| route-apim-to-firewall | 0.0.0.0/0      | VirtualAppliance | 10.2.8.4 (FW private ID)          |
+		| fw-apim               | ApiManagement  | Internet        |                     |
+		
+
+![alt text](docs/images/urd.png)
+
+## Azure Functions
+
+	- https://learn.microsoft.com/en-us/azure/azure-functions/configure-networking-how-to?tabs=portal
+
+	- https://learn.microsoft.com/en-us/azure/azure-functions/functions-create-vnet
+
+	- Sample Function HTTP trigger: https://github.com/Azure-Samples/functions-vnet-tutorial
+
+# Others
+
+## To publish the Developer Portal:
+		1) Go to the Portal via APIM: Developer portal-> Portal overview
+		2) Click on "Developer Portal" link on the top of the page
+		3) Adjust the url to the App Gateway url
+		4) Login and open the Portal
+		5) From the Developer Portal, click on "Operations" -> "Publish"

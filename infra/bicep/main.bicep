@@ -36,8 +36,11 @@ param accountName string = ''
 @secure()
 param personalAccessToken string = ''
 
-@description('The FQDN for the Application Gateway. Example - api.contoso.com.')
-param appGatewayFqdn string = 'rmoreiraotst3'
+// @description('The FQDN for the Application Gateway. Example - api.contoso.com.')
+// param appGatewayFqdn string = 'rmoreiraotst3'
+
+@description('Custom domain for APIM - is used to API Management from the internet. This should also match the Domain name of your Certificate. Example - contoso.com.')
+param apimCustomDomainName string = 'rmoreirao-apim-custom-domain.com'
 
 @description('The password for the TLS certificate for the Application Gateway.  The pfx file needs to be copied to deployment/bicep/gateway/certs/appgw.pfx')
 @secure()
@@ -45,6 +48,14 @@ param certificatePassword string = ''
 
 @description('Set to selfsigned if self signed certificates should be used for the Application Gateway. Set to custom and copy the pfx file to deployment/bicep/gateway/certs/appgw.pfx if custom certificates are to be used')
 param appGatewayCertType string = 'selfsigned'
+
+@description('The email address of the publisher of the APIM resource.')
+@minLength(1)
+param publisherEmail string = 'rmoreirao@microsoft.com'
+
+@description('Company name of the publisher of the APIM resource.')
+@minLength(1)
+param publisherName string = 'Carnaval Integration Services'
 
 param location string = deployment().location
 
@@ -61,6 +72,15 @@ var apimResourceGroupName = 'rg-apim-${resourceSuffix}'
 // Resource Names
 var apimName = 'apim-${resourceSuffix}'
 var appGatewayName = 'appgw-${resourceSuffix}'
+
+var apimGatewayFQDN = '${apimName}.azure-api.net'
+var apimGatewayCustomHostname = 'api.${apimCustomDomainName}'
+var oldDevPortalFQDN = '${apimName}.portal.azure-api.net'
+var oldDevPortalCustomHostname = 'portal.${apimCustomDomainName}'
+var devPortalFQDN = '${apimName}.developer.azure-api.net'
+var devPortalCustomHostname = 'developer.${apimCustomDomainName}'
+var managementBackendEndFQDN = '${apimName}.management.azure-api.net'
+var managementBackendEndCustomHostname = 'management.${apimCustomDomainName}'
 
 
 resource networkingRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
@@ -102,8 +122,8 @@ module backend './backend/backend.bicep' = {
     location: location    
     vnetName: networking.outputs.apimCSVNetName
     vnetRG: networkingRG.name
-    backendSubnetId: networking.outputs.backEndSubnetid
-    privateEndpointSubnetid: networking.outputs.privateEndpointSubnetid
+    functiounsOutboundSubnetId: networking.outputs.functionsOutboundSubnetid
+    functionsInboundPrivateEndpointSubnetid: networking.outputs.privateEndpointSubnetid
   }
 }
 
@@ -141,6 +161,9 @@ module apimModule 'apim/apim.bicep'  = {
     appInsightsName: shared.outputs.appInsightsName
     appInsightsId: shared.outputs.appInsightsId
     appInsightsInstrumentationKey: shared.outputs.appInsightsInstrumentationKey
+    publicIpAddressId: networking.outputs.publicIp
+    publisherEmail: publisherEmail
+    publisherName: publisherName
   }
 }
 
@@ -159,7 +182,7 @@ module dnsZoneModule 'shared/dnszone.bicep'  = {
   }
 }
 
-module appgwModule 'gateway/apimAppgw.bicep' = {
+module appgwModule 'apim/apimAppgw.bicep' = {
   name: 'appgwDeploy'
   scope: resourceGroup(apimRG.name)
   dependsOn: [
@@ -168,13 +191,17 @@ module appgwModule 'gateway/apimAppgw.bicep' = {
   ]
   params: {
     appGatewayName: appGatewayName
-    appGatewayFQDN: appGatewayFqdn
+    appGatewayFQDN: apimCustomDomainName
     location: location
     appGatewaySubnetId: networking.outputs.appGatewaySubnetid
-    apimBackendEndFQDN: '${apimName}.azure-api.net'
-    oldDevPortalBackendEndFQDN: '${apimName}.portal.azure-api.net'  
-    devPortalBackendEndFQDN: '${apimName}.developer.azure-api.net'
-    managementBackendEndFQDN: '${apimName}.management.azure-api.net'
+    apiGatewayFQDN: apimGatewayFQDN
+    oldDevPortalFQDN: oldDevPortalFQDN  
+    devPortalFQDN: devPortalFQDN
+    managementFQDN: managementBackendEndFQDN
+    apiGatewayCustomHostname: apimGatewayCustomHostname
+    oldDevPortalCustomHostname: oldDevPortalCustomHostname
+    devPortalCustomHostname: devPortalCustomHostname
+    managementBackendEndCustomHostname: managementBackendEndCustomHostname
     keyVaultName: shared.outputs.keyVaultName
     keyVaultResourceGroupName: sharedRG.name
     appGatewayCertType: appGatewayCertType
