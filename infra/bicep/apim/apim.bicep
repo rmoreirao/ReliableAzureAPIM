@@ -77,3 +77,5 @@ resource applicationinsights 'Microsoft.ApiManagement/service/diagnostics@2019-0
     }
   }
 }
+
+output apimPrivateIpAddress string = apim.properties.privateIPAddresses[0]

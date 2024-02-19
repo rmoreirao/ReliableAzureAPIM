@@ -47,9 +47,6 @@ var appServicePlanFunctionName  = 'plan-func-${workloadName}-${environment}-${lo
 
 var appServicePlanFunctionSku  = 'EP1' // dev - 'B1'
 var appServicePlanFunctionSkuTier  = 'ElasticPremium' // dev - 'Basic'
-var appServicePlanFunctionSkuSize  = 'P2v2' // dev - 'B1'
-var appServicePlanFunctionSkuFamily  = 'Pv2' // dev - 'B'
-var appServicePlanFunctionSkuCapacity  = 1
 
 var functionsAppServiceName = 'func-code-be-${workloadName}-${environment}-${location}'
 var functionsAppServiceHostname   = 'func-code-be-${workloadName}-${environment}-${location}.azurewebsites.net'
@@ -118,7 +115,6 @@ module blobStoragePrivateEndpoint './backendnetworking.bicep' = {
   params: {
     location: location
     privateEndpointName: privateEndpointStorageaccountBlobName
-    // privateDnsZoneName: 'blobDnsZone'
     storageAcountName: storageAccountName
     groupId: 'blob'
     storageAccountId: storageAccount.id
@@ -133,7 +129,6 @@ module tableStoragePrivateEndpoint './backendnetworking.bicep' = {
   params: {
     location: location
     privateEndpointName: privateEndpointStorageAccountTableName
-    // privateDnsZoneName: 'tableDnsZone'
     storageAcountName: storageAccountName
     groupId: 'table'
     storageAccountId: storageAccount.id
@@ -148,7 +143,6 @@ module fileStoragePrivateEndpoint './backendnetworking.bicep' = {
   params: {
     location: location
     privateEndpointName: privateEndpointStorageAccountFileName
-    // privateDnsZoneName: 'fileDnsZone'
     storageAcountName: storageAccountName
     groupId: 'file'
     storageAccountId: storageAccount.id
@@ -247,6 +241,8 @@ resource functionsAppService 'Microsoft.Web/sites@2022-09-01' = {
           name: 'WEBSITE_USE_PLACEHOLDER_DOTNETISOLATED'
           value: '1'
         }
+        // This is required to connect to the Storage account using the VNET - don't remove it!
+        // https://learn.microsoft.com/en-us/azure/azure-functions/functions-app-settings#website_contentovervnet
         {
           name: 'WEBSITE_CONTENTOVERVNET'
           value: '1'
@@ -256,10 +252,7 @@ resource functionsAppService 'Microsoft.Web/sites@2022-09-01' = {
           value: functionContentShareName
         }
       ]      
-
     }
-    
-    
   }
   dependsOn: [
     queueStoragePrivateEndpoint

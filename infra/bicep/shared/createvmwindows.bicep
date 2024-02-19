@@ -1,15 +1,13 @@
-// Parameters
-@description('Azure location to which the resources are to be deployed')
 param location string
 
 @description('The full id string identifying the target subnet for the VM')
 param subnetId string
 
 @description('Disk type of the IS disk')
-param osDiskType string = 'Standard_LRS'
+param osDiskType string = 'StandardSSD_LRS'
 
 @description('Valid SKU indicator for the VM')
-param vmSize string = 'Standard_D4_v3'
+param vmSize string = 'Standard_D2s_v3'
 
 @description('The user name to be used as the Administrator for all VMs created by this deployment')
 param username string
@@ -19,7 +17,7 @@ param username string
 param password string
 
 @description('Windows OS Version indicator')
-param windowsOSVersion string = '2016-Datacenter'
+param windowsOSVersion string
 
 @description('Name of the VM to be created')
 param vmName string
@@ -49,15 +47,32 @@ param CICDAgentType string
 
 param artifactsLocation string = 'https://raw.githubusercontent.com/Azure/apim-landing-zone-accelerator/main/reference-implementations/AppGW-IAPIM-Func/bicep/shared/agentsetup.ps1'
 // Variables
-var AgentName = 'agent-${vmName}'
+var agentName = 'agent-${vmName}'
+var nicName = '${vmName}-nic'
 
-// Bring in the nic
-module nic './vm-nic.bicep' = {
-  name: '${vmName}-nic'
-  params: {
-    location: location
-    subnetId: subnetId
-    nicName: '${vmName}-nic'
+resource nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
+  name: nicName
+  location: location
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'ipconfig1'
+        properties: {
+          privateIPAddress: '10.0.0.4'
+          privateIPAllocationMethod: 'Dynamic'
+          subnet: {
+            id: subnetId
+          }
+          primary: true
+          privateIPAddressVersion: 'IPv4'
+        }
+      }
+    ]
+    dnsSettings: {
+      dnsServers: []
+    }
+    enableAcceleratedNetworking: false
+    enableIPForwarding: false
   }
 }
 
@@ -95,7 +110,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-04-01' = {
     networkProfile: {
       networkInterfaces: [
         {
-          id: nic.outputs.nicId
+          id: nic.id
         }
       ]
     }
@@ -117,7 +132,7 @@ resource vm_CustomScript 'Microsoft.Compute/virtualMachines/extensions@2021-04-0
       ]   
     }
     protectedSettings: {
-      commandToExecute: 'powershell.exe -ExecutionPolicy Unrestricted -Command ./agentsetup.ps1 -url ${accountName} -pat ${personalAccessToken} -agent ${AgentName} -pool ${poolName} -agenttype ${CICDAgentType} '
+      commandToExecute: 'powershell.exe -ExecutionPolicy Unrestricted -Command ./agentsetup.ps1 -url ${accountName} -pat ${personalAccessToken} -agent ${agentName} -pool ${poolName} -agenttype ${CICDAgentType} '
     }
   }
 }

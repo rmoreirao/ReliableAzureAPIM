@@ -1,13 +1,17 @@
 # ReliableAzureAPIM
 
+
+
 ## For today:
 	
-	Logic Apps - deploy & test the flow
-	Azure DevOps Agent
+	Logic Apps - deploy & test the flow - Ongoing
+	Azure DevOps Agent - Ongoing
 	Functions - test the flow (Deploy to the External Subscription)
 	Log Analytics Workspace - to all resources
 	
 	Developer Portal Styling
+	IaC Pipelines
+	
 	
 ## To Access the APIM locally:
 	C:\Windows\system32\drivers\etc\hosts
@@ -74,6 +78,10 @@
 	- [Sample Bicep: azure-quickstart-templates/quickstarts/microsoft.web/private-webapp-with-app-gateway-and-apim at master · Azure/azure-quickstart-templates (github.com)](https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.web/private-webapp-with-app-gateway-and-apim)
 	- [Generate self-signed certificate with a custom root CA - Azure Application Gateway | Microsoft Learn](https://learn.microsoft.com/en-us/azure/application-gateway/self-signed-certificates)
 	- [Tutorial: Create and configure an application gateway to host multiple web sites using the Azure portal - Azure Application Gateway | Microsoft Learn](https://learn.microsoft.com/en-us/azure/application-gateway/create-multiple-sites-portal)
+
+	- App Gateway + LogAnalytics sample: https://github.com/AzDocs/AzDocs/blob/11872387c6674d1c09b90902195023b965468ab9/src-bicep/Network/applicationGateways.bicep#L8
+
+	- To solve error "The remote server returned an error: (403) Forbidden.'. Please check if the storage account is accessible" - https://stackoverflow.com/questions/69766994/cant-create-a-file-share-in-a-storage-account-while-deploying-logic-app-from-th
 
 	- https://learn.microsoft.com/en-us/answers/questions/1006626/application-gateway-backend-end-pool-not-getting-u
 

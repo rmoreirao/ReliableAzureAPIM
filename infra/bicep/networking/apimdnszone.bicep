@@ -1,7 +1,7 @@
 param vnetName                  string
 param vnetRG                    string
 param apimName                  string
-param apimRG                    string
+param apimPrivateIPAddress      string
 
 /*
 Createa a Private DNS ZOne, A Record and Vnet Link for each of the below endpoints
@@ -16,11 +16,6 @@ Direct management endpoint	{APIM Name}.management.azure-api.net
 /*
  Retrieve APIM and Virtual Network
 */
-
-resource apim 'Microsoft.ApiManagement/service@2020-12-01' existing = {
-  name: apimName
-  scope: resourceGroup(apimRG)
-}
 
 resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
   name: vnetName
@@ -79,13 +74,12 @@ resource managementDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
 resource gatewayRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
   name: 'azure-api.net/${apimName}'
   dependsOn: [
-    apim
     gatewayDnsZone
   ]
   properties: {
     aRecords: [
       {
-        ipv4Address: apim.properties.privateIPAddresses[0]
+        ipv4Address: apimPrivateIPAddress
       }
     ]
     ttl: 36000
@@ -95,13 +89,12 @@ resource gatewayRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
 resource portalRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
   name: 'portal.azure-api.net/${apimName}'
   dependsOn: [
-    apim
     portalDnsZone
   ]
   properties: {
     aRecords: [
       {
-        ipv4Address: apim.properties.privateIPAddresses[0]
+        ipv4Address: apimPrivateIPAddress
       }
     ]
     ttl: 36000
@@ -111,13 +104,12 @@ resource portalRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
 resource developerRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
   name: 'developer.azure-api.net/${apimName}'
   dependsOn: [
-    apim
     developerDnsZone
   ]
   properties: {
     aRecords: [
       {
-        ipv4Address: apim.properties.privateIPAddresses[0]
+        ipv4Address: apimPrivateIPAddress
       }
     ]
     ttl: 36000
@@ -127,13 +119,12 @@ resource developerRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
 resource managementRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
   name: 'management.azure-api.net/${apimName}'
   dependsOn: [
-    apim
     managementDnsZone
   ]
   properties: {
     aRecords: [
       {
-        ipv4Address: apim.properties.privateIPAddresses[0]
+        ipv4Address: apimPrivateIPAddress
       }
     ]
     ttl: 36000

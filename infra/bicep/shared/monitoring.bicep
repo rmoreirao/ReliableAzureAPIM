@@ -1,6 +1,4 @@
 targetScope='resourceGroup'
-// Parameters
-@description('Azure location to which the resources are to be deployed')
 param location string
 
 @description('Standardized suffix text to be added to resource names')
@@ -40,3 +38,4 @@ output appInsightsConnectionString string = appInsights.properties.ConnectionStr
 output appInsightsName string = appInsights.name
 output appInsightsId string = appInsights.id
 output appInsightsInstrumentationKey string = appInsights.properties.InstrumentationKey
+output logAnalyticsWorkspaceId string = logAnalyticsWorkspace.id

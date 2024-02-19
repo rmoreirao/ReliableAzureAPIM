@@ -1,0 +1,35 @@
+trigger:
+  - none
+# trigger and path filter are expected be configured in the ADO UI
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - group: openhack
+  - name: ServiceConnectionName
+    value: AzureServiceConnection
+  - name: workDir
+    value: "$(System.DefaultWorkingDirectory)/iac/bicep"
+
+steps:
+  - script: |
+      az bicep build --file main.bicep
+    name: Lint
+    displayName: "Bicep Lint"
+    workingDirectory: $(workDir)
+
+  - task: AzureCLI@2
+    name: Validate
+    displayName: "Bicep Validate"
+    inputs:
+      azureSubscription: $(ServiceConnectionName)
+      scriptType: "bash"
+      scriptLocation: "inlineScript"
+      inlineScript: |
+        az deployment sub validate \
+          --name $(Build.BuildId) \
+          --template-file main.bicep \
+          --location "$(LOCATION)" \
+          --parameters resourcesPrefix=$(RESOURCES_PREFIX)
+      workingDirectory: $(workDir)

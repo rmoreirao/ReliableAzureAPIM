@@ -12,18 +12,21 @@ param workloadName string
   'dr'
 ])
 param deploymentEnvironment string
+param location string
 
-param apimCSVNetNameAddressPrefix string = '10.2.0.0/16'
+param apimVNetNameAddressPrefix string = '10.2.0.0/16'
 
 param bastionAddressPrefix string = '10.2.1.0/24'
 param devOpsNameAddressPrefix string = '10.2.2.0/24'
 param jumpBoxAddressPrefix string = '10.2.3.0/24'
 param appGatewayAddressPrefix string = '10.2.4.0/24'
-param privateEndpointAddressPrefix string = '10.2.5.0/24'
+param functionsInboundAddressPrefix string = '10.2.5.0/24'
 param functionsOutboundAddressPrefix string = '10.2.6.0/24'
 param apimAddressPrefix string = '10.2.7.0/24'
 param firewallAddressPrefix string = '10.2.8.0/24'
-param location string
+param logicAppsOutboundAddressPrefix string = '10.2.10.0/24'
+param logicAppsInboundAddressPrefix string = '10.2.11.0/24'
+param logicAppsStorageInboundAddressPrefix string = '10.2.12.0/24'
 
 var apimVNetName = 'vnet-apim-${workloadName}-${deploymentEnvironment}-${location}'
 
@@ -37,6 +40,9 @@ var apimSubnetName = 'snet-apim-${workloadName}-${deploymentEnvironment}-${locat
 var firewallSubnetName = 'AzureFirewallSubnet'
 var bastionName = 'bastion-${workloadName}-${deploymentEnvironment}-${location}'	
 var bastionIPConfigName = 'bastionipcfg-${workloadName}-${deploymentEnvironment}-${location}'
+var logicAppsInboundPrivateEndpointSubnetName = 'snet-logapps-in-${workloadName}-${deploymentEnvironment}-${location}-001'
+var logicAppsOutboundSubnetName = 'snet-logapps-out-${workloadName}-${deploymentEnvironment}-${location}-001'
+var logicAppsStorageInboundSubnetName = 'snet-logapps-stg-${workloadName}-${deploymentEnvironment}-${location}-001'
 
 var bastionSNNSG = 'nsg-bast-${workloadName}-${deploymentEnvironment}-${location}'
 var devOpsSNNSG = 'nsg-devops-${workloadName}-${deploymentEnvironment}-${location}'
@@ -44,6 +50,9 @@ var jumpBoxSNNSG = 'nsg-jbox-${workloadName}-${deploymentEnvironment}-${location
 var appGatewaySNNSG = 'nsg-apgw-${workloadName}-${deploymentEnvironment}-${location}'
 var functionsInboundPrivateEndpointSNNSG = 'nsg-func-in-${workloadName}-${deploymentEnvironment}-${location}'
 var functionsOutboundSNNSG = 'nsg-func-out-${workloadName}-${deploymentEnvironment}-${location}'
+var logicAppsInboundPrivateEndpointSNNSG = 'nsg-logapps-in-${workloadName}-${deploymentEnvironment}-${location}'
+var logicAppsStorageInboundPrivateEndpointSNNSG = 'nsg-logapps-stg-${workloadName}-${deploymentEnvironment}-${location}'
+var logicAppsOutboundSNNSG = 'nsg-logapps-out-${workloadName}-${deploymentEnvironment}-${location}'
 var apimSNNSG = 'nsg-apim-${workloadName}-${deploymentEnvironment}-${location}'
 
 var publicIPAddressName = 'pip-apimcs-${workloadName}-${deploymentEnvironment}-${location}' // 'publicIp'
@@ -61,14 +70,14 @@ resource udrApimFirewall 'Microsoft.Network/routeTables@2023-06-01' = {
 }
 
 // Resources - VNet - SubNets
-resource vnetApimCs 'Microsoft.Network/virtualNetworks@2021-02-01' = {
+resource vnetApim 'Microsoft.Network/virtualNetworks@2021-02-01' = {
   name: apimVNetName
   location: location
   
   properties: {
     addressSpace: {
       addressPrefixes: [
-        apimCSVNetNameAddressPrefix
+        apimVNetNameAddressPrefix
       ]
     }
     enableVmProtection: false
@@ -114,7 +123,7 @@ resource vnetApimCs 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       {
         name: functionsInboundPrivateEndpointSubnetName
         properties: {
-          addressPrefix: privateEndpointAddressPrefix
+          addressPrefix: functionsInboundAddressPrefix
           networkSecurityGroup: {
             id: functionsInboundPrivateEndpointNSG.id
           }
@@ -137,6 +146,44 @@ resource vnetApimCs 'Microsoft.Network/virtualNetworks@2021-02-01' = {
           networkSecurityGroup: {
             id: functionsOutboundNSG.id
           }
+        }
+      }
+      {
+        name: logicAppsInboundPrivateEndpointSubnetName
+        properties: {
+          addressPrefix: logicAppsInboundAddressPrefix
+          networkSecurityGroup: {
+            id: logicAppsInboundPrivateEndpointNSG.id
+          }
+          privateEndpointNetworkPolicies: 'Disabled'
+        }
+      }
+      {
+        name: logicAppsOutboundSubnetName
+        properties: {
+          addressPrefix: logicAppsOutboundAddressPrefix
+          delegations: [
+            {
+              name: 'delegation'
+              properties: {
+                serviceName: 'Microsoft.Web/serverfarms'
+              }
+            }
+          ]
+          privateEndpointNetworkPolicies: 'Enabled'
+          networkSecurityGroup: {
+            id: logicAppsOutboundNSG.id
+          }
+        }
+      }
+      {
+        name: logicAppsStorageInboundSubnetName
+        properties: {
+          addressPrefix: logicAppsStorageInboundAddressPrefix
+          networkSecurityGroup: {
+            id: logicAppsStorageInboundPrivateEndpointNSG.id
+          }
+          privateEndpointNetworkPolicies: 'Disabled'
         }
       }
       {
@@ -406,6 +453,34 @@ resource functionsOutboundNSG 'Microsoft.Network/networkSecurityGroups@2020-06-0
     ]
   }
 }
+
+resource logicAppsInboundPrivateEndpointNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+  name: logicAppsInboundPrivateEndpointSNNSG
+  location: location
+  properties: {
+    securityRules: [
+    ]
+  }
+}
+
+resource logicAppsStorageInboundPrivateEndpointNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+  name: logicAppsStorageInboundPrivateEndpointSNNSG
+  location: location
+  properties: {
+    securityRules: [
+    ]
+  }
+}
+
+resource logicAppsOutboundNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+  name: logicAppsOutboundSNNSG
+  location: location
+  properties: {
+    securityRules: [
+    ]
+  }
+}
+
 resource apimNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
   name: apimSNNSG
   location: location
@@ -529,7 +604,7 @@ resource bastion 'Microsoft.Network/bastionHosts@2020-07-01' = {
             id: pipBastion.id             
           }
           subnet: {
-            id: '${vnetApimCs.id}/subnets/${bastionSubnetName}' 
+            id: '${vnetApim.id}/subnets/${bastionSubnetName}' 
           }
         }
       }
@@ -538,7 +613,7 @@ resource bastion 'Microsoft.Network/bastionHosts@2020-07-01' = {
 } 
 
 module networking './firewall.bicep' = {
-  name: 'networkingresources'
+  name: 'networkingfirewallresources'
   scope: resourceGroup()
   params: {
     workloadName: workloadName
@@ -549,13 +624,13 @@ module networking './firewall.bicep' = {
     udrApimFirewallName: udrApimFirewallName
   }
   dependsOn: [
-    vnetApimCs
+    vnetApim
   ]
 }
 
 // Output section
-output apimCSVNetName string = apimVNetName
-output apimCSVNetId string = vnetApimCs.id
+output apimVNetName string = apimVNetName
+output apimVNetId string = vnetApim.id
 
 output bastionSubnetName string = bastionSubnetName  
 output devOpsSubnetName string = devOpsSubnetName  
@@ -565,12 +640,15 @@ output functionsInboundPrivateEndpointSubnetName string = functionsInboundPrivat
 output functionsOutboundSubnetName string = functionsOutboundSubnetName  
 output apimSubnetName string = apimSubnetName
 
-output bastionSubnetid string = '${vnetApimCs.id}/subnets/${bastionSubnetName}'  
-output CICDAgentSubnetId string = '${vnetApimCs.id}/subnets/${devOpsSubnetName}'  
-output jumpBoxSubnetid string = '${vnetApimCs.id}/subnets/${jumpBoxSubnetName}'  
-output appGatewaySubnetid string = '${vnetApimCs.id}/subnets/${appGatewaySubnetName}'  
-output privateEndpointSubnetid string = '${vnetApimCs.id}/subnets/${functionsInboundPrivateEndpointSubnetName}'  
-output functionsOutboundSubnetid string = '${vnetApimCs.id}/subnets/${functionsOutboundSubnetName}'  
-output apimSubnetid string = '${vnetApimCs.id}/subnets/${apimSubnetName}'  
+output bastionSubnetid string = '${vnetApim.id}/subnets/${bastionSubnetName}'  
+output CICDAgentSubnetId string = '${vnetApim.id}/subnets/${devOpsSubnetName}'  
+output jumpBoxSubnetid string = '${vnetApim.id}/subnets/${jumpBoxSubnetName}'  
+output appGatewaySubnetid string = '${vnetApim.id}/subnets/${appGatewaySubnetName}'  
+output functionsInboundSubnetid string = '${vnetApim.id}/subnets/${functionsInboundPrivateEndpointSubnetName}'  
+output functionsOutboundSubnetid string = '${vnetApim.id}/subnets/${functionsOutboundSubnetName}'
+output logicAppsInboundSubnetid string = '${vnetApim.id}/subnets/${logicAppsInboundPrivateEndpointSubnetName}'  
+output logicAppsOutboundSubnetid string = '${vnetApim.id}/subnets/${logicAppsOutboundSubnetName}'
+output logicAppsStorageInboundSubnetid string = '${vnetApim.id}/subnets/${logicAppsStorageInboundSubnetName}'  
+output apimSubnetid string = '${vnetApim.id}/subnets/${apimSubnetName}'  
 
 output publicIp string = pip.id

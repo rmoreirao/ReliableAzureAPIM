@@ -36,9 +36,6 @@ param accountName string = ''
 @secure()
 param personalAccessToken string = ''
 
-// @description('The FQDN for the Application Gateway. Example - api.contoso.com.')
-// param appGatewayFqdn string = 'rmoreiraotst3'
-
 @description('Custom domain for APIM - is used to API Management from the internet. This should also match the Domain name of your Certificate. Example - contoso.com.')
 param apimCustomDomainName string = 'rmoreirao-apim-custom-domain.com'
 
@@ -65,7 +62,8 @@ var networkingResourceGroupName = 'rg-networking-${resourceSuffix}'
 var sharedResourceGroupName = 'rg-shared-${resourceSuffix}'
 
 
-var backendResourceGroupName = 'rg-backend-${resourceSuffix}'
+var functionsResourceGroupName = 'rg-backend-func-${resourceSuffix}'
+var logicAppsResourceGroupName = 'rg-logicapps-func-${resourceSuffix}'
 
 var apimResourceGroupName = 'rg-apim-${resourceSuffix}'
 
@@ -88,8 +86,13 @@ resource networkingRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   location: location
 }
 
-resource backendRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: backendResourceGroupName
+resource backendFunctionsRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
+  name: functionsResourceGroupName
+  location: location
+}
+
+resource backendLogicAppsRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
+  name: logicAppsResourceGroupName
   location: location
 }
 
@@ -113,17 +116,32 @@ module networking './networking/networking.bicep' = {
   }
 }
 
-module backend './backend/backend.bicep' = {
-  name: 'backendresources'
-  scope: resourceGroup(backendRG.name)
+// module backendFunctions './backend/backendFunctions.bicep' = {
+//   name: 'backendresourcesfunctions'
+//   scope: resourceGroup(backendFunctionsRG.name)
+//   params: {
+//     workloadName: workloadName
+//     environment: environment
+//     location: location    
+//     vnetName: networking.outputs.apimVNetName
+//     vnetRG: networkingRG.name
+//     functiounsOutboundSubnetId: networking.outputs.functionsOutboundSubnetid
+//     functionsInboundPrivateEndpointSubnetid: networking.outputs.functionsInboundSubnetid
+//   }
+// }
+
+module backendLogicApps './backend/backendLogicApps.bicep' = {
+  name: 'backendresourceslogicapps'
+  scope: resourceGroup(backendLogicAppsRG.name)
   params: {
     workloadName: workloadName
     environment: environment
     location: location    
-    vnetName: networking.outputs.apimCSVNetName
+    vnetName: networking.outputs.apimVNetName
     vnetRG: networkingRG.name
-    functiounsOutboundSubnetId: networking.outputs.functionsOutboundSubnetid
-    functionsInboundPrivateEndpointSubnetid: networking.outputs.privateEndpointSubnetid
+    logicAppsOutboundSubnetId: networking.outputs.logicAppsOutboundSubnetid
+    logicAppsInboundPrivateEndpointSubnetid: networking.outputs.logicAppsInboundSubnetid
+    logicAppsStorageInboundSubnetid: networking.outputs.logicAppsStorageInboundSubnetid
   }
 }
 
@@ -168,17 +186,17 @@ module apimModule 'apim/apim.bicep'  = {
 }
 
 //Creation of private DNS zones
-module dnsZoneModule 'shared/dnszone.bicep'  = {
+module dnsZoneModule 'networking/apimdnszone.bicep'  = {
   name: 'apimDnsZoneDeploy'
-  scope: resourceGroup(sharedRG.name)
+  scope: resourceGroup(networkingRG.name)
   dependsOn: [
     apimModule
   ]
   params: {
-    vnetName: networking.outputs.apimCSVNetName
+    vnetName: networking.outputs.apimVNetName
     vnetRG: networkingRG.name
     apimName: apimName
-    apimRG: apimRG.name
+    apimPrivateIPAddress: apimModule.outputs.apimPrivateIpAddress
   }
 }
 
@@ -206,5 +224,6 @@ module appgwModule 'apim/apimAppgw.bicep' = {
     keyVaultResourceGroupName: sharedRG.name
     appGatewayCertType: appGatewayCertType
     certPassword: certificatePassword
+    logAnalyticsWorkspaceResourceId: shared.outputs.logAnalyticsWorkspaceId
   }
 }

@@ -47,11 +47,12 @@ param resourceSuffix string
 param environment string
 
 // Variables - ensure key vault name does not end with '-'
-var tempKeyVaultName = take('kv-${resourceSuffix}', 24) // Must be between 3-24 alphanumeric characters 
+var tempKeyVaultName = take('kva-${resourceSuffix}', 24) // Must be between 3-24 alphanumeric characters 
 var keyVaultName = endsWith(tempKeyVaultName, '-') ? substring(tempKeyVaultName, 0, length(tempKeyVaultName) - 1) : tempKeyVaultName
+var defaultWindowsOSVersion = '2022-datacenter-azure-edition'
 
 // Resources
-module appInsights './azmon.bicep' = {
+module appInsights './monitoring.bicep' = {
   name: 'azmon'
   scope: resourceGroup(resourceGroupName)
   params: {
@@ -60,7 +61,7 @@ module appInsights './azmon.bicep' = {
   }
 }
 
-module vm_devopswinvm './createvmwindows.bicep' = if (toLower(CICDAgentType)!='none') {
+module vmDevOps './createvmwindows.bicep' = if (toLower(CICDAgentType)!='none') {
   name: 'devopsvm'
   scope: resourceGroup(resourceGroupName)
   params: {
@@ -73,10 +74,11 @@ module vm_devopswinvm './createvmwindows.bicep' = if (toLower(CICDAgentType)!='n
     personalAccessToken: personalAccessToken
     CICDAgentType: CICDAgentType
     deployAgent: true
+    windowsOSVersion: defaultWindowsOSVersion
   }
 }
 
-module vm_jumpboxwinvm './createvmwindows.bicep' = {
+module vmJumpBox './createvmwindows.bicep' = {
   name: 'vm-jumpbox'
   scope: resourceGroup(resourceGroupName)
   params: {
@@ -86,10 +88,11 @@ module vm_jumpboxwinvm './createvmwindows.bicep' = {
     password: vmPassword
     CICDAgentType: CICDAgentType
     vmName: 'jumpbox-${environment}'
+    windowsOSVersion: defaultWindowsOSVersion
   }
 }
 
-resource key_vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
   name: keyVaultName
   location: location
   properties: {
@@ -105,9 +108,10 @@ resource key_vault 'Microsoft.KeyVault/vaults@2019-09-01' = {
 
 // Outputs
 output appInsightsConnectionString string = appInsights.outputs.appInsightsConnectionString
-output CICDAgentVmName string = vm_devopswinvm.name
-output jumpBoxvmName string = vm_jumpboxwinvm.name
+output CICDAgentVmName string = vmDevOps.name
+output jumpBoxvmName string = vmJumpBox.name
 output appInsightsName string=appInsights.outputs.appInsightsName
 output appInsightsId string=appInsights.outputs.appInsightsId
 output appInsightsInstrumentationKey string=appInsights.outputs.appInsightsInstrumentationKey
-output keyVaultName string = key_vault.name
+output keyVaultName string = keyVault.name
+output logAnalyticsWorkspaceId string = appInsights.outputs.logAnalyticsWorkspaceId

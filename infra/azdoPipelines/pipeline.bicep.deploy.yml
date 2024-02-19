@@ -1,0 +1,64 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - iac/bicep
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - group: openhack
+  - name: ServiceConnectionName
+    value: AzureServiceConnection
+  - name: workDir
+    value: "$(System.DefaultWorkingDirectory)/iac/bicep"
+
+stages:
+  - stage: Preview
+    jobs:
+      - job: Preview
+        displayName: Preview Changes
+        steps:
+          - task: AzureCLI@2
+            name: RunWhatIf
+            displayName: What-If
+            inputs:
+              azureSubscription: $(ServiceConnectionName)
+              scriptType: "bash"
+              scriptLocation: "inlineScript"
+              inlineScript: |
+                az deployment sub what-if \
+                  --name $(Build.BuildId) \
+                  --template-file main.bicep \
+                  --location $(LOCATION) \
+                  --parameters resourcesPrefix=$(RESOURCES_PREFIX)
+              workingDirectory: $(workDir)
+
+  - stage: Deploy
+    jobs:
+      - deployment: Deploy
+        displayName: Deployment
+        environment: production
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+                - task: AzureCLI@2
+                  name: Deployment
+                  displayName: Deployment
+                  inputs:
+                    azureSubscription: $(ServiceConnectionName)
+                    scriptType: "bash"
+                    scriptLocation: "inlineScript"
+                    inlineScript: |
+                      az deployment sub create \
+                        --name $(Build.BuildId) \
+                        --template-file main.bicep \
+                        --location $(LOCATION) \
+                        --parameters resourcesPrefix=$(RESOURCES_PREFIX)
+                    workingDirectory: $(workDir)

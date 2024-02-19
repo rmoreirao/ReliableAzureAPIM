@@ -40,6 +40,9 @@ param devPortalCustomHostname string
 @description('The custom hostname of the API Management.')
 param managementBackendEndCustomHostname string
 
+@description('The resource id of the Log Analytics Workspace to be used for diagnostics.')
+param logAnalyticsWorkspaceResourceId string
+
 param keyVaultName string
 param keyVaultResourceGroupName string
 
@@ -48,6 +51,7 @@ param certPassword                  string
 
 var appGatewayPrimaryPip            = 'pip-${appGatewayName}'
 var appGatewayIdentityId            = 'identity-${appGatewayName}'
+var appGatewayDiagnosticSettingsName = 'diag-${appGatewayName}'
 
 resource appGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name:     appGatewayIdentityId
@@ -79,7 +83,7 @@ resource appGatewayPublicIPAddress 'Microsoft.Network/publicIPAddresses@2019-09-
   }
 }
 
-resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-01' = {
+resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
   name: appGatewayName
   location: location
   dependsOn: [
@@ -507,5 +511,26 @@ resource appGatewayName_resource 'Microsoft.Network/applicationGateways@2019-09-
       minCapacity: 2
       maxCapacity: 3
     }
+  }
+}
+
+@description('Upsert the diagnostic settings associated with the application gateway.')
+resource diagnosticSetting 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: appGatewayDiagnosticSettingsName
+  scope: appGateway
+  properties: {
+    workspaceId: logAnalyticsWorkspaceResourceId
+    logs: [
+      {
+        categoryGroup: 'allLogs'
+        enabled: true
+      }
+    ]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+      }
+    ]
   }
 }
