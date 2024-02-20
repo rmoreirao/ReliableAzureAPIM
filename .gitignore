@@ -236,7 +236,6 @@ ClientBin/
 *.dbmdl
 *.dbproj.schemaview
 *.jfm
-*.pfx
 *.publishsettings
 orleans.codegen.cs
 
@@ -396,8 +395,4 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
-rmoreiraotest/testpscript.ps1
-rmoreiraotest/test.bicep
-rmoreiraotest/samplerequestapim.http
-rmoreiraotest/*
-rmoreiraotest/*.*
+rmoreiraotest/
