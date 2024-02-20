@@ -1,17 +1,25 @@
 # ReliableAzureAPIM
 
 
-
 ## For today:
 	
-	Logic Apps - deploy & test the flow - Ongoing
-	Azure DevOps Agent - Ongoing
-	Functions - test the flow (Deploy to the External Subscription)
+	IaC Pipelines
+
+	API Ops: https://azure.github.io/apiops/
+
+	Diagram and Documentation
+		High Level and Low Level
+
+	Both Inbound and Outbound needs to go via Firewall
+
+	Logic Apps - DevOps flow
+	
 	Log Analytics Workspace - to all resources
 	
 	Developer Portal Styling
-	IaC Pipelines
-	
+
+	Functions - test the flow (Deploy to the External Subscription)
+		Low prio - but to explain why this is not there
 	
 ## To Access the APIM locally:
 	C:\Windows\system32\drivers\etc\hosts
@@ -21,10 +29,27 @@
 	20.73.209.255 devportal.rmoreirao.net
 	20.73.209.255 management.rmoreirao.net
 
-## Pending to be Discussed
+## Networking questions:
+	- VNet and Subnets:
+		- Who defines the VNets and Subnets on Prod and Non-Prod subscriptions?
+		- Who defines the IP adress ranges for the different environments?
 
-**Open Points for Sandbox: **
- 
+	- How do we connect Out of the Subscriptions?
+		- Both for On-prem and Internet?
+		- What is the flow for Azure Firewall?
+			- What are the requirements for Azure Firewall?
+
+	- How is the Inbound connection to the Subscription working?
+
+	- There are many NSGs and UDRs for the Subnets
+		- Are there any guidance / limitations on these?
+
+	- There are Many Private DNS Zones and Private Endpoints - are there any requirements for this? [to list]
+
+	- There are some Public IP Addresses: what are the guidelines for Heineken on Public IP Address on Prod and Non-Prod subscriptions?
+		- Ex.: Do we need to protect the inbound flow for Public IP? Do you have guidelines on that?
+
+- Understand the flow for the Azure Firewall?
 - Access to Azure DevOps project
 - Have non-prod Subscription with access to it to test / deploy the solution
 - Depends on Networking team to work with us on setting up the Networking components (ex.: IP Address spaces for Subnets)
@@ -65,7 +90,6 @@
  
 - Are there naming conventions to be used? Work together on the name of the components
 - Decision on which other services to be installed - Azure Functions or Logic Apps – both there to start with
-
 
 # References
 
@@ -115,10 +139,21 @@
 ## Azure Functions
 
 	- https://learn.microsoft.com/en-us/azure/azure-functions/configure-networking-how-to?tabs=portal
-
 	- https://learn.microsoft.com/en-us/azure/azure-functions/functions-create-vnet
-
 	- Sample Function HTTP trigger: https://github.com/Azure-Samples/functions-vnet-tutorial
+
+## Logic Apps
+	- https://www.middleway.eu/deployment-of-standard-logic-app-via-bicep/
+	- https://techcommunity.microsoft.com/t5/azure-integration-services-blog/deploying-logic-app-standard-resource-using-bicep-templates-and/ba-p/3760070
+	- https://learn.microsoft.com/en-us/azure/logic-apps/single-tenant-overview-compare
+	- https://jordanbeandev.com/how-to-deploy-logic-apps-standard-with-bicep-azure-devops/
+	- https://learn.microsoft.com/en-us/azure/logic-apps/set-up-devops-deployment-single-tenant-azure-logic-apps?tabs=github
+
+## DevOps
+	- https://github.com/mattias-fjellstrom/azure-bicep-upload-data-to-storage/blob/main/main.bicep
+	- https://learn.microsoft.com/en-us/azure/virtual-machines/extensions/features-windows
+	- https://learn.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-windows
+	- https://learn.microsoft.com/en-us/azure/virtual-machines/extensions/troubleshoot
 
 # Others
 

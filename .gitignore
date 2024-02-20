@@ -396,4 +396,8 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
-infra/bicep/testpscript.ps1
+rmoreiraotest/testpscript.ps1
+rmoreiraotest/test.bicep
+rmoreiraotest/samplerequestapim.http
+rmoreiraotest/*
+rmoreiraotest/*.*

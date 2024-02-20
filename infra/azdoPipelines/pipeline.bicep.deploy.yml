@@ -4,17 +4,21 @@ trigger:
       - main
   paths:
     include:
-      - iac/bicep
-
+      - infra/bicep
 pool:
   vmImage: ubuntu-latest
 
-variables:
-  - group: openhack
+# parameter service connection name
+parameters:
   - name: ServiceConnectionName
-    value: AzureServiceConnection
+    type: string
+    default: AzureServiceConnection
+
+variables:
   - name: workDir
-    value: "$(System.DefaultWorkingDirectory)/iac/bicep"
+    value: "$(System.DefaultWorkingDirectory)/ReliableAzureAPIM/infra/bicep"
+  - name: gitRepoURL
+    value: "https://github.com/rmoreirao/ReliableAzureAPIM.git"
 
 stages:
   - stage: Preview
@@ -22,11 +26,16 @@ stages:
       - job: Preview
         displayName: Preview Changes
         steps:
+          - checkout: $(gitRepoURL)
+            clean: true
+            
           - task: AzureCLI@2
             name: RunWhatIf
             displayName: What-If
             inputs:
+              # param ServiceConnectionName
               azureSubscription: $(ServiceConnectionName)
+              workingDirectory: $(workDir)
               scriptType: "bash"
               scriptLocation: "inlineScript"
               inlineScript: |
@@ -34,8 +43,8 @@ stages:
                   --name $(Build.BuildId) \
                   --template-file main.bicep \
                   --location $(LOCATION) \
-                  --parameters resourcesPrefix=$(RESOURCES_PREFIX)
-              workingDirectory: $(workDir)
+                  --parameters main.dev.bicepparam devOpsVmPassword=$(DEVOPS_VMPASSWORD) devOpsPersonalAccessToken=$(DEVOPS_PAT)
+              
 
   - stage: Deploy
     jobs:
@@ -46,7 +55,8 @@ stages:
           runOnce:
             deploy:
               steps:
-                - checkout: self
+                - checkout: $(gitRepoURL)
+                  clean: true
 
                 - task: AzureCLI@2
                   name: Deployment
@@ -57,8 +67,8 @@ stages:
                     scriptLocation: "inlineScript"
                     inlineScript: |
                       az deployment sub create \
-                        --name $(Build.BuildId) \
-                        --template-file main.bicep \
-                        --location $(LOCATION) \
-                        --parameters resourcesPrefix=$(RESOURCES_PREFIX)
+                      --name $(Build.BuildId) \
+                      --template-file main.bicep \
+                      --location $(LOCATION) \
+                      --parameters main.dev.bicepparam devOpsVmPassword=$(DEVOPS_VMPASSWORD) devOpsPersonalAccessToken=$(DEVOPS_PAT)
                     workingDirectory: $(workDir)

@@ -18,6 +18,7 @@ param environment string
 @description('Functions Outbound subnet id')
 param functiounsOutboundSubnetId string
 param functionsInboundPrivateEndpointSubnetid string
+param functionsStorageInboundSubnetid string
 param vnetName string
 param vnetRG string
 
@@ -106,7 +107,7 @@ module queueStoragePrivateEndpoint './backendnetworking.bicep' = {
     storageAccountId: storageAccount.id
     vnetName: vnetName
     vnetRG: vnetRG
-    subnetId: functionsInboundPrivateEndpointSubnetid
+    subnetId: functionsStorageInboundSubnetid
   }
 }
 
@@ -120,7 +121,7 @@ module blobStoragePrivateEndpoint './backendnetworking.bicep' = {
     storageAccountId: storageAccount.id
     vnetName: vnetName
     vnetRG: vnetRG
-    subnetId: functionsInboundPrivateEndpointSubnetid
+    subnetId: functionsStorageInboundSubnetid
   }
 }
 
@@ -134,7 +135,7 @@ module tableStoragePrivateEndpoint './backendnetworking.bicep' = {
     storageAccountId: storageAccount.id
     vnetName: vnetName
     vnetRG: vnetRG
-    subnetId: functionsInboundPrivateEndpointSubnetid
+    subnetId: functionsStorageInboundSubnetid
   }
 }
 
@@ -148,7 +149,7 @@ module fileStoragePrivateEndpoint './backendnetworking.bicep' = {
     storageAccountId: storageAccount.id
     vnetName: vnetName
     vnetRG: vnetRG
-    subnetId: functionsInboundPrivateEndpointSubnetid
+    subnetId: functionsStorageInboundSubnetid
   }
 }
 

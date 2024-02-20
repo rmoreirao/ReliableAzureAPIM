@@ -10,7 +10,7 @@ variables:
   - name: ServiceConnectionName
     value: AzureServiceConnection
   - name: workDir
-    value: "$(System.DefaultWorkingDirectory)/iac/bicep"
+    value: "$(System.DefaultWorkingDirectory)/infra/bicep"
 
 steps:
   - script: |

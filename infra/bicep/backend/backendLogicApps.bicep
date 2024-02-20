@@ -23,10 +23,6 @@ param vnetName string
 param vnetRG string
 
 
-
-//
-// Azure Storage
-//
 var storageAccountName  = toLower(take(replace('stblogicapps${workloadName}${environment}${location}', '-',''), 24))
 
 var storageAccountSku  = 'Standard_LRS'
@@ -39,26 +35,19 @@ var privateEndpointStorageaccountBlobName = 'pep-logapps-blob-${workloadName}-${
 var privateEndpointStorageAccountFileName = 'pep-logapps-file-${workloadName}-${environment}-${location}'
 var privateEndpointStorageAccountTableName = 'pep-logapps-table-${workloadName}-${environment}-${location}'
 
+var privateDNSZoneName = 'privatelink.azurewebsites.net'
 
-// Azure Application Service Plan
-//
-// - name
 var appServicePlanLogicAppsName  = 'plan-logapps-${workloadName}-${environment}-${location}'
 
-var appServicePlanLogicAppsSku  = 'WS1' // dev - 'B1'
-var appServicePlanLogicAppsSkuTier  = 'WorkflowStandard' // dev - 'Basic'
+var appServicePlanLogicAppsSku  = 'WS1'
+var appServicePlanLogicAppsSkuTier  = 'WorkflowStandard'
 
 var logicAppsAppServiceName = 'logapps-${workloadName}-${environment}-${location}'
 var logicAppsAppServiceHostname   = 'logapps-${workloadName}-${environment}-${location}.azurewebsites.net'
 var logicAppsAppServiceRepoHostname   = 'logapps-${workloadName}-${environment}-${location}.scm.azurewebsites.net'
-var logicAppsAppServiceHostnameBindingName   = 'bindlogapps${workloadName}${environment}${location}'
 var logicAppsInboundPrivateEndpointName   = 'pep-logapps-${workloadName}-${environment}-${location}'
 
 
-//
-// Definitions
-//
-// Azure Storage Account
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   name: storageAccountName
   location: location
@@ -162,25 +151,14 @@ resource appServicePlanFunction 'Microsoft.Web/serverfarms@2018-02-01' = {
   sku: {
     name:  appServicePlanLogicAppsSku
     tier: appServicePlanLogicAppsSkuTier
-    // size: appServicePlanFunctionSkuSize
-    // family: appServicePlanFunctionSkuFamily
-    // capacity: appServicePlanFunctionSkuCapacity
   }
-  kind: ''
+  kind: 'windows'
   properties: {
-    perSiteScaling: false
-    maximumElasticWorkerCount: 1
-    isSpot: false
-    reserved: true
-    isXenon: false
-    hyperV: false
-    targetWorkerCount: 0
-    targetWorkerSizeId: 0
   }
 }
 
 
-resource logicAppsAppService 'Microsoft.Web/sites@2022-09-01' = {
+resource logicApp 'Microsoft.Web/sites@2022-09-01' = {
   name: logicAppsAppServiceName
   location: location
   kind: 'functionapp,workflowapp'
@@ -277,18 +255,20 @@ resource logicAppsAppService 'Microsoft.Web/sites@2022-09-01' = {
   ]
 }
 
-// // Hostname binding for Azure Function App (Linux, .NET Core 3.1)
-// resource functionsAppServiceHostnameBinding 'Microsoft.Web/sites/hostNameBindings@2018-11-01' = {
-//   parent: logicAppsAppService
-//   name: '${logicAppsAppServiceName}.azurewebsites.net'
+// var logicAppDefinition = json(loadTextContent('logicAppWorkflows/Sample.LogicApp.API.json'))
+
+// resource logicAppWorkflow 'Microsoft.Logic/workflows@2019-05-01' = {
+//   name: logicAppsAppServiceName
+//   location: location
 //   properties: {
-//     siteName: logicAppsAppServiceHostnameBindingName
-//     hostNameType: 'Verified'
+//     state: 'Enabled'
+//     definition: logicAppDefinition.definition
+//     // parameters: logicAppDefinition.parameters
 //   }
 // }
 
 resource planNetworkConfig 'Microsoft.Web/sites/networkConfig@2021-01-01' = {
-  parent: logicAppsAppService
+  parent: logicApp
   name: 'virtualNetwork'
   properties: {
     subnetResourceId: logicAppsOutboundSubnetId
@@ -296,7 +276,6 @@ resource planNetworkConfig 'Microsoft.Web/sites/networkConfig@2021-01-01' = {
   }
 }
 
-var privateDNSZoneName = 'privatelink.azurewebsites.net'
 
 resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
   name: vnetName
@@ -314,7 +293,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-03-01' = {
       {
         name: logicAppsInboundPrivateEndpointName
         properties: {
-          privateLinkServiceId: logicAppsAppService.id
+          privateLinkServiceId: logicApp.id
           groupIds: [
             'sites'
           ]

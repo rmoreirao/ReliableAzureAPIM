@@ -15,11 +15,11 @@ param workloadName string
 param environment string
 
 @description('The user name to be used as the Administrator for all VMs created by this deployment')
-param vmUsername string = 'vmadmin'
+param devOpsVmUsername string
 
 @description('The password for the Administrator user for all VMs created by this deployment')
 @secure()
-param vmPassword string = 'V4ryS4cr3tP@ssw0rd1421!'
+param devOpsVmPassword string = ''
 
 @description('The CI/CD platform to be used, and for which an agent will be configured for the ASE deployment. Specify \'none\' if no agent needed')
 @allowed([
@@ -27,32 +27,36 @@ param vmPassword string = 'V4ryS4cr3tP@ssw0rd1421!'
   'azuredevops'
   'none'
 ])
-param CICDAgentType string = 'none'
+param devOpsCICDAgentType string
 
 @description('The Azure DevOps or GitHub account name to be used when configuring the CI/CD agent, in the format https://dev.azure.com/ORGNAME OR github.com/ORGUSERNAME OR none')
-param accountName string = ''
+param devOpsAccountName string
 
 @description('The Azure DevOps or GitHub personal access token (PAT) used to setup the CI/CD agent')
 @secure()
-param personalAccessToken string = ''
+param devOpsPersonalAccessToken string = ''
 
 @description('Custom domain for APIM - is used to API Management from the internet. This should also match the Domain name of your Certificate. Example - contoso.com.')
-param apimCustomDomainName string = 'rmoreirao-apim-custom-domain.com'
+param apimCustomDomainName string
 
 @description('The password for the TLS certificate for the Application Gateway.  The pfx file needs to be copied to deployment/bicep/gateway/certs/appgw.pfx')
 @secure()
-param certificatePassword string = ''
+param apimAppGatewayCertificatePassword string
 
 @description('Set to selfsigned if self signed certificates should be used for the Application Gateway. Set to custom and copy the pfx file to deployment/bicep/gateway/certs/appgw.pfx if custom certificates are to be used')
-param appGatewayCertType string = 'selfsigned'
+@allowed([
+  'selfsigned'
+  'custom'
+])
+param apimAppGatewayCertType string
 
 @description('The email address of the publisher of the APIM resource.')
 @minLength(1)
-param publisherEmail string = 'rmoreirao@microsoft.com'
+param apimPublisherEmail string
 
 @description('Company name of the publisher of the APIM resource.')
 @minLength(1)
-param publisherName string = 'Carnaval Integration Services'
+param apimPublisherName string
 
 param location string = deployment().location
 
@@ -63,7 +67,7 @@ var sharedResourceGroupName = 'rg-shared-${resourceSuffix}'
 
 
 var functionsResourceGroupName = 'rg-backend-func-${resourceSuffix}'
-var logicAppsResourceGroupName = 'rg-logicapps-func-${resourceSuffix}'
+var logicAppsResourceGroupName = 'rg-backend-logicapps-${resourceSuffix}'
 
 var apimResourceGroupName = 'rg-apim-${resourceSuffix}'
 
@@ -130,20 +134,20 @@ module networking './networking/networking.bicep' = {
 //   }
 // }
 
-module backendLogicApps './backend/backendLogicApps.bicep' = {
-  name: 'backendresourceslogicapps'
-  scope: resourceGroup(backendLogicAppsRG.name)
-  params: {
-    workloadName: workloadName
-    environment: environment
-    location: location    
-    vnetName: networking.outputs.apimVNetName
-    vnetRG: networkingRG.name
-    logicAppsOutboundSubnetId: networking.outputs.logicAppsOutboundSubnetid
-    logicAppsInboundPrivateEndpointSubnetid: networking.outputs.logicAppsInboundSubnetid
-    logicAppsStorageInboundSubnetid: networking.outputs.logicAppsStorageInboundSubnetid
-  }
-}
+// module backendLogicApps './backend/backendLogicApps.bicep' = {
+//   name: 'backendresourceslogicapps'
+//   scope: resourceGroup(backendLogicAppsRG.name)
+//   params: {
+//     workloadName: workloadName
+//     environment: environment
+//     location: location    
+//     vnetName: networking.outputs.apimVNetName
+//     vnetRG: networkingRG.name
+//     logicAppsOutboundSubnetId: networking.outputs.logicAppsOutboundSubnetid
+//     logicAppsInboundPrivateEndpointSubnetid: networking.outputs.logicAppsInboundSubnetid
+//     logicAppsStorageInboundSubnetid: networking.outputs.logicAppsStorageInboundSubnetid
+//   }
+// }
 
 var jumpboxSubnetId= networking.outputs.jumpBoxSubnetid
 var CICDAgentSubnetId = networking.outputs.CICDAgentSubnetId
@@ -155,17 +159,17 @@ module shared './shared/shared.bicep' = {
   name: 'sharedresources'
   scope: resourceGroup(sharedRG.name)
   params: {
-    accountName: accountName
+    accountName: devOpsAccountName
     CICDAgentSubnetId: CICDAgentSubnetId
-    CICDAgentType: CICDAgentType
+    CICDAgentType: devOpsCICDAgentType
     environment: environment
     jumpboxSubnetId: jumpboxSubnetId
     location: location
-    personalAccessToken: personalAccessToken
+    personalAccessToken: devOpsPersonalAccessToken
     resourceGroupName: sharedRG.name
     resourceSuffix: resourceSuffix
-    vmPassword: vmPassword
-    vmUsername: vmUsername
+    vmPassword: devOpsVmPassword
+    vmUsername: devOpsVmUsername
   }
 }
 
@@ -180,12 +184,12 @@ module apimModule 'apim/apim.bicep'  = {
     appInsightsId: shared.outputs.appInsightsId
     appInsightsInstrumentationKey: shared.outputs.appInsightsInstrumentationKey
     publicIpAddressId: networking.outputs.publicIp
-    publisherEmail: publisherEmail
-    publisherName: publisherName
+    publisherEmail: apimPublisherEmail
+    publisherName: apimPublisherName
   }
 }
 
-//Creation of private DNS zones
+//Creation of private DNS zones for APIM
 module dnsZoneModule 'networking/apimdnszone.bicep'  = {
   name: 'apimDnsZoneDeploy'
   scope: resourceGroup(networkingRG.name)
@@ -222,8 +226,8 @@ module appgwModule 'apim/apimAppgw.bicep' = {
     managementBackendEndCustomHostname: managementBackendEndCustomHostname
     keyVaultName: shared.outputs.keyVaultName
     keyVaultResourceGroupName: sharedRG.name
-    appGatewayCertType: appGatewayCertType
-    certPassword: certificatePassword
+    appGatewayCertType: apimAppGatewayCertType
+    certPassword: apimAppGatewayCertificatePassword
     logAnalyticsWorkspaceResourceId: shared.outputs.logAnalyticsWorkspaceId
   }
 }
