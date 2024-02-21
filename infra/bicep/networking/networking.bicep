@@ -376,6 +376,7 @@ resource jumpBoxNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
     ]
   }
 }
+
 resource appGatewayNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
   name: appGatewaySNNSG
   location: location

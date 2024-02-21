@@ -1,3 +1,10 @@
+### Setup ###
+## 1) Create Service Connection "apimDevOpsDev"
+## 2) Create Variable Group "deploy" with the following variables:
+# DEVOPS_VMPASSWORD
+# DEVOPS_PAT
+# LOCATION
+
 trigger:
   branches:
     include:
@@ -8,33 +15,33 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
-# parameter service connection name
-parameters:
-  - name: ServiceConnectionName
-    type: string
-    default: AzureServiceConnection
-
 variables:
+  - group: deploy
   - name: workDir
     value: "$(System.DefaultWorkingDirectory)/ReliableAzureAPIM/infra/bicep"
   - name: gitRepoURL
     value: "https://github.com/rmoreirao/ReliableAzureAPIM.git"
 
 stages:
-  - stage: Preview
+  - stage: Validate_Preview
     jobs:
-      - job: Preview
+      - job: Validate_Preview
         displayName: Preview Changes
         steps:
-          - checkout: $(gitRepoURL)
-            clean: true
-            
+          - script: git clone $(gitRepoURL)
+            displayName: "Clone Repo"
+          
+          - script: |
+              az bicep build --file main.bicep
+            name: Lint
+            displayName: "Bicep Lint"
+            workingDirectory: $(workDir)
+          
           - task: AzureCLI@2
-            name: RunWhatIf
-            displayName: What-If
+            name: Validate
+            displayName: Validate Bicep
             inputs:
-              # param ServiceConnectionName
-              azureSubscription: $(ServiceConnectionName)
+              azureSubscription: 'apimDevOpsDev'
               workingDirectory: $(workDir)
               scriptType: "bash"
               scriptLocation: "inlineScript"
@@ -44,7 +51,21 @@ stages:
                   --template-file main.bicep \
                   --location $(LOCATION) \
                   --parameters main.dev.bicepparam devOpsVmPassword=$(DEVOPS_VMPASSWORD) devOpsPersonalAccessToken=$(DEVOPS_PAT)
-              
+                  
+          - task: AzureCLI@2
+            name: RunWhatIf
+            displayName: What-If
+            inputs:
+              azureSubscription: 'apimDevOpsDev'
+              workingDirectory: $(workDir)
+              scriptType: "bash"
+              scriptLocation: "inlineScript"
+              inlineScript: |
+                az deployment sub what-if \
+                  --name $(Build.BuildId) \
+                  --template-file main.bicep \
+                  --location $(LOCATION) \
+                  --parameters main.dev.bicepparam devOpsVmPassword=$(DEVOPS_VMPASSWORD) devOpsPersonalAccessToken=$(DEVOPS_PAT)
 
   - stage: Deploy
     jobs:
@@ -55,14 +76,15 @@ stages:
           runOnce:
             deploy:
               steps:
-                - checkout: $(gitRepoURL)
-                  clean: true
+                - script: git clone $(gitRepoURL)
+                  displayName: "Clone Repo"
 
                 - task: AzureCLI@2
                   name: Deployment
                   displayName: Deployment
                   inputs:
-                    azureSubscription: $(ServiceConnectionName)
+                    azureSubscription: 'apimDevOpsDev'
+                    workingDirectory: $(workDir)
                     scriptType: "bash"
                     scriptLocation: "inlineScript"
                     inlineScript: |
@@ -71,4 +93,4 @@ stages:
                       --template-file main.bicep \
                       --location $(LOCATION) \
                       --parameters main.dev.bicepparam devOpsVmPassword=$(DEVOPS_VMPASSWORD) devOpsPersonalAccessToken=$(DEVOPS_PAT)
-                    workingDirectory: $(workDir)
+                    

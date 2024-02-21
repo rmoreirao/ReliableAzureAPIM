@@ -2,13 +2,10 @@
 
 
 ## For today:
-	
-	IaC Pipelines
-
-	API Ops: https://azure.github.io/apiops/
-
 	Diagram and Documentation
 		High Level and Low Level
+
+	API Ops: https://azure.github.io/apiops/
 
 	Both Inbound and Outbound needs to go via Firewall
 
