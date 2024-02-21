@@ -43,7 +43,7 @@
 
 	- There are Many Private DNS Zones and Private Endpoints - are there any requirements for this? [to list]
 
-	- There are some Public IP Addresses: what are the guidelines for Heineken on Public IP Address on Prod and Non-Prod subscriptions?
+	- There are some Public IP Addresses: what are the guidelines on Public IP Address on Prod and Non-Prod subscriptions?
 		- Ex.: Do we need to protect the inbound flow for Public IP? Do you have guidelines on that?
 
 - Understand the flow for the Azure Firewall?
