@@ -1,3 +1,17 @@
+
+@description('A short name for the workload being deployed alphanumberic only')
+@maxLength(8)
+param workloadName string
+
+@description('The environment for which the deployment is being executed')
+@allowed([
+  'dev'
+  'uat'
+  'prod'
+  'dr'
+])
+param environment string
+
 param keyVaultName string
 param keyVaultRG string
 param managedIdentity         object      
@@ -64,7 +78,59 @@ module kvRoleAssignmentsSecret 'kvAppGtwRoleAssignment.bicep' = {
   ]
 }
 
-resource appGatewayCertificate 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+var storageAccountName  = toLower(take(replace('stbdscr${workloadName}${environment}${location}', '-',''), 24))
+
+var storageAccountSku  = 'Standard_LRS'
+var storageAccountKind  = 'StorageV2'
+
+var storageAccounts_minTLSVersion = 'TLS1_2'
+
+param deployScriptStorageSubnetId string
+
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
+  name: storageAccountName
+  location: location
+  sku: {
+    name: storageAccountSku
+  }
+  kind: storageAccountKind
+  properties: {
+    minimumTlsVersion: storageAccounts_minTLSVersion
+    allowBlobPublicAccess: true
+    allowSharedKeyAccess: true
+    networkAcls: {
+      bypass: 'AzureServices'
+      virtualNetworkRules: [
+        {
+          id: deployScriptStorageSubnetId
+          action: 'Allow'
+          state: 'Succeeded'
+        }
+      ]
+      ipRules: []
+      defaultAction: 'Deny'
+    }
+    supportsHttpsTrafficOnly: true
+  }
+}
+
+resource storageFileDataPrivilegedContributor 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
+  name: '69566ab7-960f-475b-8e7c-b3118f30c6bd' // Storage File Data Privileged Contributor
+  scope: tenant()
+}
+
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: storageAccount
+
+  name: guid(storageFileDataPrivilegedContributor.id, managedIdentity.properties.principalId, storageAccount.id)
+  properties: {
+    principalId: managedIdentity.properties.principalId
+    roleDefinitionId: storageFileDataPrivilegedContributor.id
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource appGatewayCertificate 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   name: '${secretName}-certificate'
   dependsOn: [
     kvRoleAssignmentsSecret
@@ -72,52 +138,20 @@ resource appGatewayCertificate 'Microsoft.Resources/deploymentScripts@2020-10-01
   location: location 
   kind: 'AzurePowerShell'
   properties: {
+    storageAccountSettings: {
+      storageAccountName: storageAccount.name
+      storageAccountKey: storageAccount.listKeys().keys[0].value
+    }
+    containerSettings: {
+      subnetIds: [
+        {
+          id: deployScriptStorageSubnetId
+        }
+      ]
+    }
     azPowerShellVersion: '6.6'
     arguments: ' -vaultName ${keyVaultName} -certificateName ${secretName} -subjectName ${subjectName} -certPwd ${certPwd} -certDataString ${certData} -certType ${appGatewayCertType}'
-    scriptContent: '''
-      param(
-      [string] [Parameter(Mandatory=$true)] $vaultName,
-      [string] [Parameter(Mandatory=$true)] $certificateName,
-      [string] [Parameter(Mandatory=$true)] $subjectName,
-      [string] [Parameter(Mandatory=$true)] $certPwd,
-      [string] [Parameter(Mandatory=$true)] $certDataString,
-      [string] [Parameter(Mandatory=$true)] $certType
-      )
-
-      $ErrorActionPreference = 'Stop'
-      $DeploymentScriptOutputs = @{}
-      if ($certType -eq 'selfsigned') {
-        $policy = New-AzKeyVaultCertificatePolicy -SubjectName $subjectName -IssuerName Self -ValidityInMonths 12 -Verbose
-        
-        # private key is added as a secret that can be retrieved in the ARM template
-        Add-AzKeyVaultCertificate -VaultName $vaultName -Name $certificateName -CertificatePolicy $policy -Verbose
-        
-        $newCert = Get-AzKeyVaultCertificate -VaultName $vaultName -Name $certificateName
-
-        # it takes a few seconds for KeyVault to finish
-        $tries = 0
-        do {
-          Write-Host 'Waiting for certificate creation completion...'
-          Start-Sleep -Seconds 10
-          $operation = Get-AzKeyVaultCertificateOperation -VaultName $vaultName -Name $certificateName
-          $tries++
-
-          if ($operation.Status -eq 'failed')
-          {
-          throw 'Creating certificate $certificateName in vault $vaultName failed with error $($operation.ErrorMessage)'
-          }
-
-          if ($tries -gt 120)
-          {
-          throw 'Timed out waiting for creation of certificate $certificateName in vault $vaultName'
-          }
-        } while ($operation.Status -ne 'completed')		
-      }
-      else {
-        $ss = Convertto-SecureString -String $certPwd -AsPlainText -Force; 
-        Import-AzKeyVaultCertificate -Name $certificateName -VaultName $vaultName -CertificateString $certDataString -Password $ss
-      }
-      '''
+    scriptContent: loadTextContent('./scripts/appGatewayCertToKv.ps1')
     retentionInterval: 'P1D'
   }
   identity: {
@@ -130,6 +164,7 @@ resource appGatewayCertificate 'Microsoft.Resources/deploymentScripts@2020-10-01
 
 resource keyVaultCertificate 'Microsoft.KeyVault/vaults/secrets@2021-06-01-preview' existing = {
   name: '${keyVaultName}/${secretName}'
+  scope: resourceGroup(keyVaultRG)
 }
 
 output secretUri string = keyVaultCertificate.properties.secretUriWithVersion

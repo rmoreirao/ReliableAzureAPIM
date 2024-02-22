@@ -231,5 +231,8 @@ module appgwModule 'apim/appGateway.bicep' = {
     appGatewayCertType: apimAppGatewayCertType
     certPassword: apimAppGatewayCertificatePassword
     logAnalyticsWorkspaceResourceId: shared.outputs.logAnalyticsWorkspaceId
+    deployScriptStorageSubnetId: networkingModule.outputs.deployScriptStorageSubnetId
+    environment: environment
+    workloadName: workloadName
   }
 }

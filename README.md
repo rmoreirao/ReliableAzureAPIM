@@ -5,15 +5,15 @@
 	
 	Key Vault to be Internal - Ongoing
 
-	Check if Only on Subnet is Ok for all the Private Endpoints
+	Move firewall to Basic
+
+	Kill all the resources and move to the other subscription!
 
 	Start preparing for Multi-Region 
 
-	Move firewall to Basic
-
 	
 
-	Kill all the resources and move to the other subscription!
+	
 
 	Both Inbound and Outbound needs to go via Firewall
 
@@ -25,6 +25,10 @@
 
 	Functions - test the flow (Deploy to the External Subscription)
 		Low prio - but to explain why this is not there
+
+	Low Prio Improvements:
+		Check if Only on Subnet is Ok for all the Private Endpoints
+		Move things to the correct Resource Groups
 	
 ## To Access the APIM locally:
 	C:\Windows\system32\drivers\etc\hosts

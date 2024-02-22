@@ -26,6 +26,7 @@ param vNetSettings = {
   logicAppsOutboundAddressPrefix : '10.2.10.0/24'
   logicAppsInboundAddressPrefix : '10.2.11.0/24'
   logicAppsStorageInboundAddressPrefix : '10.2.12.0/24'
+  deployScriptStorageSubnetAddressPrefix: '10.2.14.0/24'
 }
 
 // param additionalRegions = []

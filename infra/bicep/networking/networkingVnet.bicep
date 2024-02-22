@@ -27,6 +27,7 @@ var functionsOutboundSubnetName = 'snet-func-out-${workloadName}-${deploymentEnv
 var apimSubnetName = 'snet-apim-${workloadName}-${deploymentEnvironment}-${location}-001'
 var firewallSubnetName = 'AzureFirewallSubnet'
 var bastionName = 'bastion-${workloadName}-${deploymentEnvironment}-${location}'	
+var deployScriptStorageSubnetName = 'dscript-${workloadName}-${deploymentEnvironment}-${location}'	
 var bastionIPConfigName = 'bastionipcfg-${workloadName}-${deploymentEnvironment}-${location}'
 var logicAppsInboundPrivateEndpointSubnetName = 'snet-logapps-in-${workloadName}-${deploymentEnvironment}-${location}-001'
 var logicAppsOutboundSubnetName = 'snet-logapps-out-${workloadName}-${deploymentEnvironment}-${location}-001'
@@ -144,6 +145,25 @@ resource vnetApim 'Microsoft.Network/virtualNetworks@2021-02-01' = {
             id: logicAppsInboundPrivateEndpointNSG.id
           }
           privateEndpointNetworkPolicies: 'Disabled'
+        }
+      }
+      {
+        name: deployScriptStorageSubnetName
+        properties: {
+          addressPrefix: vNetSettings.deployScriptStorageSubnetAddressPrefix
+          serviceEndpoints: [
+            {
+              service: 'Microsoft.Storage'
+            }
+          ]
+          delegations: [
+            {
+              name: 'Microsoft.ContainerInstance.containerGroups'
+              properties: {
+                serviceName: 'Microsoft.ContainerInstance/containerGroups'
+              }
+            }
+          ]
         }
       }
       {
@@ -624,7 +644,9 @@ output functionsOutboundSubnetid string = '${vnetApim.id}/subnets/${functionsOut
 output logicAppsInboundSubnetid string = '${vnetApim.id}/subnets/${logicAppsInboundPrivateEndpointSubnetName}'  
 output logicAppsOutboundSubnetid string = '${vnetApim.id}/subnets/${logicAppsOutboundSubnetName}'
 output logicAppsStorageInboundSubnetid string = '${vnetApim.id}/subnets/${logicAppsStorageInboundSubnetName}'  
+output deployScriptStorageSubnetId string = '${vnetApim.id}/subnets/${deployScriptStorageSubnetName}'
 output apimSubnetid string = '${vnetApim.id}/subnets/${apimSubnetName}'  
+output firewallSubnetid string = '${vnetApim.id}/subnets/${firewallSubnetName}'
 output udrApimFirewallName string = udrApimFirewallName
 
 output publicIp string = pip.id

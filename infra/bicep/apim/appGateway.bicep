@@ -1,6 +1,17 @@
-/*
- * Input parameters
-*/
+
+@description('A short name for the workload being deployed alphanumberic only')
+@maxLength(8)
+param workloadName string
+
+@description('The environment for which the deployment is being executed')
+@allowed([
+  'dev'
+  'uat'
+  'prod'
+  'dr'
+])
+param environment string
+
 @description('The name of the Application Gateawy to be created.')
 param appGatewayName                string
 
@@ -45,6 +56,8 @@ param keyVaultResourceGroupName string
 @secure()
 param certPassword                  string  
 
+param deployScriptStorageSubnetId string 
+
 var appGatewayPrimaryPip            = 'pip-${appGatewayName}'
 var appGatewayIdentityId            = 'identity-${appGatewayName}'
 var appGatewayDiagnosticSettingsName = 'diag-${appGatewayName}'
@@ -65,6 +78,9 @@ module apiGatewayCertificate './appGatewayCertificate.bicep' = {
     appGatewayCertType: appGatewayCertType
     certPassword:       certPassword
     keyVaultRG:         keyVaultResourceGroupName
+    deployScriptStorageSubnetId: deployScriptStorageSubnetId
+    environment:       environment
+    workloadName:     workloadName
   }
 }
 

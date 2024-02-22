@@ -22,8 +22,6 @@ var firewallPolicyName = 'fw-policy-${workloadName}-${deploymentEnvironment}-${l
 var firewallName = 'fw-${workloadName}-${deploymentEnvironment}-${location}'
 
 
-// Public IP Address for the Firewall
-
 resource pipFw 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
   name: publicIPAddressNameFirewall
   location: location

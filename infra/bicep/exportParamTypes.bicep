@@ -12,6 +12,7 @@ type vNetSettingsType = {
   logicAppsOutboundAddressPrefix : string?
   logicAppsInboundAddressPrefix : string?
   logicAppsStorageInboundAddressPrefix : string?
+  deployScriptStorageSubnetAddressPrefix : string?
 }
 
 @export()

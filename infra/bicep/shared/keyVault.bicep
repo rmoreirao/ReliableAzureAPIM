@@ -32,85 +32,85 @@ var keyVaultNameInternal = endsWith(tempKeyVaultNameInternal, '-') ? substring(t
 //   }
 // }
 
-resource keyVaultInternal 'Microsoft.KeyVault/vaults@2021-10-01' = {
-  name: keyVaultNameInternal
-  location: location
-  properties: {
-    enableRbacAuthorization: true
-    publicNetworkAccess: 'Disabled'
-    tenantId: tenant().tenantId
-    sku: {
-      family: 'A'
-      name: 'standard'
-    }
-    networkAcls: {
-      bypass: 'AzureServices'
-      defaultAction: 'Deny'
-      ipRules: []
-      virtualNetworkRules: []
-    }
-  }
-}
+// resource keyVaultInternal 'Microsoft.KeyVault/vaults@2021-10-01' = {
+//   name: keyVaultNameInternal
+//   location: location
+//   properties: {
+//     enableRbacAuthorization: true
+//     publicNetworkAccess: 'Disabled'
+//     tenantId: tenant().tenantId
+//     sku: {
+//       family: 'A'
+//       name: 'standard'
+//     }
+//     networkAcls: {
+//       bypass: 'AzureServices'
+//       defaultAction: 'Deny'
+//       ipRules: []
+//       virtualNetworkRules: []
+//     }
+//   }
+// }
 
-var privateDNSZoneName = 'privatelink.vaultcore.azure.net'
+// var privateDNSZoneName = 'privatelink.vaultcore.azure.net'
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
-  name: vnetName
-  scope: resourceGroup(vnetRG)
-}
+// resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
+//   name: vnetName
+//   scope: resourceGroup(vnetRG)
+// }
 
 
-resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2018-09-01' = {
-  name: privateDNSZoneName
-  location: 'global'
-}
+// resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2018-09-01' = {
+//   name: privateDNSZoneName
+//   location: 'global'
+// }
 
-resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
-  parent: keyVaultPrivateDnsZone
-  name: uniqueString(vnet.id)
-  location: 'global'
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: vnet.id
-    }
-  }
-}
+// resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
+//   parent: keyVaultPrivateDnsZone
+//   name: uniqueString(vnet.id)
+//   location: 'global'
+//   properties: {
+//     registrationEnabled: false
+//     virtualNetwork: {
+//       id: vnet.id
+//     }
+//   }
+// }
 
-resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-03-01' = {
-  name: keyvaultPrivateEndpointName
-  location: location
-  properties: {
-    subnet: {
-      id: keyVaultPrivateEndpointSubnetid
-    }
-    privateLinkServiceConnections: [
-      {
-        name: keyvaultPrivateEndpointName
-        properties: {
-          privateLinkServiceId: keyVaultInternal.id
-          groupIds: [
-            'vault'
-          ]
-        }
-      }
-    ]
-  }
-}
+// resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-03-01' = {
+//   name: keyvaultPrivateEndpointName
+//   location: location
+//   properties: {
+//     subnet: {
+//       id: keyVaultPrivateEndpointSubnetid
+//     }
+//     privateLinkServiceConnections: [
+//       {
+//         name: keyvaultPrivateEndpointName
+//         properties: {
+//           privateLinkServiceId: keyVaultInternal.id
+//           groupIds: [
+//             'vault'
+//           ]
+//         }
+//       }
+//     ]
+//   }
+// }
 
-resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-03-01' = {
-  parent: privateEndpoint
-  name: 'default'
-  properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: '${keyVaultNameInternal}-vaultcore-windows-net'
-        properties: {
-          privateDnsZoneId: keyVaultPrivateDnsZone.id
-        }
-      }
-    ]
-  }
-}
+// resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-03-01' = {
+//   parent: privateEndpoint
+//   name: 'default'
+//   properties: {
+//     privateDnsZoneConfigs: [
+//       {
+//         name: '${keyVaultNameInternal}-vaultcore-windows-net'
+//         properties: {
+//           privateDnsZoneId: keyVaultPrivateDnsZone.id
+//         }
+//       }
+//     ]
+//   }
+// }
 
 output keyVaultName string = keyVaultNameInternal
