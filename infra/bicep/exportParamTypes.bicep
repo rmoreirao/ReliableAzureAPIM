@@ -3,6 +3,7 @@ type vNetSettingsType = {
   apimVNetNameAddressPrefix :  string
   apimAddressPrefix : string
   firewallAddressPrefix : string
+  firewallManagementAddressPrefix : string
   appGatewayAddressPrefix : string
   bastionAddressPrefix : string?
   devOpsNameAddressPrefix : string?

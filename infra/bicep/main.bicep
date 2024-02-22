@@ -106,12 +106,12 @@ resource apimRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   location: location
 }
 
-module networkingModule './networking/networkingVnet.bicep' = {
+module networkingModule './networking/mainNetworking.bicep' = {
   name: 'networkingresources'
   scope: resourceGroup(networkingRG.name)
   params: {
     workloadName: workloadName
-    deploymentEnvironment: environment
+    environment: environment
     location: location
     vNetSettings: vNetSettings
   }
@@ -169,28 +169,29 @@ module apimModule 'apim/apim.bicep'  = {
     appInsightsName: shared.outputs.appInsightsName
     appInsightsId: shared.outputs.appInsightsId
     appInsightsInstrumentationKey: shared.outputs.appInsightsInstrumentationKey
-    publicIpAddressId: networkingModule.outputs.publicIp
+    apimPublicIpId: networkingModule.outputs.publicIpId
     publisherEmail: apimPublisherEmail
     publisherName: apimPublisherName
   }
 }
 
 
-module firwall './apim/firewall.bicep' = {
-  name: 'networkingfirewallresources'
-  scope: resourceGroup(networkingRG.name)
-  params: {
-    workloadName: workloadName
-    deploymentEnvironment: environment
-    location: location
-    apimVNetName: networkingModule.outputs.apimVNetName
-    firewallSubnetName: networkingModule.outputs.firewallSubnetName
-    udrApimFirewallName: networkingModule.outputs.udrApimFirewallName
-  }
-  dependsOn: [
-    networkingModule
-  ]
-}
+// module firwall './networking/firewall.bicep' = {
+//   name: 'networkingfirewallresources'
+//   scope: resourceGroup(networkingRG.name)
+//   params: {
+//     workloadName: workloadName
+//     deploymentEnvironment: environment
+//     location: location
+//     apimVNetName: networkingModule.outputs.apimVNetName
+//     firewallSubnetName: networkingModule.outputs.firewallSubnetName
+//     udrApimFirewallName: networkingModule.outputs.udrApimFirewallName
+//     firewallManagementSubnetName: networkingModule.outputs.firewallManagementSubnetName
+//   }
+//   dependsOn: [
+//     networkingModule
+//   ]
+// }
 
 
 //Creation of private DNS zones for APIM
@@ -234,5 +235,6 @@ module appgwModule 'apim/appGateway.bicep' = {
     deployScriptStorageSubnetId: networkingModule.outputs.deployScriptStorageSubnetId
     environment: environment
     workloadName: workloadName
+    appGatewayPublicIPAddressId: networkingModule.outputs.appGatewayPublicIpId
   }
 }

@@ -3,17 +3,11 @@
 
 ## For today:
 	
-	Key Vault to be Internal - Ongoing
-
 	Move firewall to Basic
 
 	Kill all the resources and move to the other subscription!
 
 	Start preparing for Multi-Region 
-
-	
-
-	
 
 	Both Inbound and Outbound needs to go via Firewall
 

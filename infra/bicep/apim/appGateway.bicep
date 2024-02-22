@@ -54,11 +54,12 @@ param keyVaultName string
 param keyVaultResourceGroupName string
 
 @secure()
-param certPassword                  string  
+param certPassword string  
 
 param deployScriptStorageSubnetId string 
+param appGatewayPublicIPAddressId string
 
-var appGatewayPrimaryPip            = 'pip-${appGatewayName}'
+// var appGatewayPrimaryPip            = 'pip-${appGatewayName}'
 var appGatewayIdentityId            = 'identity-${appGatewayName}'
 var appGatewayDiagnosticSettingsName = 'diag-${appGatewayName}'
 
@@ -84,17 +85,17 @@ module apiGatewayCertificate './appGatewayCertificate.bicep' = {
   }
 }
 
-resource appGatewayPublicIPAddress 'Microsoft.Network/publicIPAddresses@2019-09-01' = {
-  name: appGatewayPrimaryPip
-  location: location
-  sku: {
-    name: 'Standard'
-  }
-  properties: {
-    publicIPAddressVersion: 'IPv4'
-    publicIPAllocationMethod: 'Static'
-  }
-}
+// resource appGatewayPublicIPAddress 'Microsoft.Network/publicIPAddresses@2019-09-01' = {
+//   name: appGatewayPrimaryPip
+//   location: location
+//   sku: {
+//     name: 'Standard'
+//   }
+//   properties: {
+//     publicIPAddressVersion: 'IPv4'
+//     publicIPAllocationMethod: 'Static'
+//   }
+// }
 
 resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
   name: appGatewayName
@@ -152,7 +153,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
-            id: appGatewayPublicIPAddress.id
+            id: appGatewayPublicIPAddressId
           }
         }
       }

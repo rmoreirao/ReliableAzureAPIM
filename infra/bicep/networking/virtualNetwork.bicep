@@ -26,6 +26,7 @@ var functionsInboundPrivateEndpointSubnetName = 'snet-func-in-${workloadName}-${
 var functionsOutboundSubnetName = 'snet-func-out-${workloadName}-${deploymentEnvironment}-${location}-001'
 var apimSubnetName = 'snet-apim-${workloadName}-${deploymentEnvironment}-${location}-001'
 var firewallSubnetName = 'AzureFirewallSubnet'
+var firewallManagementSubnetName = 'AzureFirewallManagementSubnet'
 var bastionName = 'bastion-${workloadName}-${deploymentEnvironment}-${location}'	
 var deployScriptStorageSubnetName = 'dscript-${workloadName}-${deploymentEnvironment}-${location}'	
 var bastionIPConfigName = 'bastionipcfg-${workloadName}-${deploymentEnvironment}-${location}'
@@ -44,8 +45,9 @@ var logicAppsStorageInboundPrivateEndpointSNNSG = 'nsg-logapps-stg-${workloadNam
 var logicAppsOutboundSNNSG = 'nsg-logapps-out-${workloadName}-${deploymentEnvironment}-${location}'
 var apimSNNSG = 'nsg-apim-${workloadName}-${deploymentEnvironment}-${location}'
 
-var publicIPAddressName = 'pip-apimcs-${workloadName}-${deploymentEnvironment}-${location}' // 'publicIp'
-var publicIPAddressNameBastion = 'pip-bastion-${workloadName}-${deploymentEnvironment}-${location}'
+var apimPublicIPName = 'pip-apim-${workloadName}-${deploymentEnvironment}-${location}' // 'publicIp'
+var bastionPublicIPName = 'pip-bastion-${workloadName}-${deploymentEnvironment}-${location}'
+var appGatewayPublicIpName = 'pip-appgw-${workloadName}-${deploymentEnvironment}-${location}'
 
 var udrApimFirewallName = 'udr-apim-fw-${workloadName}-${deploymentEnvironment}-${location}'
 
@@ -237,6 +239,12 @@ resource vnetApim 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         name: firewallSubnetName
         properties: {
           addressPrefix: vNetSettings.firewallAddressPrefix
+        }
+      }
+      {
+        name: firewallManagementSubnetName
+        properties: {
+          addressPrefix: vNetSettings.firewallManagementAddressPrefix
         }
       }
     ]
@@ -566,7 +574,7 @@ resource apimNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
 
 // Public IP 
 resource pip 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
-  name: publicIPAddressName
+  name: apimPublicIPName
   location: location
   sku: {
     name: 'Standard'
@@ -577,7 +585,7 @@ resource pip 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
     publicIPAllocationMethod: 'Static'
     publicIPAddressVersion: 'IPv4'
     dnsSettings: {
-      domainNameLabel: toLower('${publicIPAddressName}-${uniqueString(resourceGroup().id)}')
+      domainNameLabel: toLower('${apimPublicIPName}-${uniqueString(resourceGroup().id)}')
     }
   } 
   
@@ -585,7 +593,7 @@ resource pip 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
 
 // Mind the PIP for bastion being Standard SKU, Static IP
 resource pipBastion 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
-  name: publicIPAddressNameBastion
+  name: bastionPublicIPName
   location: location
   sku: {
     name: 'Standard'
@@ -595,10 +603,26 @@ resource pipBastion 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
     publicIPAllocationMethod: 'Static'
     publicIPAddressVersion: 'IPv4'
     dnsSettings: {
-      domainNameLabel: toLower('${publicIPAddressNameBastion}-${uniqueString(resourceGroup().id)}')
+      domainNameLabel: toLower('${bastionPublicIPName}-${uniqueString(resourceGroup().id)}')
     }
   }  
 }
+
+resource appGatewayPublicIP 'Microsoft.Network/publicIPAddresses@2019-09-01' = {
+  name: appGatewayPublicIpName
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    publicIPAddressVersion: 'IPv4'
+    publicIPAllocationMethod: 'Static'
+    dnsSettings: {
+      domainNameLabel: toLower('${appGatewayPublicIpName}-${uniqueString(resourceGroup().id)}')
+    }
+  }
+}
+
 
 resource bastion 'Microsoft.Network/bastionHosts@2020-07-01' = {
   name: bastionName
@@ -631,6 +655,7 @@ output devOpsSubnetName string = devOpsSubnetName
 output jumpBoxSubnetName string = jumpBoxSubnetName  
 output appGatewaySubnetName string = appGatewaySubnetName  
 output firewallSubnetName string = firewallSubnetName
+output firewallManagementSubnetName string = firewallManagementSubnetName
 output functionsInboundPrivateEndpointSubnetName string = functionsInboundPrivateEndpointSubnetName  
 output functionsOutboundSubnetName string = functionsOutboundSubnetName  
 output apimSubnetName string = apimSubnetName
@@ -648,5 +673,6 @@ output deployScriptStorageSubnetId string = '${vnetApim.id}/subnets/${deployScri
 output apimSubnetid string = '${vnetApim.id}/subnets/${apimSubnetName}'  
 output firewallSubnetid string = '${vnetApim.id}/subnets/${firewallSubnetName}'
 output udrApimFirewallName string = udrApimFirewallName
+output appGatewayPublicIpId string = appGatewayPublicIP.id
 
-output publicIp string = pip.id
+output publicIpId string = pip.id

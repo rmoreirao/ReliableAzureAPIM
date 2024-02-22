@@ -15,9 +15,11 @@ param workloadName string
 param deploymentEnvironment string
 param apimVNetName string
 param firewallSubnetName string 
+param firewallManagementSubnetName string 
 param udrApimFirewallName string
 
 var publicIPAddressNameFirewall = 'pip-firewall-${workloadName}-${deploymentEnvironment}-${location}'
+var publicIPAddressNameFirewallManagement = 'pip-firewmgmt-${workloadName}-${deploymentEnvironment}-${location}'
 var firewallPolicyName = 'fw-policy-${workloadName}-${deploymentEnvironment}-${location}'
 var firewallName = 'fw-${workloadName}-${deploymentEnvironment}-${location}'
 
@@ -29,7 +31,6 @@ resource pipFw 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
     name: 'Standard'
     tier: 'Regional'
   }
-  
   properties: {
     publicIPAllocationMethod: 'Static'
     publicIPAddressVersion: 'IPv4'
@@ -40,11 +41,35 @@ resource pipFw 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
   
 }
 
-resource firewallPolicy 'Microsoft.Network/firewallPolicies@2020-04-01' = {
+resource pipFwMgmt 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
+  name: publicIPAddressNameFirewallManagement
+  location: location
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    publicIPAddressVersion: 'IPv4'
+    dnsSettings: {
+      domainNameLabel: toLower('${publicIPAddressNameFirewallManagement}-${uniqueString(resourceGroup().id)}')
+    }
+  } 
+  
+}
+
+resource firewallPolicy 'Microsoft.Network/firewallPolicies@2022-07-01' = {
   name: firewallPolicyName
   location: location
   properties: {
-    threatIntelMode: 'Alert'
+    sku: {
+      tier: 'Basic'
+    }
+    threatIntelMode: 'Off'
+    threatIntelWhitelist: {
+      fqdns: []
+      ipAddresses: []
+    }
   }
 }
 
@@ -95,10 +120,15 @@ resource firewallPolicies 'Microsoft.Network/firewallPolicies/ruleCollectionGrou
 // Azure Firewall
 
 var azureFirewallSubnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', apimVNetName, firewallSubnetName)
+var azureFirewallManagementSubnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', apimVNetName, firewallManagementSubnetName)
+
 resource firewall 'Microsoft.Network/azureFirewalls@2020-04-01' = {
   name: firewallName
   location: location
   properties: {
+    sku: {
+      tier: 'Basic'
+    }
     ipConfigurations: [
       {
         name: 'AzureFirewallIpConfig'
@@ -110,6 +140,15 @@ resource firewall 'Microsoft.Network/azureFirewalls@2020-04-01' = {
         }
       }
     ]
+    managementIpConfiguration: {
+      name: 'ManagementIpConfiguration'
+      properties: {
+        subnet: json('{"id": "${azureFirewallManagementSubnetId}"}')
+        publicIPAddress: {
+          id: pipFwMgmt.id
+        }
+      }
+    }
     firewallPolicy: {
       id: firewallPolicy.id
     }

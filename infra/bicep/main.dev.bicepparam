@@ -1,6 +1,6 @@
 using './main.bicep'
 
-param workloadName = 'rmor5'
+param workloadName = 'rmor6'
 param environment = 'dev'
 param devOpsVmUsername = 'vmadmin'
 param devOpsCICDAgentType = 'none'
@@ -23,6 +23,7 @@ param vNetSettings = {
   functionsOutboundAddressPrefix : '10.2.6.0/24'
   apimAddressPrefix : '10.2.7.0/24'
   firewallAddressPrefix : '10.2.8.0/24'
+  firewallManagementAddressPrefix : '10.2.9.0/24'
   logicAppsOutboundAddressPrefix : '10.2.10.0/24'
   logicAppsInboundAddressPrefix : '10.2.11.0/24'
   logicAppsStorageInboundAddressPrefix : '10.2.12.0/24'

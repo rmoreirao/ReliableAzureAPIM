@@ -7,8 +7,8 @@ param apimName string
 @minLength(1)
 param apimSubnetId string
 
-@description('The public IP address resource id to use for APIM.  In internal VNet mode, this public IP address is used only for management operations.')
-param publicIpAddressId string
+@description('The public IP resource id to use for APIM.  In internal VNet mode, this public IP address is used only for management operations.')
+param apimPublicIpId string
 
 @description('The email address of the publisher of the APIM resource.')
 @minLength(1)
@@ -46,7 +46,7 @@ resource apim 'Microsoft.ApiManagement/service@2021-08-01' = {
     virtualNetworkType: 'Internal'
     publisherEmail: publisherEmail
     publisherName: publisherName
-    publicIpAddressId: publicIpAddressId
+    publicIpAddressId: apimPublicIpId
     virtualNetworkConfiguration: {
       subnetResourceId: apimSubnetId
     }

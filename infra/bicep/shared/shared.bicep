@@ -45,10 +45,6 @@ param resourceSuffix string
   'dr'
 ])
 param environment string
-
-// Variables - ensure key vault name does not end with '-'
-// var tempKeyVaultName = take('kva-${resourceSuffix}', 24) // Must be between 3-24 alphanumeric characters 
-// var keyVaultName = endsWith(tempKeyVaultName, '-') ? substring(tempKeyVaultName, 0, length(tempKeyVaultName) - 1) : tempKeyVaultName
 var defaultWindowsOSVersion = '2022-datacenter-azure-edition'
 
 param vnetName string
@@ -65,36 +61,36 @@ module appInsights './monitoring.bicep' = {
   }
 }
 
-// module vmDevOps './createvmwindows.bicep' = if (toLower(CICDAgentType)!='none') {
-//   name: 'devopsvm'
-//   scope: resourceGroup(resourceGroupName)
-//   params: {
-//     location: location
-//     subnetId: CICDAgentSubnetId
-//     username: vmUsername
-//     password: vmPassword
-//     vmName: '${CICDAgentType}-${environment}'
-//     accountName: accountName
-//     personalAccessToken: personalAccessToken
-//     CICDAgentType: CICDAgentType
-//     deployAgent: true
-//     windowsOSVersion: defaultWindowsOSVersion
-//   }
-// }
+module vmDevOps './createvmwindows.bicep' = if (toLower(CICDAgentType)!='none') {
+  name: 'devopsvm'
+  scope: resourceGroup(resourceGroupName)
+  params: {
+    location: location
+    subnetId: CICDAgentSubnetId
+    username: vmUsername
+    password: vmPassword
+    vmName: '${CICDAgentType}-${environment}'
+    accountName: accountName
+    personalAccessToken: personalAccessToken
+    CICDAgentType: CICDAgentType
+    deployAgent: true
+    windowsOSVersion: defaultWindowsOSVersion
+  }
+}
 
-// module vmJumpBox './createvmwindows.bicep' = {
-//   name: 'vm-jumpbox'
-//   scope: resourceGroup(resourceGroupName)
-//   params: {
-//     location: location
-//     subnetId: jumpboxSubnetId
-//     username: vmUsername
-//     password: vmPassword
-//     CICDAgentType: CICDAgentType
-//     vmName: 'jumpbox-${environment}'
-//     windowsOSVersion: defaultWindowsOSVersion
-//   }
-// }
+module vmJumpBox './createvmwindows.bicep' = {
+  name: 'vm-jumpbox'
+  scope: resourceGroup(resourceGroupName)
+  params: {
+    location: location
+    subnetId: jumpboxSubnetId
+    username: vmUsername
+    password: vmPassword
+    CICDAgentType: CICDAgentType
+    vmName: 'jumpbox-${environment}'
+    windowsOSVersion: defaultWindowsOSVersion
+  }
+}
 
 module keyVault './keyVault.bicep' = {
   name: 'keyvault-resource'
