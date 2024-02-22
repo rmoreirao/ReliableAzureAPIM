@@ -21,6 +21,8 @@ variables:
     value: "$(System.DefaultWorkingDirectory)/ReliableAzureAPIM/infra/bicep"
   - name: gitRepoURL
     value: "https://github.com/rmoreirao/ReliableAzureAPIM.git"
+  - name: bicepParamFilename
+    value: "main.dev.bicepparam"
 
 stages:
   - stage: Validate_Preview
@@ -36,7 +38,16 @@ stages:
             name: Lint
             displayName: "Bicep Lint"
             workingDirectory: $(workDir)
-          
+                    
+          - task: PythonScript@0
+            name: UpdateBicepParam
+            displayName: Update Bicep Parameters
+            inputs:
+              workingDirectory: $(workDir)
+              scriptSource: 'filePath' 
+              scriptPath: 'bicepParamUpdate.py'
+              arguments: '--bicep_param_filename $(bicepParamFilename) --bicep_param_output_filename $(bicepParamFilename) --new_password $(DEVOPS_VMPASSWORD) --new_pat $(DEVOPS_PAT)'
+
           - task: AzureCLI@2
             name: Validate
             displayName: Validate Bicep
@@ -50,7 +61,7 @@ stages:
                   --name $(Build.BuildId) \
                   --template-file main.bicep \
                   --location $(LOCATION) \
-                  --parameters main.dev.bicepparam devOpsVmPassword=$(DEVOPS_VMPASSWORD) devOpsPersonalAccessToken=$(DEVOPS_PAT)
+                  --parameters $(bicepParamFilename)
                   
           - task: AzureCLI@2
             name: RunWhatIf
@@ -65,7 +76,7 @@ stages:
                   --name $(Build.BuildId) \
                   --template-file main.bicep \
                   --location $(LOCATION) \
-                  --parameters main.dev.bicepparam devOpsVmPassword=$(DEVOPS_VMPASSWORD) devOpsPersonalAccessToken=$(DEVOPS_PAT)
+                  --parameters $(bicepParamFilename) 
 
   - stage: Deploy
     jobs:
@@ -92,5 +103,5 @@ stages:
                       --name $(Build.BuildId) \
                       --template-file main.bicep \
                       --location $(LOCATION) \
-                      --parameters main.dev.bicepparam devOpsVmPassword=$(DEVOPS_VMPASSWORD) devOpsPersonalAccessToken=$(DEVOPS_PAT)
+                      --parameters $(bicepParamFilename)
                     

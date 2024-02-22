@@ -2,16 +2,24 @@
 
 
 ## For today:
-	Diagram and Documentation
-		High Level and Low Level
+	
+	Key Vault to be Internal - Ongoing
 
-	API Ops: https://azure.github.io/apiops/
+	Check if Only on Subnet is Ok for all the Private Endpoints
+
+	Start preparing for Multi-Region 
+
+	Move firewall to Basic
+
+	
+
+	Kill all the resources and move to the other subscription!
 
 	Both Inbound and Outbound needs to go via Firewall
 
+	API Ops: https://azure.github.io/apiops/
+
 	Logic Apps - DevOps flow
-	
-	Log Analytics Workspace - to all resources
 	
 	Developer Portal Styling
 
@@ -107,7 +115,7 @@
 	- https://learn.microsoft.com/en-us/answers/questions/1006626/application-gateway-backend-end-pool-not-getting-u
 
 		- stop: az network application-gateway stop -n appgw-rmor2-dev-westeurope-001 -g rg-apim-rmor2-dev-westeurope-001
-		- start: az network application-gateway start -n appgw-rmor2-dev-westeurope-001 -g rg-apim-rmor2-dev-westeurope-001
+		- start: az network application-gateway start -n appgw-rmor4-dev-uksouth-001 -g rg-apim-rmor4-dev-uksouth-001
 
 ## Stv2 
 	- [Azure-Orbital-STAC/deploy/bicep/modules/apim.bicep at 105c1af9c0b5d4749c4c94fa059fdf84b6f2c811 · Azure/Azure-Orbital-STAC (github.com)](https://github.com/Azure/Azure-Orbital-STAC/blob/105c1af9c0b5d4749c4c94fa059fdf84b6f2c811/deploy/bicep/modules/apim.bicep#L67)
@@ -151,6 +159,9 @@
 	- https://learn.microsoft.com/en-us/azure/virtual-machines/extensions/features-windows
 	- https://learn.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-windows
 	- https://learn.microsoft.com/en-us/azure/virtual-machines/extensions/troubleshoot
+
+## Key Vault
+	- https://github.com/Azure/azure-quickstart-templates/blob/master/quickstarts/microsoft.keyvault/key-vault-create-rbac/main.bicep
 
 # Others
 

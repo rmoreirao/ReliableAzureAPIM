@@ -395,4 +395,8 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Solution items
 rmoreiraotest/
+infra/bicep/main.json
+*.tmp.bicepparam

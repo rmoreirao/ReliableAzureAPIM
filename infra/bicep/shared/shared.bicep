@@ -47,9 +47,13 @@ param resourceSuffix string
 param environment string
 
 // Variables - ensure key vault name does not end with '-'
-var tempKeyVaultName = take('kva-${resourceSuffix}', 24) // Must be between 3-24 alphanumeric characters 
-var keyVaultName = endsWith(tempKeyVaultName, '-') ? substring(tempKeyVaultName, 0, length(tempKeyVaultName) - 1) : tempKeyVaultName
+// var tempKeyVaultName = take('kva-${resourceSuffix}', 24) // Must be between 3-24 alphanumeric characters 
+// var keyVaultName = endsWith(tempKeyVaultName, '-') ? substring(tempKeyVaultName, 0, length(tempKeyVaultName) - 1) : tempKeyVaultName
 var defaultWindowsOSVersion = '2022-datacenter-azure-edition'
+
+param vnetName string
+param vnetRG string
+param keyVaultPrivateEndpointSubnetid string
 
 // Resources
 module appInsights './monitoring.bicep' = {
@@ -61,57 +65,54 @@ module appInsights './monitoring.bicep' = {
   }
 }
 
-module vmDevOps './createvmwindows.bicep' = if (toLower(CICDAgentType)!='none') {
-  name: 'devopsvm'
-  scope: resourceGroup(resourceGroupName)
-  params: {
-    location: location
-    subnetId: CICDAgentSubnetId
-    username: vmUsername
-    password: vmPassword
-    vmName: '${CICDAgentType}-${environment}'
-    accountName: accountName
-    personalAccessToken: personalAccessToken
-    CICDAgentType: CICDAgentType
-    deployAgent: true
-    windowsOSVersion: defaultWindowsOSVersion
-  }
-}
+// module vmDevOps './createvmwindows.bicep' = if (toLower(CICDAgentType)!='none') {
+//   name: 'devopsvm'
+//   scope: resourceGroup(resourceGroupName)
+//   params: {
+//     location: location
+//     subnetId: CICDAgentSubnetId
+//     username: vmUsername
+//     password: vmPassword
+//     vmName: '${CICDAgentType}-${environment}'
+//     accountName: accountName
+//     personalAccessToken: personalAccessToken
+//     CICDAgentType: CICDAgentType
+//     deployAgent: true
+//     windowsOSVersion: defaultWindowsOSVersion
+//   }
+// }
 
-module vmJumpBox './createvmwindows.bicep' = {
-  name: 'vm-jumpbox'
-  scope: resourceGroup(resourceGroupName)
-  params: {
-    location: location
-    subnetId: jumpboxSubnetId
-    username: vmUsername
-    password: vmPassword
-    CICDAgentType: CICDAgentType
-    vmName: 'jumpbox-${environment}'
-    windowsOSVersion: defaultWindowsOSVersion
-  }
-}
+// module vmJumpBox './createvmwindows.bicep' = {
+//   name: 'vm-jumpbox'
+//   scope: resourceGroup(resourceGroupName)
+//   params: {
+//     location: location
+//     subnetId: jumpboxSubnetId
+//     username: vmUsername
+//     password: vmPassword
+//     CICDAgentType: CICDAgentType
+//     vmName: 'jumpbox-${environment}'
+//     windowsOSVersion: defaultWindowsOSVersion
+//   }
+// }
 
-resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
-  name: keyVaultName
-  location: location
-  properties: {
-    tenantId: subscription().tenantId
-    sku: {
-      family: 'A'
-      name: 'standard'
-    }    
-    accessPolicies: [
-    ]
+module keyVault './keyVault.bicep' = {
+  name: 'keyvault-resource'
+  scope: resourceGroup(resourceGroupName)
+  
+  params: {
+    keyVaultPrivateEndpointSubnetid: keyVaultPrivateEndpointSubnetid
+    vnetName: vnetName
+    vnetRG: vnetRG
+    location: location
+    resourceSuffix: resourceSuffix
   }
 }
 
 // Outputs
 output appInsightsConnectionString string = appInsights.outputs.appInsightsConnectionString
-output CICDAgentVmName string = vmDevOps.name
-output jumpBoxvmName string = vmJumpBox.name
 output appInsightsName string=appInsights.outputs.appInsightsName
 output appInsightsId string=appInsights.outputs.appInsightsId
 output appInsightsInstrumentationKey string=appInsights.outputs.appInsightsInstrumentationKey
-output keyVaultName string = keyVault.name
+output keyVaultName string = keyVault.outputs.keyVaultName
 output logAnalyticsWorkspaceId string = appInsights.outputs.logAnalyticsWorkspaceId

@@ -7,7 +7,6 @@ param apimPrivateIPAddress      string
 Createa a Private DNS ZOne, A Record and Vnet Link for each of the below endpoints
 
 API Gateway	                {APIM Name}.azure-api.net
-Developer portal	          {APIM Name}.portal.azure-api.net
 The new developer portal	  {APIM Name}.developer.azure-api.net
 Direct management endpoint	{APIM Name}.management.azure-api.net
 
@@ -33,15 +32,6 @@ resource gatewayDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   properties: {}
 }
 
-resource portalDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-  name: 'portal.azure-api.net'
-  location: 'global'
-  dependsOn: [
-    vnet
-  ]
-  properties: {}
-}
-
 resource developerDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: 'developer.azure-api.net'
   location: 'global'
@@ -60,37 +50,9 @@ resource managementDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   properties: {}
 }
 
-// resource scmDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-//   name: 'scm.azure-api.net'
-//   location: 'global'
-//   dependsOn: [
-//     vnet
-//   ]
-//   properties: {}
-// }
-
-// A Records
-
 resource gatewayRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
-  name: 'azure-api.net/${apimName}'
-  dependsOn: [
-    gatewayDnsZone
-  ]
-  properties: {
-    aRecords: [
-      {
-        ipv4Address: apimPrivateIPAddress
-      }
-    ]
-    ttl: 36000
-  }
-}
-
-resource portalRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
-  name: 'portal.azure-api.net/${apimName}'
-  dependsOn: [
-    portalDnsZone
-  ]
+  parent: gatewayDnsZone
+  name: apimName
   properties: {
     aRecords: [
       {
@@ -102,10 +64,8 @@ resource portalRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
 }
 
 resource developerRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
-  name: 'developer.azure-api.net/${apimName}'
-  dependsOn: [
-    developerDnsZone
-  ]
+  parent: developerDnsZone
+  name: apimName
   properties: {
     aRecords: [
       {
@@ -117,10 +77,8 @@ resource developerRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
 }
 
 resource managementRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
-  name: 'management.azure-api.net/${apimName}'
-  dependsOn: [
-    managementDnsZone
-  ]
+  parent: managementDnsZone
+  name: apimName
   properties: {
     aRecords: [
       {
@@ -131,30 +89,10 @@ resource managementRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
   }
 }
 
-// resource scmRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
-//   name: 'scm.azure-api.net/${apimName}'
-//   dependsOn: [
-//     apim
-//     scmDnsZone
-//   ]
-//   properties: {
-//     aRecords: [
-//       {
-//         ipv4Address: apim.properties.privateIPAddresses[0]
-//       }
-//     ]
-//     ttl: 36000
-//   }
-// }
-
-// Vnet Links
-
 resource gatewayVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  name: 'azure-api.net/gateway-vnet-dns-link'
+  parent: gatewayDnsZone
+  name: 'gateway-vnet-dns-link'
   location: 'global'
-  dependsOn: [
-    gatewayDnsZone
-  ]
   properties: {
     registrationEnabled: true
     virtualNetwork: {
@@ -163,26 +101,10 @@ resource gatewayVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@
   }
 }
 
-resource portalVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  name: 'portal.azure-api.net/gateway-vnet-dns-link'
-  location: 'global'
-  dependsOn: [
-    portalDnsZone
-  ]
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: vnet.id
-    }
-  }
-}
-
 resource developerVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  name: 'developer.azure-api.net/gateway-vnet-dns-link'
+  parent: developerDnsZone
+  name: 'gateway-vnet-dns-link'
   location: 'global'
-  dependsOn: [
-    developerDnsZone
-  ]
   properties: {
     registrationEnabled: false
     virtualNetwork: {
@@ -192,11 +114,9 @@ resource developerVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLink
 }
 
 resource managementVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  name: 'management.azure-api.net/gateway-vnet-dns-link'
+  parent: managementDnsZone
+  name: 'gateway-vnet-dns-link'
   location: 'global'
-  dependsOn: [
-    managementDnsZone
-  ]
   properties: {
     registrationEnabled: false
     virtualNetwork: {
@@ -204,17 +124,3 @@ resource managementVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLin
     }
   }
 }
-
-// resource scmVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-//   name: 'scm.azure-api.net/gateway-vnet-dns-link'
-//   location: 'global'
-//   dependsOn: [
-//     scmDnsZone
-//   ]
-//   properties: {
-//     registrationEnabled: false
-//     virtualNetwork: {
-//       id: vnet.id
-//     }
-//   }
-// }

@@ -1,4 +1,4 @@
-
+import {vNetSettingsType} from '../exportParamTypes.bicep'
 
 // Parameters
 @description('A short name for the workload being deployed')
@@ -14,19 +14,7 @@ param workloadName string
 param deploymentEnvironment string
 param location string
 
-param apimVNetNameAddressPrefix string = '10.2.0.0/16'
-
-param bastionAddressPrefix string = '10.2.1.0/24'
-param devOpsNameAddressPrefix string = '10.2.2.0/24'
-param jumpBoxAddressPrefix string = '10.2.3.0/24'
-param appGatewayAddressPrefix string = '10.2.4.0/24'
-param functionsInboundAddressPrefix string = '10.2.5.0/24'
-param functionsOutboundAddressPrefix string = '10.2.6.0/24'
-param apimAddressPrefix string = '10.2.7.0/24'
-param firewallAddressPrefix string = '10.2.8.0/24'
-param logicAppsOutboundAddressPrefix string = '10.2.10.0/24'
-param logicAppsInboundAddressPrefix string = '10.2.11.0/24'
-param logicAppsStorageInboundAddressPrefix string = '10.2.12.0/24'
+param vNetSettings vNetSettingsType
 
 var apimVNetName = 'vnet-apim-${workloadName}-${deploymentEnvironment}-${location}'
 
@@ -77,7 +65,7 @@ resource vnetApim 'Microsoft.Network/virtualNetworks@2021-02-01' = {
   properties: {
     addressSpace: {
       addressPrefixes: [
-        apimVNetNameAddressPrefix
+        vNetSettings.apimVNetNameAddressPrefix
       ]
     }
     enableVmProtection: false
@@ -86,7 +74,7 @@ resource vnetApim 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       {
         name: bastionSubnetName
         properties: {
-          addressPrefix: bastionAddressPrefix
+          addressPrefix: vNetSettings.bastionAddressPrefix
           networkSecurityGroup: {
             id: bastionNSG.id
           }
@@ -95,7 +83,7 @@ resource vnetApim 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       {
         name: devOpsSubnetName
         properties: {
-          addressPrefix: devOpsNameAddressPrefix
+          addressPrefix: vNetSettings.devOpsNameAddressPrefix
           networkSecurityGroup: {
             id: devOpsNSG.id
           }
@@ -104,7 +92,7 @@ resource vnetApim 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       {
         name: jumpBoxSubnetName
         properties: {
-          addressPrefix: jumpBoxAddressPrefix
+          addressPrefix: vNetSettings.jumpBoxAddressPrefix
           networkSecurityGroup: {
             id: jumpBoxNSG.id
           }
@@ -114,7 +102,7 @@ resource vnetApim 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       {
         name: appGatewaySubnetName
         properties: {
-          addressPrefix: appGatewayAddressPrefix
+          addressPrefix: vNetSettings.appGatewayAddressPrefix
           networkSecurityGroup: {
             id: appGatewayNSG.id
           }
@@ -123,7 +111,7 @@ resource vnetApim 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       {
         name: functionsInboundPrivateEndpointSubnetName
         properties: {
-          addressPrefix: functionsInboundAddressPrefix
+          addressPrefix: vNetSettings.functionsInboundAddressPrefix
           networkSecurityGroup: {
             id: functionsInboundPrivateEndpointNSG.id
           }
@@ -133,7 +121,7 @@ resource vnetApim 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       {
         name: functionsOutboundSubnetName
         properties: {
-          addressPrefix: functionsOutboundAddressPrefix
+          addressPrefix: vNetSettings.functionsOutboundAddressPrefix
           delegations: [
             {
               name: 'delegation'
@@ -151,7 +139,7 @@ resource vnetApim 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       {
         name: logicAppsInboundPrivateEndpointSubnetName
         properties: {
-          addressPrefix: logicAppsInboundAddressPrefix
+          addressPrefix: vNetSettings.logicAppsInboundAddressPrefix
           networkSecurityGroup: {
             id: logicAppsInboundPrivateEndpointNSG.id
           }
@@ -161,7 +149,7 @@ resource vnetApim 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       {
         name: logicAppsOutboundSubnetName
         properties: {
-          addressPrefix: logicAppsOutboundAddressPrefix
+          addressPrefix: vNetSettings.logicAppsOutboundAddressPrefix
           delegations: [
             {
               name: 'delegation'
@@ -179,7 +167,7 @@ resource vnetApim 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       {
         name: logicAppsStorageInboundSubnetName
         properties: {
-          addressPrefix: logicAppsStorageInboundAddressPrefix
+          addressPrefix: vNetSettings.logicAppsStorageInboundAddressPrefix
           networkSecurityGroup: {
             id: logicAppsStorageInboundPrivateEndpointNSG.id
           }
@@ -189,7 +177,7 @@ resource vnetApim 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       {
         name: apimSubnetName
         properties: {
-          addressPrefix: apimAddressPrefix
+          addressPrefix: vNetSettings.apimAddressPrefix
           networkSecurityGroup: {
             id: apimNSG.id
           }
@@ -228,7 +216,7 @@ resource vnetApim 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       {
         name: firewallSubnetName
         properties: {
-          addressPrefix: firewallAddressPrefix
+          addressPrefix: vNetSettings.firewallAddressPrefix
         }
       }
     ]
@@ -613,21 +601,6 @@ resource bastion 'Microsoft.Network/bastionHosts@2020-07-01' = {
   }
 } 
 
-module networking './firewall.bicep' = {
-  name: 'networkingfirewallresources'
-  scope: resourceGroup()
-  params: {
-    workloadName: workloadName
-    deploymentEnvironment: deploymentEnvironment
-    location: location
-    apimVNetName: apimVNetName
-    firewallSubnetName: firewallSubnetName
-    udrApimFirewallName: udrApimFirewallName
-  }
-  dependsOn: [
-    vnetApim
-  ]
-}
 
 // Output section
 output apimVNetName string = apimVNetName
@@ -637,6 +610,7 @@ output bastionSubnetName string = bastionSubnetName
 output devOpsSubnetName string = devOpsSubnetName  
 output jumpBoxSubnetName string = jumpBoxSubnetName  
 output appGatewaySubnetName string = appGatewaySubnetName  
+output firewallSubnetName string = firewallSubnetName
 output functionsInboundPrivateEndpointSubnetName string = functionsInboundPrivateEndpointSubnetName  
 output functionsOutboundSubnetName string = functionsOutboundSubnetName  
 output apimSubnetName string = apimSubnetName
@@ -651,5 +625,6 @@ output logicAppsInboundSubnetid string = '${vnetApim.id}/subnets/${logicAppsInbo
 output logicAppsOutboundSubnetid string = '${vnetApim.id}/subnets/${logicAppsOutboundSubnetName}'
 output logicAppsStorageInboundSubnetid string = '${vnetApim.id}/subnets/${logicAppsStorageInboundSubnetName}'  
 output apimSubnetid string = '${vnetApim.id}/subnets/${apimSubnetName}'  
+output udrApimFirewallName string = udrApimFirewallName
 
 output publicIp string = pip.id

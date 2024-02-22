@@ -1,7 +1,3 @@
-//
-// Parameters
-//
-
 @description('A short name for the workload being deployed alphanumberic only')
 @maxLength(8)
 param workloadName string
@@ -18,24 +14,10 @@ param location string
 
 param logicAppsOutboundSubnetId string
 param logicAppsInboundPrivateEndpointSubnetid string
-param logicAppsStorageInboundSubnetid string
-param vnetName string
-param vnetRG string
+param storageAccountName string
+param backendPrivateDnsZoneId string
 
-
-var storageAccountName  = toLower(take(replace('stblogicapps${workloadName}${environment}${location}', '-',''), 24))
-
-var storageAccountSku  = 'Standard_LRS'
-var storageAccountKind  = 'StorageV2'
 var logicAppsContentShareName = 'logic-apps-contents'
-
-var storageAccounts_minTLSVersion = 'TLS1_2'
-var privateEndpointStorageAccountQueueName = 'pep-logapps-queue-${workloadName}-${environment}-${location}'
-var privateEndpointStorageaccountBlobName = 'pep-logapps-blob-${workloadName}-${environment}-${location}'
-var privateEndpointStorageAccountFileName = 'pep-logapps-file-${workloadName}-${environment}-${location}'
-var privateEndpointStorageAccountTableName = 'pep-logapps-table-${workloadName}-${environment}-${location}'
-
-var privateDNSZoneName = 'privatelink.azurewebsites.net'
 
 var appServicePlanLogicAppsName  = 'plan-logapps-${workloadName}-${environment}-${location}'
 
@@ -47,102 +29,10 @@ var logicAppsAppServiceHostname   = 'logapps-${workloadName}-${environment}-${lo
 var logicAppsAppServiceRepoHostname   = 'logapps-${workloadName}-${environment}-${location}.scm.azurewebsites.net'
 var logicAppsInboundPrivateEndpointName   = 'pep-logapps-${workloadName}-${environment}-${location}'
 
-
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
-  name: storageAccountName
-  location: location
-  sku: {
-    name: storageAccountSku
-  }
-  kind: storageAccountKind
-  properties: {
-    minimumTlsVersion: storageAccounts_minTLSVersion
-    allowBlobPublicAccess: true
-    allowSharedKeyAccess: true
-    networkAcls: {
-      bypass: 'AzureServices'
-      virtualNetworkRules: []
-      ipRules: []
-      defaultAction: 'Deny'
-    }
-    supportsHttpsTrafficOnly: true
-    encryption: {
-      services: {
-        file: {
-          keyType: 'Account'
-          enabled: true
-        }
-        blob: {
-          keyType: 'Account'
-          enabled: true
-        }
-      }
-      keySource: 'Microsoft.Storage'
-    }
-    accessTier: 'Hot'
-  }
-}
-
-
-module queueStoragePrivateEndpoint './backendnetworking.bicep' = {
-  name: privateEndpointStorageAccountQueueName
-  params: {
-    location: location
-    privateEndpointName: privateEndpointStorageAccountQueueName
-    storageAcountName: storageAccountName
-    groupId: 'queue'
-    storageAccountId: storageAccount.id
-    vnetName: vnetName
-    vnetRG: vnetRG
-    subnetId: logicAppsStorageInboundSubnetid
-  }
-}
-
-module blobStoragePrivateEndpoint './backendnetworking.bicep' = {
-  name: privateEndpointStorageaccountBlobName
-  params: {
-    location: location
-    privateEndpointName: privateEndpointStorageaccountBlobName
-    storageAcountName: storageAccountName
-    groupId: 'blob'
-    storageAccountId: storageAccount.id
-    vnetName: vnetName
-    vnetRG: vnetRG
-    subnetId: logicAppsStorageInboundSubnetid
-  }
-}
-
-module tableStoragePrivateEndpoint './backendnetworking.bicep' = {
-  name: privateEndpointStorageAccountTableName
-  params: {
-    location: location
-    privateEndpointName: privateEndpointStorageAccountTableName
-    storageAcountName: storageAccountName
-    groupId: 'table'
-    storageAccountId: storageAccount.id
-    vnetName: vnetName
-    vnetRG: vnetRG
-    subnetId: logicAppsStorageInboundSubnetid
-  }
-}
-
-module fileStoragePrivateEndpoint './backendnetworking.bicep' = {
-  name: privateEndpointStorageAccountFileName
-  params: {
-    location: location
-    privateEndpointName: privateEndpointStorageAccountFileName
-    storageAcountName: storageAccountName
-    groupId: 'file'
-    storageAccountId: storageAccount.id
-    vnetName: vnetName
-    vnetRG: vnetRG
-    subnetId: logicAppsStorageInboundSubnetid
-  }
-}
-
 resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2021-04-01' = {
-  name: '${storageAccount.name}/default/${logicAppsContentShareName}'
+  name: '${storageAccountName}/default/${logicAppsContentShareName}'
 }
+
 
 // Azure Application Service Plan
 resource appServicePlanFunction 'Microsoft.Web/serverfarms@2018-02-01' = {
@@ -157,6 +47,10 @@ resource appServicePlanFunction 'Microsoft.Web/serverfarms@2018-02-01' = {
   }
 }
 
+// retrieve existing storage account with name storageAccountName
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' existing = {
+  name: storageAccountName
+}
 
 resource logicApp 'Microsoft.Web/sites@2022-09-01' = {
   name: logicAppsAppServiceName
@@ -248,24 +142,9 @@ resource logicApp 'Microsoft.Web/sites@2022-09-01' = {
   }
 
   dependsOn: [
-    queueStoragePrivateEndpoint
-    blobStoragePrivateEndpoint
-    tableStoragePrivateEndpoint
-    fileStoragePrivateEndpoint
+    fileShare
   ]
 }
-
-// var logicAppDefinition = json(loadTextContent('logicAppWorkflows/Sample.LogicApp.API.json'))
-
-// resource logicAppWorkflow 'Microsoft.Logic/workflows@2019-05-01' = {
-//   name: logicAppsAppServiceName
-//   location: location
-//   properties: {
-//     state: 'Enabled'
-//     definition: logicAppDefinition.definition
-//     // parameters: logicAppDefinition.parameters
-//   }
-// }
 
 resource planNetworkConfig 'Microsoft.Web/sites/networkConfig@2021-01-01' = {
   parent: logicApp
@@ -274,12 +153,6 @@ resource planNetworkConfig 'Microsoft.Web/sites/networkConfig@2021-01-01' = {
     subnetResourceId: logicAppsOutboundSubnetId
     swiftSupported: true
   }
-}
-
-
-resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
-  name: vnetName
-  scope: resourceGroup(vnetRG)
 }
 
 resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-03-01' = {
@@ -303,11 +176,6 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-03-01' = {
   }
 }
 
-resource logicAppInboundPrivateDnsZone 'Microsoft.Network/privateDnsZones@2018-09-01' = {
-  name: privateDNSZoneName
-  location: 'global'
-}
-
 resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-03-01' = {
   parent: privateEndpoint
   name: 'default'
@@ -316,28 +184,14 @@ resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneG
       {
         name: '${logicAppsAppServiceHostname}-azurewebsites-net'
         properties: {
-          privateDnsZoneId: logicAppInboundPrivateDnsZone.id
+          privateDnsZoneId: backendPrivateDnsZoneId
         }
       }
     ]
   }
-  dependsOn: [
-    privateDnsZoneLink
-  ]
+  // dependsOn: [
+  //   privateDnsZoneLink
+  // ]
 }
 
-resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
-  parent: logicAppInboundPrivateDnsZone
-  name: uniqueString(vnet.id)
-  location: 'global'
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: vnet.id
-    }
-  }
-  dependsOn: [
-    privateEndpoint
-  ]
-}
 

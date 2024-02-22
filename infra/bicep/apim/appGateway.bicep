@@ -19,8 +19,6 @@ param appGatewayCertType string
 @description('The backend URL of the Api Gateway.')
 param apiGatewayFQDN string
 
-@description('The backend URL of the API Deprecated Dev Portal.')
-param oldDevPortalFQDN string
 
 @description('The backend URL of the Developer Portal.')
 param devPortalFQDN string
@@ -31,8 +29,6 @@ param managementFQDN string
 @description('The custom hostname of the API Gateway.')
 param apiGatewayCustomHostname string
 
-@description('The custom hostname of the Developer Portal.')
-param oldDevPortalCustomHostname string
 
 @description('The custom hostname of the Developer Portal.')
 param devPortalCustomHostname string
@@ -58,7 +54,7 @@ resource appGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@20
   location: location
 }
 
-module apiGatewayCertificate './modules/certificate.bicep' = {
+module apiGatewayCertificate './appGatewayCertificate.bicep' = {
   name: 'certificate'
   scope: resourceGroup(keyVaultResourceGroupName)
   params: {
@@ -68,6 +64,7 @@ module apiGatewayCertificate './modules/certificate.bicep' = {
     appGatewayFQDN:     appGatewayFQDN
     appGatewayCertType: appGatewayCertType
     certPassword:       certPassword
+    keyVaultRG:         keyVaultResourceGroupName
   }
 }
 
@@ -170,16 +167,6 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
         }
       }
       {
-        name: 'devportalold'
-        properties: {
-          backendAddresses: [
-            {
-              fqdn: oldDevPortalFQDN
-            }
-          ]
-        }
-      }
-      {
         name: 'devportal'
         properties: {
           backendAddresses: [
@@ -223,20 +210,6 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
           requestTimeout: 20
           probe: {
             id: resourceId('Microsoft.Network/applicationGateways/probes', appGatewayName, 'apigatewayprobe')
-          }
-        }
-      }
-      {
-        name: 'httpsdevportalold'
-        properties: {
-          port: 443
-          protocol: 'Https'
-          cookieBasedAffinity: 'Disabled'
-          hostName: oldDevPortalFQDN
-          pickHostNameFromBackendAddress: false
-          requestTimeout: 20
-          probe: {
-            id: resourceId('Microsoft.Network/applicationGateways/probes', appGatewayName, 'devportaloldprobe')
           }
         }
       }
@@ -303,24 +276,6 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
         }
       }
       {
-        name: 'httpsdevportalold'
-        properties: {
-          frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGatewayName, 'appGwPublicFrontendIp')
-          }
-          frontendPort: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGatewayName, 'port_443')
-          }
-          protocol: 'Https'
-          sslCertificate: {
-            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGatewayName, appGatewayFQDN)
-          }
-          hostName: oldDevPortalCustomHostname
-          hostnames: []
-          requireServerNameIndication: true
-        }
-      }
-      {
         name: 'httpsdevportal'
         properties: {
           frontendIPConfiguration: {
@@ -375,21 +330,6 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
         }
       }
       {
-        name: 'devportalold'
-        properties: {
-          ruleType: 'Basic'
-          httpListener: {
-            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGatewayName, 'httpsdevportalold')
-          }
-          backendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGatewayName, 'devportalold')
-          }
-          backendHttpSettings: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGatewayName, 'httpsdevportalold')
-          }
-        }
-      }
-      {
         name: 'devportal'
         properties: {
           ruleType: 'Basic'
@@ -427,24 +367,6 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
           protocol: 'Https'
           host: apiGatewayFQDN
           path: '/status-0123456789abcdef'
-          interval: 30
-          timeout: 30
-          unhealthyThreshold: 3
-          pickHostNameFromBackendHttpSettings: false
-          minServers: 0
-          match: {
-            statusCodes: [
-              '200-399'
-            ]
-          }
-        }
-      }
-      {
-        name: 'devportaloldprobe'
-        properties: {
-          protocol: 'Https'
-          host: oldDevPortalFQDN
-          path: '/signin'
           interval: 30
           timeout: 30
           unhealthyThreshold: 3
