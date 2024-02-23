@@ -10,11 +10,13 @@ param(
       $ErrorActionPreference = 'Stop'
       $DeploymentScriptOutputs = @{}
       if ($certType -eq 'selfsigned') {
+        Write-Host 'Starting creation of certificate $certificateName in vault $vaultName...'
+
         $policy = New-AzKeyVaultCertificatePolicy -SubjectName $subjectName -IssuerName Self -ValidityInMonths 12 -Verbose
         
         # private key is added as a secret that can be retrieved in the ARM template
         Add-AzKeyVaultCertificate -VaultName $vaultName -Name $certificateName -CertificatePolicy $policy -Verbose
-        
+
         $newCert = Get-AzKeyVaultCertificate -VaultName $vaultName -Name $certificateName
 
         # it takes a few seconds for KeyVault to finish
@@ -34,7 +36,9 @@ param(
           {
           throw 'Timed out waiting for creation of certificate $certificateName in vault $vaultName'
           }
-        } while ($operation.Status -ne 'completed')		
+        } while ($operation.Status -ne 'completed')	
+
+        Write-Host 'Certificate creation completed.'
       }
       else {
         $ss = Convertto-SecureString -String $certPwd -AsPlainText -Force; 

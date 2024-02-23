@@ -153,6 +153,8 @@ resource appGatewayCertificate 'Microsoft.Resources/deploymentScripts@2023-08-01
     arguments: ' -vaultName ${keyVaultName} -certificateName ${secretName} -subjectName ${subjectName} -certPwd ${certPwd} -certDataString ${certData} -certType ${appGatewayCertType}'
     scriptContent: loadTextContent('./scripts/appGatewayCertToKv.ps1')
     retentionInterval: 'P1D'
+    // timeout 20 minutes
+    timeout: 'PT20M'
   }
   identity: {
     type: 'UserAssigned'

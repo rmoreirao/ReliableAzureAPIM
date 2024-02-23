@@ -3,9 +3,7 @@
 
 ## For today:
 	
-	Move firewall to Basic
-
-	Kill all the resources and move to the other subscription!
+	Move firewall to Basic - ongoing
 
 	Start preparing for Multi-Region 
 
@@ -97,7 +95,7 @@
 # References
 
 ## APIM Landing Zone
-	- Add the Github Link here!!!
+	- Add the Github Link here for APIM and Integration Services!
 
 ## App Gateway 
 	- [(Use API Management in a virtual network with Azure Application Gateway - Azure API Management | Microsoft Learn)](https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-integrate-internal-vnet-appgateway)
@@ -160,6 +158,14 @@
 
 ## Key Vault
 	- https://github.com/Azure/azure-quickstart-templates/blob/master/quickstarts/microsoft.keyvault/key-vault-create-rbac/main.bicep
+
+## Deployment Script
+	- https://johnlokerse.dev/2022/12/04/run-powershell-scripts-with-azure-bicep/
+
+## Multi Region
+	- https://learn.microsoft.com/en-us/samples/azure/azure-quickstart-templates/api-management-create-with-multiregion/
+	- https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-deploy-multi-region
+	- https://github.com/nehalineogi/azure-cross-solution-network-architectures/blob/main/apim/README-mulitregion.md
 
 # Others
 

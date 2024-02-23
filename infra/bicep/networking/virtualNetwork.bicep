@@ -27,9 +27,9 @@ var functionsOutboundSubnetName = 'snet-func-out-${workloadName}-${deploymentEnv
 var apimSubnetName = 'snet-apim-${workloadName}-${deploymentEnvironment}-${location}-001'
 var firewallSubnetName = 'AzureFirewallSubnet'
 var firewallManagementSubnetName = 'AzureFirewallManagementSubnet'
-var bastionName = 'bastion-${workloadName}-${deploymentEnvironment}-${location}'	
+
 var deployScriptStorageSubnetName = 'dscript-${workloadName}-${deploymentEnvironment}-${location}'	
-var bastionIPConfigName = 'bastionipcfg-${workloadName}-${deploymentEnvironment}-${location}'
+
 var logicAppsInboundPrivateEndpointSubnetName = 'snet-logapps-in-${workloadName}-${deploymentEnvironment}-${location}-001'
 var logicAppsOutboundSubnetName = 'snet-logapps-out-${workloadName}-${deploymentEnvironment}-${location}-001'
 var logicAppsStorageInboundSubnetName = 'snet-logapps-stg-${workloadName}-${deploymentEnvironment}-${location}-001'
@@ -45,10 +45,6 @@ var logicAppsStorageInboundPrivateEndpointSNNSG = 'nsg-logapps-stg-${workloadNam
 var logicAppsOutboundSNNSG = 'nsg-logapps-out-${workloadName}-${deploymentEnvironment}-${location}'
 var apimSNNSG = 'nsg-apim-${workloadName}-${deploymentEnvironment}-${location}'
 
-var apimPublicIPName = 'pip-apim-${workloadName}-${deploymentEnvironment}-${location}' // 'publicIp'
-var bastionPublicIPName = 'pip-bastion-${workloadName}-${deploymentEnvironment}-${location}'
-var appGatewayPublicIpName = 'pip-appgw-${workloadName}-${deploymentEnvironment}-${location}'
-
 var udrApimFirewallName = 'udr-apim-fw-${workloadName}-${deploymentEnvironment}-${location}'
 
 // This is created here, and updated in the firewall module because there's a cycle dependency between the firewall and the VNet
@@ -60,201 +56,11 @@ resource udrApimFirewall 'Microsoft.Network/routeTables@2023-06-01' = {
   }
 }
 
-// Resources - VNet - SubNets
-resource vnetApim 'Microsoft.Network/virtualNetworks@2021-02-01' = {
-  name: apimVNetName
-  location: location
-  
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        vNetSettings.apimVNetNameAddressPrefix
-      ]
-    }
-    enableVmProtection: false
-    enableDdosProtection: false
-    subnets: [
-      {
-        name: bastionSubnetName
-        properties: {
-          addressPrefix: vNetSettings.bastionAddressPrefix
-          networkSecurityGroup: {
-            id: bastionNSG.id
-          }
-        }
-      }
-      {
-        name: devOpsSubnetName
-        properties: {
-          addressPrefix: vNetSettings.devOpsNameAddressPrefix
-          networkSecurityGroup: {
-            id: devOpsNSG.id
-          }
-        }
-      }
-      {
-        name: jumpBoxSubnetName
-        properties: {
-          addressPrefix: vNetSettings.jumpBoxAddressPrefix
-          networkSecurityGroup: {
-            id: jumpBoxNSG.id
-          }
-        }
-        
-      }
-      {
-        name: appGatewaySubnetName
-        properties: {
-          addressPrefix: vNetSettings.appGatewayAddressPrefix
-          networkSecurityGroup: {
-            id: appGatewayNSG.id
-          }
-        }
-      }
-      {
-        name: functionsInboundPrivateEndpointSubnetName
-        properties: {
-          addressPrefix: vNetSettings.functionsInboundAddressPrefix
-          networkSecurityGroup: {
-            id: functionsInboundPrivateEndpointNSG.id
-          }
-          privateEndpointNetworkPolicies: 'Disabled'
-        }
-      }
-      {
-        name: functionsOutboundSubnetName
-        properties: {
-          addressPrefix: vNetSettings.functionsOutboundAddressPrefix
-          delegations: [
-            {
-              name: 'delegation'
-              properties: {
-                serviceName: 'Microsoft.Web/serverfarms'
-              }
-            }
-          ]
-          privateEndpointNetworkPolicies: 'Enabled'
-          networkSecurityGroup: {
-            id: functionsOutboundNSG.id
-          }
-        }
-      }
-      {
-        name: logicAppsInboundPrivateEndpointSubnetName
-        properties: {
-          addressPrefix: vNetSettings.logicAppsInboundAddressPrefix
-          networkSecurityGroup: {
-            id: logicAppsInboundPrivateEndpointNSG.id
-          }
-          privateEndpointNetworkPolicies: 'Disabled'
-        }
-      }
-      {
-        name: deployScriptStorageSubnetName
-        properties: {
-          addressPrefix: vNetSettings.deployScriptStorageSubnetAddressPrefix
-          serviceEndpoints: [
-            {
-              service: 'Microsoft.Storage'
-            }
-          ]
-          delegations: [
-            {
-              name: 'Microsoft.ContainerInstance.containerGroups'
-              properties: {
-                serviceName: 'Microsoft.ContainerInstance/containerGroups'
-              }
-            }
-          ]
-        }
-      }
-      {
-        name: logicAppsOutboundSubnetName
-        properties: {
-          addressPrefix: vNetSettings.logicAppsOutboundAddressPrefix
-          delegations: [
-            {
-              name: 'delegation'
-              properties: {
-                serviceName: 'Microsoft.Web/serverfarms'
-              }
-            }
-          ]
-          privateEndpointNetworkPolicies: 'Enabled'
-          networkSecurityGroup: {
-            id: logicAppsOutboundNSG.id
-          }
-        }
-      }
-      {
-        name: logicAppsStorageInboundSubnetName
-        properties: {
-          addressPrefix: vNetSettings.logicAppsStorageInboundAddressPrefix
-          networkSecurityGroup: {
-            id: logicAppsStorageInboundPrivateEndpointNSG.id
-          }
-          privateEndpointNetworkPolicies: 'Disabled'
-        }
-      }
-      {
-        name: apimSubnetName
-        properties: {
-          addressPrefix: vNetSettings.apimAddressPrefix
-          networkSecurityGroup: {
-            id: apimNSG.id
-          }
-          // this is required due to the Force Tunneling - Azure Firewall
-          serviceEndpoints: [
-            {
-              service: 'Microsoft.Storage'
-              locations: [
-                location
-              ]
-            }
-            {
-              service: 'Microsoft.Sql'
-              locations: [
-                location
-              ]
-            }
-            {
-              service: 'Microsoft.EventHub'
-              locations: [
-                location
-              ]
-            }
-            {
-              service: 'Microsoft.KeyVault'
-              locations: [
-                location
-              ]
-            }
-          ]
-          routeTable: {
-            id: udrApimFirewall.id
-          }
-        }
-      }
-      {
-        name: firewallSubnetName
-        properties: {
-          addressPrefix: vNetSettings.firewallAddressPrefix
-        }
-      }
-      {
-        name: firewallManagementSubnetName
-        properties: {
-          addressPrefix: vNetSettings.firewallManagementAddressPrefix
-        }
-      }
-    ]
-  }
-}
 
-// Network Security Groups (NSG)
+// // Network Security Groups (NSG)
 
 // Bastion NSG must have mininal set of rules below
-resource bastionNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource bastionNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = if (vNetSettings.?bastionAddressPrefix != null) {
   name: bastionSNNSG
   location: location
   properties: {
@@ -376,7 +182,7 @@ resource bastionNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
   }
 }
 
-resource devOpsNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource devOpsNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = if (vNetSettings.?devOpsNameAddressPrefix != null) {
   name: devOpsSNNSG
   location: location
   properties: {
@@ -384,7 +190,7 @@ resource devOpsNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
     ]
   }
 }
-resource jumpBoxNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource jumpBoxNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = if (vNetSettings.?jumpBoxAddressPrefix != null) {
   name: jumpBoxSNNSG
   location: location
   properties: {
@@ -393,7 +199,7 @@ resource jumpBoxNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
   }
 }
 
-resource appGatewayNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource appGatewayNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = if (vNetSettings.?appGatewayAddressPrefix != null) {
   name: appGatewaySNNSG
   location: location
   properties: {
@@ -453,7 +259,7 @@ resource appGatewayNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
     ]
   }
 }
-resource functionsInboundPrivateEndpointNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource functionsInboundPrivateEndpointNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = if (vNetSettings.?functionsInboundAddressPrefix != null) {
   name: functionsInboundPrivateEndpointSNNSG
   location: location
   properties: {
@@ -462,7 +268,7 @@ resource functionsInboundPrivateEndpointNSG 'Microsoft.Network/networkSecurityGr
   }
 }
 
-resource functionsOutboundNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource functionsOutboundNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = if (vNetSettings.?functionsOutboundAddressPrefix != null) {
   name: functionsOutboundSNNSG
   location: location
   properties: {
@@ -471,7 +277,7 @@ resource functionsOutboundNSG 'Microsoft.Network/networkSecurityGroups@2020-06-0
   }
 }
 
-resource logicAppsInboundPrivateEndpointNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource logicAppsInboundPrivateEndpointNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = if (vNetSettings.?logicAppsInboundAddressPrefix != null) {
   name: logicAppsInboundPrivateEndpointSNNSG
   location: location
   properties: {
@@ -480,7 +286,7 @@ resource logicAppsInboundPrivateEndpointNSG 'Microsoft.Network/networkSecurityGr
   }
 }
 
-resource logicAppsStorageInboundPrivateEndpointNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource logicAppsStorageInboundPrivateEndpointNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = if (vNetSettings.?logicAppsStorageInboundAddressPrefix != null) {
   name: logicAppsStorageInboundPrivateEndpointSNNSG
   location: location
   properties: {
@@ -489,7 +295,7 @@ resource logicAppsStorageInboundPrivateEndpointNSG 'Microsoft.Network/networkSec
   }
 }
 
-resource logicAppsOutboundNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource logicAppsOutboundNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = if (vNetSettings.?logicAppsOutboundAddressPrefix != null) {
   name: logicAppsOutboundSNNSG
   location: location
   properties: {
@@ -498,7 +304,7 @@ resource logicAppsOutboundNSG 'Microsoft.Network/networkSecurityGroups@2020-06-0
   }
 }
 
-resource apimNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource apimNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = if (vNetSettings.?apimAddressPrefix != null) {
   name: apimSNNSG
   location: location
   properties: {
@@ -572,78 +378,210 @@ resource apimNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
   }
 }
 
-// Public IP 
-resource pip 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
-  name: apimPublicIPName
-  location: location
-  sku: {
-    name: 'Standard'
-    tier: 'Regional'
-  }
-  
+var bastionSubnet = vNetSettings.?bastionAddressPrefix == null ? [] : [{
+  name: bastionSubnetName
   properties: {
-    publicIPAllocationMethod: 'Static'
-    publicIPAddressVersion: 'IPv4'
-    dnsSettings: {
-      domainNameLabel: toLower('${apimPublicIPName}-${uniqueString(resourceGroup().id)}')
-    }
-  } 
-  
-}
-
-// Mind the PIP for bastion being Standard SKU, Static IP
-resource pipBastion 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
-  name: bastionPublicIPName
-  location: location
-  sku: {
-    name: 'Standard'
-    tier: 'Regional'
-  }
-  properties: {
-    publicIPAllocationMethod: 'Static'
-    publicIPAddressVersion: 'IPv4'
-    dnsSettings: {
-      domainNameLabel: toLower('${bastionPublicIPName}-${uniqueString(resourceGroup().id)}')
-    }
-  }  
-}
-
-resource appGatewayPublicIP 'Microsoft.Network/publicIPAddresses@2019-09-01' = {
-  name: appGatewayPublicIpName
-  location: location
-  sku: {
-    name: 'Standard'
-  }
-  properties: {
-    publicIPAddressVersion: 'IPv4'
-    publicIPAllocationMethod: 'Static'
-    dnsSettings: {
-      domainNameLabel: toLower('${appGatewayPublicIpName}-${uniqueString(resourceGroup().id)}')
+    addressPrefix: vNetSettings.bastionAddressPrefix
+    networkSecurityGroup: {
+      id: bastionNSG.id
     }
   }
-}
+}]
 
-
-resource bastion 'Microsoft.Network/bastionHosts@2020-07-01' = {
-  name: bastionName
-  location: location 
+var devOpsSubnet = vNetSettings.?devOpsNameAddressPrefix == null ? [] : [{
+  name: devOpsSubnetName
   properties: {
-    ipConfigurations: [
+    addressPrefix: vNetSettings.devOpsNameAddressPrefix
+    networkSecurityGroup: {
+      id: devOpsNSG.id
+    }
+  }
+}]
+
+var jumpBoxSubnet = vNetSettings.?jumpBoxAddressPrefix == null ? [] : [{
+  name: jumpBoxSubnetName
+  properties: {
+    addressPrefix: vNetSettings.jumpBoxAddressPrefix
+    networkSecurityGroup: {
+      id: jumpBoxNSG.id
+    }
+  }
+}]
+
+var appGatewaySubnet = vNetSettings.?appGatewayAddressPrefix == null ? [] : [{
+  name: appGatewaySubnetName
+  properties: {
+    addressPrefix: vNetSettings.appGatewayAddressPrefix
+    networkSecurityGroup: {
+      id: appGatewayNSG.id
+    }
+  }
+}]
+
+var functionsInboundPrivateEndpointSubnet = vNetSettings.?functionsInboundAddressPrefix == null ? [] : [{
+  name: functionsInboundPrivateEndpointSubnetName
+  properties: {
+    addressPrefix: vNetSettings.functionsInboundAddressPrefix
+    networkSecurityGroup: {
+      id: functionsInboundPrivateEndpointNSG.id
+    }
+    privateEndpointNetworkPolicies: 'Disabled'
+  }
+}]
+
+var functionsOutboundSubnet = vNetSettings.?functionsOutboundAddressPrefix == null ? [] : [{
+  name: functionsOutboundSubnetName
+  properties: {
+    addressPrefix: vNetSettings.functionsOutboundAddressPrefix
+    delegations: [
       {
-        name: bastionIPConfigName
+        name: 'delegation'
         properties: {
-          privateIPAllocationMethod: 'Dynamic'
-          publicIPAddress: {
-            id: pipBastion.id             
-          }
-          subnet: {
-            id: '${vnetApim.id}/subnets/${bastionSubnetName}' 
-          }
+          serviceName: 'Microsoft.Web/serverfarms'
+        }
+      }
+    ]
+    privateEndpointNetworkPolicies: 'Enabled'
+    networkSecurityGroup: {
+      id: functionsOutboundNSG.id
+    }
+  }
+}]
+
+var logicAppsInboundPrivateEndpointSubnet = vNetSettings.?logicAppsInboundAddressPrefix == null ? [] : [{
+  name: logicAppsInboundPrivateEndpointSubnetName
+  properties: {
+    addressPrefix: vNetSettings.logicAppsInboundAddressPrefix
+    networkSecurityGroup: {
+      id: logicAppsInboundPrivateEndpointNSG.id
+    }
+    privateEndpointNetworkPolicies: 'Disabled'
+  }
+}]
+
+var deployScriptStorageSubnet = vNetSettings.?deployScriptStorageSubnetAddressPrefix == null ? [] : [{
+  name: deployScriptStorageSubnetName
+  properties: {
+    addressPrefix: vNetSettings.deployScriptStorageSubnetAddressPrefix
+    serviceEndpoints: [
+      {
+        service: 'Microsoft.Storage'
+      }
+    ]
+    delegations: [
+      {
+        name: 'Microsoft.ContainerInstance.containerGroups'
+        properties: {
+          serviceName: 'Microsoft.ContainerInstance/containerGroups'
         }
       }
     ]
   }
-} 
+}]
+
+var logicAppsOutboundSubnet = vNetSettings.?logicAppsOutboundAddressPrefix == null ? [] : [{
+  name: logicAppsOutboundSubnetName
+  properties: {
+    addressPrefix: vNetSettings.logicAppsOutboundAddressPrefix
+    delegations: [
+      {
+        name: 'delegation'
+        properties: {
+          serviceName: 'Microsoft.Web/serverfarms'
+        }
+      }
+    ]
+    privateEndpointNetworkPolicies: 'Enabled'
+    networkSecurityGroup: {
+      id: logicAppsOutboundNSG.id
+    }
+  }
+}]
+
+var logicAppsStorageInboundSubnet = vNetSettings.?logicAppsStorageInboundAddressPrefix == null ? [] : [{
+  name: logicAppsStorageInboundSubnetName
+  properties: {
+    addressPrefix: vNetSettings.logicAppsStorageInboundAddressPrefix
+    networkSecurityGroup: {
+      id: logicAppsStorageInboundPrivateEndpointNSG.id
+    }
+    privateEndpointNetworkPolicies: 'Disabled'
+  }
+}]
+
+var apimSubnet = vNetSettings.?apimAddressPrefix == null ? [] : [{
+  name: apimSubnetName
+  properties: {
+    addressPrefix: vNetSettings.apimAddressPrefix
+    networkSecurityGroup: {
+      id: apimNSG.id
+    }
+    // this is required due to the Force Tunneling - Azure Firewall
+    serviceEndpoints: [
+      {
+        service: 'Microsoft.Storage'
+        locations: [
+          location
+        ]
+      }
+      {
+        service: 'Microsoft.Sql'
+        locations: [
+          location
+        ]
+      }
+      {
+        service: 'Microsoft.EventHub'
+        locations: [
+          location
+        ]
+      }
+      {
+        service: 'Microsoft.KeyVault'
+        locations: [
+          location
+        ]
+      }
+    ]
+    routeTable: {
+      id: udrApimFirewall.id
+    }
+  }
+}]
+
+var firewallSubnet = vNetSettings.?firewallAddressPrefix == null ? [] : [{
+  name: firewallSubnetName
+  properties: {
+    addressPrefix: vNetSettings.firewallAddressPrefix
+  }
+}]
+
+var firewallManagementSubnet = vNetSettings.?firewallManagementAddressPrefix == null ? [] : [{
+  name: firewallManagementSubnetName
+  properties: {
+    addressPrefix: vNetSettings.firewallManagementAddressPrefix
+  }
+}]
+
+var allSubnets = concat(bastionSubnet, devOpsSubnet, jumpBoxSubnet, appGatewaySubnet, functionsInboundPrivateEndpointSubnet, functionsOutboundSubnet, logicAppsInboundPrivateEndpointSubnet, deployScriptStorageSubnet, logicAppsOutboundSubnet, logicAppsStorageInboundSubnet, apimSubnet, firewallSubnet, firewallManagementSubnet)
+
+// Resources - VNet - SubNets
+resource vnetApim 'Microsoft.Network/virtualNetworks@2021-02-01' = {
+  name: apimVNetName
+  location: location
+  
+  properties: {
+    addressSpace: {
+      addressPrefixes: [
+        vNetSettings.apimVNetNameAddressPrefix
+      ]
+    }
+    enableVmProtection: false
+    enableDdosProtection: false
+    subnets: allSubnets
+  }
+}
+
 
 
 // Output section
@@ -673,6 +611,4 @@ output deployScriptStorageSubnetId string = '${vnetApim.id}/subnets/${deployScri
 output apimSubnetid string = '${vnetApim.id}/subnets/${apimSubnetName}'  
 output firewallSubnetid string = '${vnetApim.id}/subnets/${firewallSubnetName}'
 output udrApimFirewallName string = udrApimFirewallName
-output appGatewayPublicIpId string = appGatewayPublicIP.id
 
-output publicIpId string = pip.id

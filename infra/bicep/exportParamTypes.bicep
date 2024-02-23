@@ -1,3 +1,4 @@
+
 @export()
 type vNetSettingsType = {
   apimVNetNameAddressPrefix :  string
@@ -17,7 +18,20 @@ type vNetSettingsType = {
 }
 
 @export()
-type additionalRegionsType = {
+type locationSettingType = {
   location: string
-  vNetSettingsAdditionalRegion: vNetSettingsType
+  vNetSettings: vNetSettingsType
+}
+
+@export()
+type networkingOutputType = {
+  apimVNetName: string
+  logicAppsStorageInboundSubnetid:string
+  CICDAgentSubnetId: string
+  jumpBoxSubnetid: string
+  apimSubnetid: string
+  apimPublicIpId: string
+  appGatewaySubnetid: string
+  deployScriptStorageSubnetId: string
+  appGatewayPublicIpId: string
 }

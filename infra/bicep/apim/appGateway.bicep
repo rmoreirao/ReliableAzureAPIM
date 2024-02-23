@@ -11,9 +11,7 @@ param workloadName string
   'dr'
 ])
 param environment string
-
-@description('The name of the Application Gateawy to be created.')
-param appGatewayName                string
+param resourceSuffix string
 
 @description('The FQDN of the Application Gateawy.Must match the TLS Certificate.')
 param appGatewayFQDN                string = 'api.example.com'
@@ -27,25 +25,7 @@ param appGatewaySubnetId            string
 @description('Set to selfsigned if self signed certificates should be used for the Application Gateway. Set to custom and copy the pfx file to deployment/bicep/gateway/certs/appgw.pfx if custom certificates are to be used')
 param appGatewayCertType string
 
-@description('The backend URL of the Api Gateway.')
-param apiGatewayFQDN string
 
-
-@description('The backend URL of the Developer Portal.')
-param devPortalFQDN string
-
-@description('The backend URL of the API Management.')
-param managementFQDN string
-
-@description('The custom hostname of the API Gateway.')
-param apiGatewayCustomHostname string
-
-
-@description('The custom hostname of the Developer Portal.')
-param devPortalCustomHostname string
-
-@description('The custom hostname of the API Management.')
-param managementBackendEndCustomHostname string
 
 @description('The resource id of the Log Analytics Workspace to be used for diagnostics.')
 param logAnalyticsWorkspaceResourceId string
@@ -59,9 +39,20 @@ param certPassword string
 param deployScriptStorageSubnetId string 
 param appGatewayPublicIPAddressId string
 
+param apimName string
+param apimCustomDomainName string
+
+var appGatewayName = 'appgw-${resourceSuffix}'
 // var appGatewayPrimaryPip            = 'pip-${appGatewayName}'
 var appGatewayIdentityId            = 'identity-${appGatewayName}'
 var appGatewayDiagnosticSettingsName = 'diag-${appGatewayName}'
+
+var apimGatewayFQDN = '${apimName}.azure-api.net'
+var apimGatewayCustomHostname = 'api.${apimCustomDomainName}'
+var devPortalFQDN = '${apimName}.developer.azure-api.net'
+var devPortalCustomHostname = 'developer.${apimCustomDomainName}'
+var managementBackendEndFQDN = '${apimName}.management.azure-api.net'
+var managementBackendEndCustomHostname = 'management.${apimCustomDomainName}'
 
 resource appGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name:     appGatewayIdentityId
@@ -178,7 +169,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
         properties: {
           backendAddresses: [
             {
-              fqdn: apiGatewayFQDN
+              fqdn: apimGatewayFQDN
             }
           ]
         }
@@ -198,7 +189,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
         properties: {
           backendAddresses: [
             {
-              fqdn: managementFQDN
+              fqdn: managementBackendEndFQDN
             }
           ]
         }
@@ -222,7 +213,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
           port: 443
           protocol: 'Https'
           cookieBasedAffinity: 'Disabled'
-          hostName: apiGatewayFQDN
+          hostName: apimGatewayFQDN
           pickHostNameFromBackendAddress: false
           requestTimeout: 20
           probe: {
@@ -250,7 +241,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
           port: 443
           protocol: 'Https'
           cookieBasedAffinity: 'Disabled'
-          hostName: managementFQDN
+          hostName: managementBackendEndFQDN
           pickHostNameFromBackendAddress: false
           requestTimeout: 20
           probe: {
@@ -287,7 +278,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
           sslCertificate: {
             id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGatewayName, appGatewayFQDN)
           }
-          hostName: apiGatewayCustomHostname
+          hostName: apimGatewayCustomHostname
           hostnames: []
           requireServerNameIndication: true
         }
@@ -382,7 +373,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
         name: 'apigatewayprobe'
         properties: {
           protocol: 'Https'
-          host: apiGatewayFQDN
+          host: apimGatewayFQDN
           path: '/status-0123456789abcdef'
           interval: 30
           timeout: 30
@@ -418,7 +409,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
         name: 'apimanagementprobe'
         properties: {
           protocol: 'Https'
-          host: managementFQDN
+          host: managementBackendEndFQDN
           path: '/ServiceStatus'
           interval: 30
           timeout: 30

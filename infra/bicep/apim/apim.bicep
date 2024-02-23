@@ -1,7 +1,6 @@
 targetScope='resourceGroup'
+param resourceSuffix string
 
-@description('The name of the API Management resource to be created.')
-param apimName string
 
 @description('The subnet resource id to use for APIM.')
 @minLength(1)
@@ -34,6 +33,8 @@ param appInsightsInstrumentationKey string
 /*
  * Resources
 */
+
+var apimName = 'apim-${resourceSuffix}'
 
 resource apim 'Microsoft.ApiManagement/service@2021-08-01' = {
   name: apimName
@@ -79,3 +80,4 @@ resource applicationinsights 'Microsoft.ApiManagement/service/diagnostics@2019-0
 }
 
 output apimPrivateIpAddress string = apim.properties.privateIPAddresses[0]
+output apimName string = apimName

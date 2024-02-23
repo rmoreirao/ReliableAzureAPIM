@@ -1,6 +1,6 @@
 using './main.bicep'
 
-param workloadName = 'rmor6'
+param workloadName = 'rmor8'
 param environment = 'dev'
 param devOpsVmUsername = 'vmadmin'
 param devOpsCICDAgentType = 'none'
@@ -13,21 +13,54 @@ param apimAppGatewayCertType = 'selfsigned'
 param apimPublisherEmail = 'rmoreirao@microsoft.com'
 param apimPublisherName = 'Carnaval Integration Services'
 param location = 'uksouth'
-param vNetSettings = {
-  apimVNetNameAddressPrefix :'10.2.0.0/16'
-  bastionAddressPrefix : '10.2.1.0/24'
-  devOpsNameAddressPrefix : '10.2.2.0/24'
-  jumpBoxAddressPrefix : '10.2.3.0/24'
-  appGatewayAddressPrefix : '10.2.4.0/24'
-  functionsInboundAddressPrefix : '10.2.5.0/24'
-  functionsOutboundAddressPrefix : '10.2.6.0/24'
-  apimAddressPrefix : '10.2.7.0/24'
-  firewallAddressPrefix : '10.2.8.0/24'
-  firewallManagementAddressPrefix : '10.2.9.0/24'
-  logicAppsOutboundAddressPrefix : '10.2.10.0/24'
-  logicAppsInboundAddressPrefix : '10.2.11.0/24'
-  logicAppsStorageInboundAddressPrefix : '10.2.12.0/24'
-  deployScriptStorageSubnetAddressPrefix: '10.2.14.0/24'
-}
+// param vNetSettings = {
+//   apimVNetNameAddressPrefix :'10.2.0.0/16'
+//   bastionAddressPrefix : '10.2.1.0/24'
+//   devOpsNameAddressPrefix : '10.2.2.0/24'
+//   jumpBoxAddressPrefix : '10.2.3.0/24'
+//   appGatewayAddressPrefix : '10.2.4.0/24'
+//   functionsInboundAddressPrefix : '10.2.5.0/24'
+//   functionsOutboundAddressPrefix : '10.2.6.0/24'
+//   apimAddressPrefix : '10.2.7.0/24'
+//   firewallAddressPrefix : '10.2.8.0/24'
+//   firewallManagementAddressPrefix : '10.2.9.0/24'
+//   logicAppsOutboundAddressPrefix : '10.2.10.0/24'
+//   logicAppsInboundAddressPrefix : '10.2.11.0/24'
+//   logicAppsStorageInboundAddressPrefix : '10.2.12.0/24'
+//   deployScriptStorageSubnetAddressPrefix: '10.2.14.0/24'
+// }
+
+param locationSettings = [
+  {
+    location: 'uksouth'
+    vNetSettings: {
+        apimVNetNameAddressPrefix :'10.2.0.0/16'
+        bastionAddressPrefix : '10.2.1.0/24'
+        devOpsNameAddressPrefix : '10.2.2.0/24'
+        jumpBoxAddressPrefix : '10.2.3.0/24'
+        appGatewayAddressPrefix : '10.2.4.0/24'
+        functionsInboundAddressPrefix : '10.2.5.0/24'
+        functionsOutboundAddressPrefix : '10.2.6.0/24'
+        apimAddressPrefix : '10.2.7.0/24'
+        firewallAddressPrefix : '10.2.8.0/24'
+        firewallManagementAddressPrefix : '10.2.9.0/24'
+        logicAppsOutboundAddressPrefix : '10.2.10.0/24'
+        logicAppsInboundAddressPrefix : '10.2.11.0/24'
+        logicAppsStorageInboundAddressPrefix : '10.2.12.0/24'
+        deployScriptStorageSubnetAddressPrefix: '10.2.14.0/24'
+    }
+  }
+  {
+    location: 'westeurope'
+    vNetSettings: {
+        apimVNetNameAddressPrefix :'10.3.0.0/16'
+        appGatewayAddressPrefix : '10.3.4.0/24'
+        apimAddressPrefix : '10.3.7.0/24'
+        firewallAddressPrefix : '10.3.8.0/24'
+        firewallManagementAddressPrefix : '10.3.9.0/24'
+    }
+  }
+]
+  
 
 // param additionalRegions = []

@@ -1,5 +1,5 @@
 targetScope='subscription'
-import {vNetSettingsType, additionalRegionsType} from 'exportParamTypes.bicep'
+import {vNetSettingsType, locationSettingType, networkingOutputType} from 'exportParamTypes.bicep'
 
 // Parameters
 @description('A short name for the workload being deployed alphanumberic only')
@@ -61,28 +61,18 @@ param apimPublisherName string
 
 param location string = deployment().location
 
-param vNetSettings vNetSettingsType
+// param vNetSettings vNetSettingsType
+
+param locationSettings locationSettingType[]
+
 // param additionalRegions additionalRegionsType[]
 
 // Variables
 var resourceSuffix = '${workloadName}-${environment}-${location}-001'
-var networkingResourceGroupName = 'rg-networking-${resourceSuffix}'
-var sharedResourceGroupName = 'rg-shared-${resourceSuffix}'
-
-var backendResourceGroupName = 'rg-backend-${resourceSuffix}'
-
+var networkingResourceGroupName = 'rg-apim-networking-${resourceSuffix}'
+var sharedResourceGroupName = 'rg-apim-shared-${resourceSuffix}'
+var backendResourceGroupName = 'rg-apim-backend-${resourceSuffix}'
 var apimResourceGroupName = 'rg-apim-${resourceSuffix}'
-
-// Resource Names
-var apimName = 'apim-${resourceSuffix}'
-var appGatewayName = 'appgw-${resourceSuffix}'
-
-var apimGatewayFQDN = '${apimName}.azure-api.net'
-var apimGatewayCustomHostname = 'api.${apimCustomDomainName}'
-var devPortalFQDN = '${apimName}.developer.azure-api.net'
-var devPortalCustomHostname = 'developer.${apimCustomDomainName}'
-var managementBackendEndFQDN = '${apimName}.management.azure-api.net'
-var managementBackendEndCustomHostname = 'management.${apimCustomDomainName}'
 
 
 resource networkingRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
@@ -106,16 +96,19 @@ resource apimRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   location: location
 }
 
-module networkingModule './networking/mainNetworking.bicep' = {
+module networkingModule './networking/mainNetworkingLocation.bicep' = {
   name: 'networkingresources'
   scope: resourceGroup(networkingRG.name)
   params: {
     workloadName: workloadName
     environment: environment
-    location: location
-    vNetSettings: vNetSettings
+
+    locationSettings: locationSettings
+    // additionalRegions: []
   }
 }
+
+output outputTest object = networkingModule.outputs
 
 // module backend './backend/mainBackend.bicep' = {
 //   name: 'backendresources'
@@ -135,7 +128,7 @@ module networkingModule './networking/mainNetworking.bicep' = {
 //   }
 // }
 
-module shared './shared/shared.bicep' = {
+module shared './shared/mainShared.bicep' = {
   dependsOn: [
     networkingModule
   ]
@@ -143,19 +136,19 @@ module shared './shared/shared.bicep' = {
   scope: resourceGroup(sharedRG.name)
   params: {
     accountName: devOpsAccountName
-    CICDAgentSubnetId: networkingModule.outputs.CICDAgentSubnetId
+    CICDAgentSubnetId: networkingModule.outputs.outputArray[0].?CICDAgentSubnetId
     CICDAgentType: devOpsCICDAgentType
     environment: environment
-    jumpboxSubnetId: networkingModule.outputs.jumpBoxSubnetid
+    jumpboxSubnetId: networkingModule.outputs.outputArray[0].?jumpBoxSubnetid
     location: location
     personalAccessToken: devOpsPersonalAccessToken
     resourceGroupName: sharedRG.name
     resourceSuffix: resourceSuffix
     vmPassword: devOpsVmPassword
     vmUsername: devOpsVmUsername
-    vnetName: networkingModule.outputs.apimVNetName
+    vnetName: networkingModule.outputs.outputArray[0].apimVNetName
     vnetRG: networkingRG.name
-    keyVaultPrivateEndpointSubnetid: networkingModule.outputs.logicAppsStorageInboundSubnetid
+    keyVaultPrivateEndpointSubnetid: networkingModule.outputs.outputArray[0].logicAppsStorageInboundSubnetid
   }
 }
 
@@ -163,35 +156,18 @@ module apimModule 'apim/apim.bicep'  = {
   name: 'apimDeploy'
   scope: resourceGroup(apimRG.name)
   params: {
-    apimName: apimName
-    apimSubnetId: networkingModule.outputs.apimSubnetid
+    resourceSuffix: resourceSuffix
+    apimSubnetId: networkingModule.outputs.outputArray[0].apimSubnetid
     location: location
     appInsightsName: shared.outputs.appInsightsName
     appInsightsId: shared.outputs.appInsightsId
     appInsightsInstrumentationKey: shared.outputs.appInsightsInstrumentationKey
-    apimPublicIpId: networkingModule.outputs.publicIpId
+    apimPublicIpId: networkingModule.outputs.outputArray[0].apimPublicIpId
     publisherEmail: apimPublisherEmail
     publisherName: apimPublisherName
   }
 }
 
-
-// module firwall './networking/firewall.bicep' = {
-//   name: 'networkingfirewallresources'
-//   scope: resourceGroup(networkingRG.name)
-//   params: {
-//     workloadName: workloadName
-//     deploymentEnvironment: environment
-//     location: location
-//     apimVNetName: networkingModule.outputs.apimVNetName
-//     firewallSubnetName: networkingModule.outputs.firewallSubnetName
-//     udrApimFirewallName: networkingModule.outputs.udrApimFirewallName
-//     firewallManagementSubnetName: networkingModule.outputs.firewallManagementSubnetName
-//   }
-//   dependsOn: [
-//     networkingModule
-//   ]
-// }
 
 
 //Creation of private DNS zones for APIM
@@ -202,9 +178,9 @@ module dnsZoneModule 'apim/apimDnsZones.bicep'  = {
     apimModule
   ]
   params: {
-    vnetName: networkingModule.outputs.apimVNetName
+    vnetName: networkingModule.outputs.outputArray[0].apimVNetName
     vnetRG: networkingRG.name
-    apimName: apimName
+    apimName: apimModule.outputs.apimName
     apimPrivateIPAddress: apimModule.outputs.apimPrivateIpAddress
   }
 }
@@ -217,24 +193,20 @@ module appgwModule 'apim/appGateway.bicep' = {
     dnsZoneModule
   ]
   params: {
-    appGatewayName: appGatewayName
+    resourceSuffix: resourceSuffix
     appGatewayFQDN: apimCustomDomainName
     location: location
-    appGatewaySubnetId: networkingModule.outputs.appGatewaySubnetid
-    apiGatewayFQDN: apimGatewayFQDN
-    devPortalFQDN: devPortalFQDN
-    managementFQDN: managementBackendEndFQDN
-    apiGatewayCustomHostname: apimGatewayCustomHostname
-    devPortalCustomHostname: devPortalCustomHostname
-    managementBackendEndCustomHostname: managementBackendEndCustomHostname
+    appGatewaySubnetId: networkingModule.outputs.outputArray[0].appGatewaySubnetid
     keyVaultName: shared.outputs.keyVaultName
     keyVaultResourceGroupName: sharedRG.name
     appGatewayCertType: apimAppGatewayCertType
     certPassword: apimAppGatewayCertificatePassword
     logAnalyticsWorkspaceResourceId: shared.outputs.logAnalyticsWorkspaceId
-    deployScriptStorageSubnetId: networkingModule.outputs.deployScriptStorageSubnetId
+    deployScriptStorageSubnetId: networkingModule.outputs.outputArray[0].deployScriptStorageSubnetId
     environment: environment
     workloadName: workloadName
-    appGatewayPublicIPAddressId: networkingModule.outputs.appGatewayPublicIpId
+    appGatewayPublicIPAddressId: networkingModule.outputs.outputArray[0].appGatewayPublicIpId
+    apimName: apimModule.outputs.apimName
+    apimCustomDomainName: apimCustomDomainName
   }
 }
