@@ -82,8 +82,8 @@ output resources networkingResourcesType = {
   apimVNetName : networkingModule.outputs.apimVNetName
   apimSubnetid : networkingModule.outputs.apimSubnetid
   apimPublicIpId : publicIps.outputs.apimPublicIpId
-  appGatewayPublicIpId : publicIps.outputs.?appGatewayPublicIpId
-  appGatewaySubnetid : networkingModule.outputs.?appGatewaySubnetid
+  appGatewayPublicIpId : publicIps.outputs.appGatewayPublicIpId
+  appGatewaySubnetid : networkingModule.outputs.appGatewaySubnetid
   logicAppsStorageInboundSubnetid : networkingModule.outputs.?logicAppsStorageInboundSubnetid
   devOpsAgentSubnetId : networkingModule.outputs.?devOpsAgentSubnetId
   jumpBoxSubnetid : networkingModule.outputs.?jumpBoxSubnetid

@@ -164,9 +164,17 @@ resource appGatewayCertificate 'Microsoft.Resources/deploymentScripts@2023-08-01
   }
 }
 
-resource keyVaultCertificate 'Microsoft.KeyVault/vaults/secrets@2021-06-01-preview' existing = {
-  name: '${keyVaultName}/${secretName}'
-  scope: resourceGroup(keyVaultRG)
+module getKeyVaultCertificateSecret 'getKeyVaultCertificateSecret.bicep' = {
+  name: 'getKeyVaultCertificateSecret'
+  params: {
+    keyVaultName: keyVaultName
+    secretName: secretName
+    keyVaultRG: keyVaultRG
+  }
+  dependsOn: [
+    appGatewayCertificate
+  ]
 }
 
-output secretUri string = keyVaultCertificate.properties.secretUriWithVersion
+output secretUri string = getKeyVaultCertificateSecret.outputs.secretUri
+

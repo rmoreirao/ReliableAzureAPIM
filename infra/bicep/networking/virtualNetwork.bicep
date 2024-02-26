@@ -651,18 +651,19 @@ output firewallManagementSubnetName string = firewallManagementSubnetName
 // output firewallSubnetid string = '${vnetApim.id}/subnets/${firewallSubnetName}'
 // output udrApimFirewallName string = udrApimFirewallName
 
+output apimSubnetid string = '${vnetApim.id}/subnets/${apimSubnetName}'
+output appGatewaySubnetid string = '${vnetApim.id}/subnets/${appGatewaySubnetName}'
+output keyVaultStorageInboundSubnetid string? = vNetSettings.?keyVaultInboundPrivateEndpointAddressPrefix != null ?'${vnetApim.id}/subnets/${keyVaultInboundPrivateEndpointSubnetName}': null
+output firewallSubnetid string? = vNetSettings.?firewallAddressPrefix != null ?'${vnetApim.id}/subnets/${firewallSubnetName}': null
+output udrApimFirewallName string? = vNetSettings.?firewallAddressPrefix != null ? udrApimFirewallName: null
 
 output bastionSubnetid string? = vNetSettings.?bastionAddressPrefix != null ? '${vnetApim.id}/subnets/${bastionSubnetName}' : null
 output devOpsAgentSubnetId string? = vNetSettings.?devOpsNameAddressPrefix != null ? '${vnetApim.id}/subnets/${devOpsSubnetName}'  : null
 output jumpBoxSubnetid string? = vNetSettings.?jumpBoxAddressPrefix != null ? '${vnetApim.id}/subnets/${jumpBoxSubnetName}'  : null
-output appGatewaySubnetid string? = vNetSettings.?appGatewayAddressPrefix != null ? '${vnetApim.id}/subnets/${appGatewaySubnetName}'  : null
 output functionsInboundSubnetid string? = vNetSettings.?functionsInboundAddressPrefix != null ?'${vnetApim.id}/subnets/${functionsInboundPrivateEndpointSubnetName}'  : null
 output functionsOutboundSubnetid string? = vNetSettings.?functionsOutboundAddressPrefix != null ?'${vnetApim.id}/subnets/${functionsOutboundSubnetName}': null
 output logicAppsInboundSubnetid string? = vNetSettings.?logicAppsInboundAddressPrefix != null ?'${vnetApim.id}/subnets/${logicAppsInboundPrivateEndpointSubnetName}'  : null
 output logicAppsOutboundSubnetid string? = vNetSettings.?logicAppsOutboundAddressPrefix != null ?'${vnetApim.id}/subnets/${logicAppsOutboundSubnetName}': null
 output logicAppsStorageInboundSubnetid string? = vNetSettings.?logicAppsStorageInboundAddressPrefix != null ?'${vnetApim.id}/subnets/${logicAppsStorageInboundSubnetName}'  : null
-output keyVaultStorageInboundSubnetid string? = vNetSettings.?keyVaultInboundPrivateEndpointAddressPrefix != null ?'${vnetApim.id}/subnets/${keyVaultInboundPrivateEndpointSubnetName}': null
 output deployScriptStorageSubnetId string? = vNetSettings.?deployScriptStorageSubnetAddressPrefix != null ?'${vnetApim.id}/subnets/${deployScriptStorageSubnetName}': null
-output apimSubnetid string = '${vnetApim.id}/subnets/${apimSubnetName}'
-output firewallSubnetid string? = vNetSettings.?firewallAddressPrefix != null ?'${vnetApim.id}/subnets/${firewallSubnetName}': null
-output udrApimFirewallName string? = vNetSettings.?firewallAddressPrefix != null ? udrApimFirewallName: null
+

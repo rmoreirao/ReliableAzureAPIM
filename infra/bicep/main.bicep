@@ -139,14 +139,14 @@ resource apimRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
 }
 
 module apimPrivateDNSZone 'apim/apimPrivateDNSZonesGlobal.bicep' = {
-  name: 'apimPrivateDnsZoneDeploy'
+  name: 'apimPrivateDnsZoneDeploy${workloadName}${environment}${location}'
   scope: resourceGroup(apimRG.name)
   params: {
   }
 }
 
 module apimModule 'apim/apim.bicep'  = {
-  name: 'apimDeploy'
+  name: 'apimDeploy${workloadName}${environment}${location}'
   scope: resourceGroup(apimRG.name)
   params: {
     resourceSuffix: resourceSuffix
@@ -158,6 +158,8 @@ module apimModule 'apim/apim.bicep'  = {
     apimPublicIpId: networkingModule[0].outputs.resources.apimPublicIpId
     publisherEmail: apimGlobalSettings.apimPublisherEmail
     publisherName: apimGlobalSettings.apimPublisherName
+    capacity: locationSettings[0].apimRegionalSettings.skuCapacity
+    skuName: apimGlobalSettings.apimSkuName
   }
 }
 
@@ -165,8 +167,8 @@ module apimModule 'apim/apim.bicep'  = {
 
 //Creation of private DNS zones for APIM
 module dnsZoneModule 'apim/apimDnsZones.bicep'  =  {
-  name: 'apimDnsZoneDeploy'
-  scope: resourceGroup(networkingRG.name)
+  name: 'apimDnsZoneDeploy${workloadName}${environment}${location}'
+  scope: resourceGroup(apimRG.name)
   dependsOn: [
     apimModule
   ]
@@ -181,7 +183,7 @@ module dnsZoneModule 'apim/apimDnsZones.bicep'  =  {
 }
 
 module appgwModule 'apim/appGateway.bicep' = {
-  name: 'appgwDeploy'
+  name: 'appgwDeploy${workloadName}${environment}${location}'
   scope: resourceGroup(apimRG.name)
   dependsOn: [
     apimModule
@@ -192,12 +194,12 @@ module appgwModule 'apim/appGateway.bicep' = {
     appGatewayFQDN: apimGlobalSettings.apimCustomDomainName
     location: location
     appGatewaySubnetId: networkingModule[0].outputs.resources.appGatewaySubnetid
-    keyVaultName: shared[0].outputs.resources.keyVaultName
+    keyVaultName: shared[0].outputs.resources.keyVaultName!
     keyVaultResourceGroupName: sharedRG.name
     appGatewayCertType: apimGlobalSettings.apimAppGatewayCertType
     certPassword: apimGlobalSettings.apimAppGatewayCertificatePassword
     logAnalyticsWorkspaceResourceId: shared[0].outputs.resources.logAnalyticsWorkspaceId
-    deployScriptStorageSubnetId: networkingModule[0].outputs.resources.deployScriptStorageSubnetId
+    deployScriptStorageSubnetId: networkingModule[0].outputs.resources.deployScriptStorageSubnetId!
     environment: environment
     workloadName: workloadName
     appGatewayPublicIPAddressId: networkingModule[0].outputs.resources.appGatewayPublicIpId

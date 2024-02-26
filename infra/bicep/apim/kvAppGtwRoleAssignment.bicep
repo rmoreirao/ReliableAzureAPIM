@@ -18,19 +18,3 @@ resource kvRoleAssignmentCert 'Microsoft.Authorization/roleAssignments@2020-04-0
     principalType: 'ServicePrincipal'
   }
 }
-
-// // 'Key Vault Secrets User'
-// var roleIdSecretsUser = 'a4417e6f-fecd-4de8-b567-7b0420556985'
-
-// resource kvRoleAssignmentSecret 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-//   name: guid(roleIdSecretsUser,managedIdentity.properties.principalId,keyVault.id)
-//   scope: keyVault
-//   properties: {
-//     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleIdSecretsUser)
-//     principalId: managedIdentity.properties.principalId
-//     principalType: 'ServicePrincipal'
-//   }
-//   dependsOn: [
-//     kvRoleAssignmentCert
-//   ]
-// }

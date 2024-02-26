@@ -43,7 +43,6 @@ param apimName string
 param apimCustomDomainName string
 
 var appGatewayName = 'appgw-${resourceSuffix}'
-// var appGatewayPrimaryPip            = 'pip-${appGatewayName}'
 var appGatewayIdentityId            = 'identity-${appGatewayName}'
 var appGatewayDiagnosticSettingsName = 'diag-${appGatewayName}'
 
@@ -75,18 +74,6 @@ module apiGatewayCertificate './appGatewayCertificate.bicep' = {
     workloadName:     workloadName
   }
 }
-
-// resource appGatewayPublicIPAddress 'Microsoft.Network/publicIPAddresses@2019-09-01' = {
-//   name: appGatewayPrimaryPip
-//   location: location
-//   sku: {
-//     name: 'Standard'
-//   }
-//   properties: {
-//     publicIPAddressVersion: 'IPv4'
-//     publicIPAllocationMethod: 'Static'
-//   }
-// }
 
 resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
   name: appGatewayName

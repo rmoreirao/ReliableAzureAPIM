@@ -55,7 +55,6 @@ resource pipFwMgmt 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
       domainNameLabel: toLower('${publicIPAddressNameFirewallManagement}-${uniqueString(resourceGroup().id)}')
     }
   } 
-  
 }
 
 resource firewallPolicy 'Microsoft.Network/firewallPolicies@2022-07-01' = {

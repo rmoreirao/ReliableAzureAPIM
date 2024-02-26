@@ -7,6 +7,7 @@ type vNetSettingsType = {
   firewallAddressPrefix : string
   firewallManagementAddressPrefix : string
   appGatewayAddressPrefix : string
+  
   bastionAddressPrefix : string?
   devOpsNameAddressPrefix : string?
   jumpBoxAddressPrefix : string?
@@ -51,7 +52,7 @@ type apimGlobalSettingsType = {
 type locationSettingType = {
   location: string
   vNetSettings: vNetSettingsType
-  apimRegionalSettings: apimRegionalSettingsType?
+  apimRegionalSettings: apimRegionalSettingsType
 }
 
 // Types related to the output of the deployment
@@ -63,8 +64,8 @@ type networkingResourcesType = {
   apimVNetName: string
   apimSubnetid: string
   apimPublicIpId: string
-  appGatewaySubnetid: string?
-  appGatewayPublicIpId: string?
+  appGatewaySubnetid: string
+  appGatewayPublicIpId: string
   logicAppsStorageInboundSubnetid:string?
   devOpsAgentSubnetId: string?
   jumpBoxSubnetid: string?

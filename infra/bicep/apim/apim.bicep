@@ -20,10 +20,10 @@ param publisherEmail string
 param publisherName string
 
 @description('The pricing tier of the APIM resource.')
-param skuName string = 'Developer'
+param skuName string
 
 @description('The instance size of the APIM resource.')
-param capacity int = 1
+param capacity int
 
 @description('Location for Azure resources.')
 param location string = resourceGroup().location
