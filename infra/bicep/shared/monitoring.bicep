@@ -1,9 +1,20 @@
 targetScope='resourceGroup'
 param location string
 
-@description('Standardized suffix text to be added to resource names')
-param resourceSuffix string
+@description('A short name for the workload being deployed alphanumberic only')
+@maxLength(8)
+param workloadName string
 
+@description('The environment for which the deployment is being executed')
+@allowed([
+  'dev'
+  'uat'
+  'prod'
+  'dr'
+])
+param environment string
+
+var resourceSuffix = '${workloadName}-${environment}-${location}-001'
 // Variables
 var appInsightsName = 'appi-${resourceSuffix}'
 var logAnalyticsWorkspaceName = 'log-${resourceSuffix}'

@@ -1,4 +1,4 @@
-targetScope='resourceGroup'
+import {vNetSettingsType, locationSettingType, sharedResourcesType} from '../bicepParamTypes.bicep'
 // Parameters
 @description('Azure location to which the resources are to be deployed')
 param location string
@@ -34,8 +34,9 @@ param personalAccessToken string
 @description('The name of the shared resource group')
 param resourceGroupName string
 
-@description('Standardized suffix text to be added to resource names')
-param resourceSuffix string
+@description('A short name for the workload being deployed alphanumberic only')
+@maxLength(8)
+param workloadName string
 
 @description('The environment for which the deployment is being executed')
 @allowed([
@@ -47,8 +48,7 @@ param resourceSuffix string
 param environment string
 var defaultWindowsOSVersion = '2022-datacenter-azure-edition'
 
-param vnetName string
-param vnetRG string
+param vnetId string
 param keyVaultPrivateEndpointSubnetid string
 
 // Resources
@@ -57,11 +57,12 @@ module appInsights './monitoring.bicep' = {
   scope: resourceGroup(resourceGroupName)
   params: {
     location: location
-    resourceSuffix: resourceSuffix
+    environment: environment
+    workloadName: workloadName
   }
 }
 
-module vmDevOps './createvmwindows.bicep' = if (toLower(CICDAgentType)!='none') {
+module vmDevOps './createvmwindows.bicep' = if (toLower(CICDAgentType)!='none' && CICDAgentSubnetId != null) {
   name: 'devopsvm'
   scope: resourceGroup(resourceGroupName)
   params: {
@@ -78,7 +79,7 @@ module vmDevOps './createvmwindows.bicep' = if (toLower(CICDAgentType)!='none') 
   }
 }
 
-module vmJumpBox './createvmwindows.bicep' = {
+module vmJumpBox './createvmwindows.bicep' = if (jumpboxSubnetId != null) {
   name: 'vm-jumpbox'
   scope: resourceGroup(resourceGroupName)
   params: {
@@ -92,23 +93,24 @@ module vmJumpBox './createvmwindows.bicep' = {
   }
 }
 
-module keyVault './keyVault.bicep' = {
+module keyVault './keyVault.bicep' = if (keyVaultPrivateEndpointSubnetid != null){
   name: 'keyvault-resource'
   scope: resourceGroup(resourceGroupName)
   
   params: {
     keyVaultPrivateEndpointSubnetid: keyVaultPrivateEndpointSubnetid
-    vnetName: vnetName
-    vnetRG: vnetRG
+    vnetId: vnetId
+    environment: environment
+    workloadName: workloadName
     location: location
-    resourceSuffix: resourceSuffix
   }
 }
 
-// Outputs
-output appInsightsConnectionString string = appInsights.outputs.appInsightsConnectionString
-output appInsightsName string=appInsights.outputs.appInsightsName
-output appInsightsId string=appInsights.outputs.appInsightsId
-output appInsightsInstrumentationKey string=appInsights.outputs.appInsightsInstrumentationKey
-output keyVaultName string = keyVault.outputs.keyVaultName
-output logAnalyticsWorkspaceId string = appInsights.outputs.logAnalyticsWorkspaceId
+output resources sharedResourcesType = {
+  appInsightsConnectionString : appInsights.outputs.appInsightsConnectionString
+  appInsightsName : appInsights.outputs.appInsightsName
+  appInsightsId : appInsights.outputs.appInsightsId
+  appInsightsInstrumentationKey : appInsights.outputs.appInsightsInstrumentationKey
+  keyVaultName : keyVault.outputs.keyVaultName
+  logAnalyticsWorkspaceId : appInsights.outputs.logAnalyticsWorkspaceId
+}

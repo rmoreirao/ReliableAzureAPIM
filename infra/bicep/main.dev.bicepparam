@@ -48,6 +48,7 @@ param locationSettings = [
         logicAppsInboundAddressPrefix : '10.2.11.0/24'
         logicAppsStorageInboundAddressPrefix : '10.2.12.0/24'
         deployScriptStorageSubnetAddressPrefix: '10.2.14.0/24'
+        keyVaultInboundPrivateEndpointAddressPrefix : '10.2.15.0/24'
     }
   }
   {

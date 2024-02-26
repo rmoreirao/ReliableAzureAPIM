@@ -15,6 +15,7 @@ type vNetSettingsType = {
   logicAppsInboundAddressPrefix : string?
   logicAppsStorageInboundAddressPrefix : string?
   deployScriptStorageSubnetAddressPrefix : string?
+  keyVaultInboundPrivateEndpointAddressPrefix : string?
 }
 
 @export()
@@ -24,7 +25,7 @@ type locationSettingType = {
 }
 
 @export()
-type networkingOutputType = {
+type networkingResourcesType = {
   apimVNetName: string
   logicAppsStorageInboundSubnetid:string
   CICDAgentSubnetId: string
@@ -34,4 +35,17 @@ type networkingOutputType = {
   appGatewaySubnetid: string
   deployScriptStorageSubnetId: string
   appGatewayPublicIpId: string
+  keyVaultPrivateEndpointSubnetid:string
+  vnetId: string
+}
+
+
+@export()
+type sharedResourcesType = {
+  appInsightsConnectionString : string
+  appInsightsName : string
+  appInsightsId : string
+  appInsightsInstrumentationKey : string
+  keyVaultName : string
+  logAnalyticsWorkspaceId : string
 }

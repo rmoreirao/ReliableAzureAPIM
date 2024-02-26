@@ -1,5 +1,4 @@
-param vnetName                  string
-param vnetRG                    string
+param vnetId                  string
 param apimName                  string
 param apimPrivateIPAddress      string
 
@@ -16,37 +15,28 @@ Direct management endpoint	{APIM Name}.management.azure-api.net
  Retrieve APIM and Virtual Network
 */
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
-  name: vnetName
-  scope: resourceGroup(vnetRG)
-}
+// resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
+//   name: vnetName
+//   scope: resourceGroup(vnetRG)
+// }
 
 // DNS Zones
 
 resource gatewayDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: 'azure-api.net'
   location: 'global'
-  dependsOn: [
-    vnet
-  ]
   properties: {}
 }
 
 resource developerDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: 'developer.azure-api.net'
   location: 'global'
-  dependsOn: [
-    vnet
-  ]
   properties: {}
 }
 
 resource managementDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: 'management.azure-api.net'
   location: 'global'
-  dependsOn: [
-    vnet
-  ]
   properties: {}
 }
 
@@ -96,7 +86,7 @@ resource gatewayVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@
   properties: {
     registrationEnabled: true
     virtualNetwork: {
-      id: vnet.id
+      id: vnetId
     }
   }
 }
@@ -108,7 +98,7 @@ resource developerVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLink
   properties: {
     registrationEnabled: false
     virtualNetwork: {
-      id: vnet.id
+      id: vnetId
     }
   }
 }
@@ -120,7 +110,7 @@ resource managementVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLin
   properties: {
     registrationEnabled: false
     virtualNetwork: {
-      id: vnet.id
+      id: vnetId
     }
   }
 }

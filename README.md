@@ -3,11 +3,13 @@
 
 ## For today:
 	
-	Move firewall to Basic - ongoing
-
 	Start preparing for Multi-Region 
+		
+		Private DNS Zone: https://learn.microsoft.com/en-us/azure/dns/dns-faq-private
+	
+	
 
-	Both Inbound and Outbound needs to go via Firewall
+	Both Inbound and Outbound needs to go via Firewall???
 
 	API Ops: https://azure.github.io/apiops/
 

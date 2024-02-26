@@ -1,13 +1,22 @@
-targetScope='resourceGroup'
-@description('Standardized suffix text to be added to resource names')
-param resourceSuffix string
+@description('A short name for the workload being deployed alphanumberic only')
+@maxLength(8)
+param workloadName string
+
+@description('The environment for which the deployment is being executed')
+@allowed([
+  'dev'
+  'uat'
+  'prod'
+  'dr'
+])
+param environment string
 
 @description('Azure location to which the resources are to be deployed')
 param location string
 
-param vnetName string
-param vnetRG string
+param vnetId string
 param keyVaultPrivateEndpointSubnetid string
+var resourceSuffix = '${workloadName}-${environment}-${location}-001'
 
 var keyvaultPrivateEndpointName   = 'pep-kv-${resourceSuffix}'
 
@@ -36,11 +45,6 @@ resource keyVaultInternal 'Microsoft.KeyVault/vaults@2021-10-01' = {
 
 var privateDNSZoneName = 'privatelink.vaultcore.azure.net'
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
-  name: vnetName
-  scope: resourceGroup(vnetRG)
-}
-
 
 resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2018-09-01' = {
   name: privateDNSZoneName
@@ -49,12 +53,12 @@ resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2018-09-01' =
 
 resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
   parent: keyVaultPrivateDnsZone
-  name: uniqueString(vnet.id)
+  name: uniqueString(vnetId)
   location: 'global'
   properties: {
     registrationEnabled: false
     virtualNetwork: {
-      id: vnet.id
+      id: vnetId
     }
   }
 }
