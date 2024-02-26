@@ -1,13 +1,13 @@
-import {vNetSettingsType, locationSettingType, sharedResourcesType} from '../bicepParamTypes.bicep'
+import {vNetSettingsType,  locationSettingType, sharedResourcesType} from '../bicepParamTypes.bicep'
 // Parameters
 @description('Azure location to which the resources are to be deployed')
 param location string
 
 @description('The full id string identifying the target subnet for the jumpbox VM')
-param jumpboxSubnetId string
+param jumpboxSubnetId string?
 
 @description('The full id string identifying the target subnet for the CI/CD Agent VM')
-param CICDAgentSubnetId string
+param devOpsAgentSubnetId string?
 
 @description('The user name to be used as the Administrator for all VMs created by this deployment')
 param vmUsername string
@@ -49,11 +49,13 @@ param environment string
 var defaultWindowsOSVersion = '2022-datacenter-azure-edition'
 
 param vnetId string
-param keyVaultPrivateEndpointSubnetid string
+param keyVaultPrivateEndpointSubnetid string?
+param keyVaultPrivateDnsZoneName string
+param keyVaultPrivateDnsZoneId string
 
 // Resources
 module appInsights './monitoring.bicep' = {
-  name: 'azmon'
+  name: 'azmon${workloadName}${environment}${location}'
   scope: resourceGroup(resourceGroupName)
   params: {
     location: location
@@ -62,12 +64,12 @@ module appInsights './monitoring.bicep' = {
   }
 }
 
-module vmDevOps './createvmwindows.bicep' = if (toLower(CICDAgentType)!='none' && CICDAgentSubnetId != null) {
-  name: 'devopsvm'
+module vmDevOps './createvmwindows.bicep' = if (toLower(CICDAgentType)!='none' && devOpsAgentSubnetId != null) {
+  name: 'devopsvm${workloadName}${environment}${location}'
   scope: resourceGroup(resourceGroupName)
   params: {
     location: location
-    subnetId: CICDAgentSubnetId
+    subnetId: devOpsAgentSubnetId!
     username: vmUsername
     password: vmPassword
     vmName: '${CICDAgentType}-${environment}'
@@ -80,11 +82,11 @@ module vmDevOps './createvmwindows.bicep' = if (toLower(CICDAgentType)!='none' &
 }
 
 module vmJumpBox './createvmwindows.bicep' = if (jumpboxSubnetId != null) {
-  name: 'vm-jumpbox'
+  name: 'vm-jumpbox${workloadName}${environment}${location}'
   scope: resourceGroup(resourceGroupName)
   params: {
     location: location
-    subnetId: jumpboxSubnetId
+    subnetId: jumpboxSubnetId!
     username: vmUsername
     password: vmPassword
     CICDAgentType: CICDAgentType
@@ -94,15 +96,17 @@ module vmJumpBox './createvmwindows.bicep' = if (jumpboxSubnetId != null) {
 }
 
 module keyVault './keyVault.bicep' = if (keyVaultPrivateEndpointSubnetid != null){
-  name: 'keyvault-resource'
+  name: 'keyvault-resource${workloadName}${environment}${location}'
   scope: resourceGroup(resourceGroupName)
   
   params: {
-    keyVaultPrivateEndpointSubnetid: keyVaultPrivateEndpointSubnetid
+    keyVaultPrivateEndpointSubnetid: keyVaultPrivateEndpointSubnetid!
     vnetId: vnetId
     environment: environment
     workloadName: workloadName
     location: location
+    keyVaultPrivateDnsZoneName: keyVaultPrivateDnsZoneName
+    keyVaultPrivateDnsZoneId: keyVaultPrivateDnsZoneId
   }
 }
 
@@ -111,6 +115,6 @@ output resources sharedResourcesType = {
   appInsightsName : appInsights.outputs.appInsightsName
   appInsightsId : appInsights.outputs.appInsightsId
   appInsightsInstrumentationKey : appInsights.outputs.appInsightsInstrumentationKey
-  keyVaultName : keyVault.outputs.keyVaultName
   logAnalyticsWorkspaceId : appInsights.outputs.logAnalyticsWorkspaceId
+  keyVaultName : keyVaultPrivateEndpointSubnetid != null ? keyVault.outputs.keyVaultName : null
 }

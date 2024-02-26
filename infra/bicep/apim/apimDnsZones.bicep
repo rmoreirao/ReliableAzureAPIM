@@ -1,6 +1,14 @@
+import {networkingResourcesType, sharedResourcesType, apimRegionalSettingsType} from '../bicepParamTypes.bicep'
+
 param vnetId                  string
 param apimName                  string
 param apimPrivateIPAddress      string
+param apimGatewayDnsZoneName string
+param apimDeveloperDnsZoneName string
+param apimManagementDnsZoneName string
+// param gatewayDnsZoneName string
+// param developerDnsZoneName string
+// param managementDnsZoneName string
 
 /*
 Createa a Private DNS ZOne, A Record and Vnet Link for each of the below endpoints
@@ -22,27 +30,26 @@ Direct management endpoint	{APIM Name}.management.azure-api.net
 
 // DNS Zones
 
-resource gatewayDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-  name: 'azure-api.net'
-  location: 'global'
-  properties: {}
-}
+// resource gatewayDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+//   name: 'azure-api.net'
+//   location: 'global'
+//   properties: {}
+// }
 
-resource developerDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-  name: 'developer.azure-api.net'
-  location: 'global'
-  properties: {}
-}
+// resource developerDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+//   name: 'developer.azure-api.net'
+//   location: 'global'
+//   properties: {}
+// }
 
-resource managementDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-  name: 'management.azure-api.net'
-  location: 'global'
-  properties: {}
-}
+// resource managementDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+//   name: 'management.azure-api.net'
+//   location: 'global'
+//   properties: {}
+// }
 
 resource gatewayRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
-  parent: gatewayDnsZone
-  name: apimName
+  name: '${apimGatewayDnsZoneName}/${apimName}'
   properties: {
     aRecords: [
       {
@@ -54,8 +61,7 @@ resource gatewayRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
 }
 
 resource developerRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
-  parent: developerDnsZone
-  name: apimName
+  name: '${apimDeveloperDnsZoneName}/${apimName}'
   properties: {
     aRecords: [
       {
@@ -67,8 +73,7 @@ resource developerRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
 }
 
 resource managementRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
-  parent: managementDnsZone
-  name: apimName
+  name: '${apimManagementDnsZoneName}/${apimName}'
   properties: {
     aRecords: [
       {
@@ -80,8 +85,7 @@ resource managementRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
 }
 
 resource gatewayVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: gatewayDnsZone
-  name: 'gateway-vnet-dns-link'
+  name: '${apimGatewayDnsZoneName}/gateway-vnet-dns-link'
   location: 'global'
   properties: {
     registrationEnabled: true
@@ -92,8 +96,7 @@ resource gatewayVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@
 }
 
 resource developerVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: developerDnsZone
-  name: 'gateway-vnet-dns-link'
+  name: '${apimDeveloperDnsZoneName}/developer-vnet-dns-link'
   location: 'global'
   properties: {
     registrationEnabled: false
@@ -104,8 +107,7 @@ resource developerVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLink
 }
 
 resource managementVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: managementDnsZone
-  name: 'gateway-vnet-dns-link'
+  name: '${apimManagementDnsZoneName}/management-vnet-dns-link'
   location: 'global'
   properties: {
     registrationEnabled: false

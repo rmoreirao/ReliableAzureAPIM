@@ -1,3 +1,5 @@
+import {networkingResourcesType, sharedResourcesType, apimRegionalSettingsType} from '../bicepParamTypes.bicep'
+
 targetScope='resourceGroup'
 param resourceSuffix string
 

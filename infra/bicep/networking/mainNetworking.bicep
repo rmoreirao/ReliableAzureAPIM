@@ -14,20 +14,6 @@ param workloadName string
 param environment string
 param location string 
 param vNetSettings vNetSettingsType
-// param locationSettings locationSettingType[]
-
-
-
-
-// module networkingModule './virtualNetwork.bicep' = [for (locationSetting,i) in locationSettings: {
-//   name: 'networkinvnetgresources${i}'
-//   params: {
-//     workloadName: workloadName
-//     deploymentEnvironment: environment
-//     location: locationSetting.location
-//     vNetSettings: locationSetting.vNetSettings
-//   }
-// }]
 
 module networkingModule './virtualNetwork.bicep' = {
     name: 'networkinvnetgresources${workloadName}${environment}${location}'
@@ -39,7 +25,7 @@ module networkingModule './virtualNetwork.bicep' = {
     }
   }
 
-module firewall './firewall.bicep' ={
+module firewall './firewall.bicep' = if( vNetSettings.?firewallAddressPrefix != null) {
   name: 'networkingfirewallresources${workloadName}${environment}${location}'
   params: {
     workloadName: workloadName
@@ -47,7 +33,7 @@ module firewall './firewall.bicep' ={
     location: location
     apimVNetName: networkingModule.outputs.apimVNetName
     firewallSubnetName: networkingModule.outputs.firewallSubnetName
-    udrApimFirewallName: networkingModule.outputs.udrApimFirewallName
+    udrApimFirewallName: networkingModule.outputs.udrApimFirewallName!
     firewallManagementSubnetName: networkingModule.outputs.firewallManagementSubnetName
   }
   dependsOn: [
@@ -91,20 +77,18 @@ resource bastion 'Microsoft.Network/bastionHosts@2020-07-01' = if(vNetSettings.?
   }
 }
 
-
-// output outputArray networkingOutputType[] = [ for (locationSetting,i) in locationSettings: {
 output resources networkingResourcesType = {
+  vnetId: networkingModule.outputs.apimVNetId
   apimVNetName : networkingModule.outputs.apimVNetName
-  logicAppsStorageInboundSubnetid : networkingModule.outputs.logicAppsStorageInboundSubnetid
-  CICDAgentSubnetId : networkingModule.outputs.CICDAgentSubnetId
-  jumpBoxSubnetid : networkingModule.outputs.jumpBoxSubnetid
   apimSubnetid : networkingModule.outputs.apimSubnetid
   apimPublicIpId : publicIps.outputs.apimPublicIpId
-  appGatewaySubnetid : networkingModule.outputs.appGatewaySubnetid
-  deployScriptStorageSubnetId : networkingModule.outputs.deployScriptStorageSubnetId
-  appGatewayPublicIpId : publicIps.outputs.appGatewayPublicIpId
-  keyVaultPrivateEndpointSubnetid: networkingModule.outputs.keyVaultStorageInboundSubnetid
-  vnetId: networkingModule.outputs.apimVNetId
+  appGatewayPublicIpId : publicIps.outputs.?appGatewayPublicIpId
+  appGatewaySubnetid : networkingModule.outputs.?appGatewaySubnetid
+  logicAppsStorageInboundSubnetid : networkingModule.outputs.?logicAppsStorageInboundSubnetid
+  devOpsAgentSubnetId : networkingModule.outputs.?devOpsAgentSubnetId
+  jumpBoxSubnetid : networkingModule.outputs.?jumpBoxSubnetid
+  deployScriptStorageSubnetId : networkingModule.outputs.?deployScriptStorageSubnetId
+  
+  keyVaultPrivateEndpointSubnetid: networkingModule.outputs.?keyVaultStorageInboundSubnetid
 }
 
-// }]

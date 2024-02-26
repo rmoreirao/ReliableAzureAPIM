@@ -16,15 +16,18 @@ param location string
 
 param vnetId string
 param keyVaultPrivateEndpointSubnetid string
+param keyVaultPrivateDnsZoneName string
+param keyVaultPrivateDnsZoneId string
+
 var resourceSuffix = '${workloadName}-${environment}-${location}-001'
 
 var keyvaultPrivateEndpointName   = 'pep-kv-${resourceSuffix}'
 
-var tempKeyVaultNameInternal = take('ki-${resourceSuffix}', 24) // Must be between 3-24 alphanumeric characters 
-var keyVaultNameInternal = endsWith(tempKeyVaultNameInternal, '-') ? substring(tempKeyVaultNameInternal, 0, length(tempKeyVaultNameInternal) - 1) : tempKeyVaultNameInternal
+var tempKeyVaultName = take('ki-${resourceSuffix}', 24) // Must be between 3-24 alphanumeric characters 
+var keyVaultName = endsWith(tempKeyVaultName, '-') ? substring(tempKeyVaultName, 0, length(tempKeyVaultName) - 1) : tempKeyVaultName
 
-resource keyVaultInternal 'Microsoft.KeyVault/vaults@2021-10-01' = {
-  name: keyVaultNameInternal
+resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
+  name: keyVaultName
   location: location
   properties: {
     enableRbacAuthorization: true
@@ -43,17 +46,12 @@ resource keyVaultInternal 'Microsoft.KeyVault/vaults@2021-10-01' = {
   }
 }
 
-var privateDNSZoneName = 'privatelink.vaultcore.azure.net'
-
-
-resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2018-09-01' = {
-  name: privateDNSZoneName
-  location: 'global'
-}
+// resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
+//   name: 'your-keyvault-private-dns-zone-name'
+// }
 
 resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
-  parent: keyVaultPrivateDnsZone
-  name: uniqueString(vnetId)
+  name: '${keyVaultPrivateDnsZoneName}/${resourceSuffix}' 
   location: 'global'
   properties: {
     registrationEnabled: false
@@ -74,7 +72,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-03-01' = {
       {
         name: keyvaultPrivateEndpointName
         properties: {
-          privateLinkServiceId: keyVaultInternal.id
+          privateLinkServiceId: keyVault.id
           groupIds: [
             'vault'
           ]
@@ -82,6 +80,9 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-03-01' = {
       }
     ]
   }
+  dependsOn: [
+    privateDnsZoneLink
+  ]
 }
 
 resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-03-01' = {
@@ -90,13 +91,13 @@ resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneG
   properties: {
     privateDnsZoneConfigs: [
       {
-        name: '${keyVaultNameInternal}-vaultcore-windows-net'
+        name: '${keyVaultName}-vaultcore-windows-net'
         properties: {
-          privateDnsZoneId: keyVaultPrivateDnsZone.id
+          privateDnsZoneId: keyVaultPrivateDnsZoneId
         }
       }
     ]
   }
 }
 
-output keyVaultName string = keyVaultNameInternal
+output keyVaultName string = keyVaultName
