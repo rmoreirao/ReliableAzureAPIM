@@ -1,3 +1,5 @@
+# Created this script because currently with Bicep ".bicepparam" files we cannot pass inline parameters 
+
 import argparse
 
 # Create the parser

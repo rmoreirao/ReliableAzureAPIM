@@ -23,7 +23,7 @@ var resourceSuffix = '${workloadName}-${environment}-${location}-001'
 
 var keyvaultPrivateEndpointName   = 'pep-kv-${resourceSuffix}'
 
-var tempKeyVaultName = take('ki-${resourceSuffix}', 24) // Must be between 3-24 alphanumeric characters 
+var tempKeyVaultName = take('kv-${resourceSuffix}', 24) // Must be between 3-24 alphanumeric characters 
 var keyVaultName = endsWith(tempKeyVaultName, '-') ? substring(tempKeyVaultName, 0, length(tempKeyVaultName) - 1) : tempKeyVaultName
 
 resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {

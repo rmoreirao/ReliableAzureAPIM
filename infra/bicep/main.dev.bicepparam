@@ -1,6 +1,6 @@
 using './main.bicep'
 
-param workloadName = 'rmor9'
+param workloadName = 'rmor1'
 param environment = 'dev'
 param devOpsVmUsername = 'vmadmin'
 param devOpsCICDAgentType = 'none'
