@@ -1,6 +1,6 @@
 using './main.bicep'
 
-param workloadName = 'dihk5'
+param workloadName = 'dihk6'
 param environment = 'dev'
 
 param devOpsResourcesSettings = {
@@ -37,8 +37,8 @@ param locationSettings = [
         // functionsInboundAddressPrefix : '10.4.5.0/24'
         // functionsOutboundAddressPrefix : '10.4.6.0/24'
         apimAddressPrefix : '10.4.7.0/24'
-        // firewallAddressPrefix : '10.4.8.0/24'
-        // firewallManagementAddressPrefix : '10.4.9.0/24'
+        firewallAddressPrefix : '10.4.8.0/24'
+        firewallManagementAddressPrefix : '10.4.9.0/24'
         // logicAppsOutboundAddressPrefix : '10.4.10.0/24'
         // logicAppsInboundAddressPrefix : '10.4.11.0/24'
         // logicAppsStorageInboundAddressPrefix : '10.4.12.0/24'

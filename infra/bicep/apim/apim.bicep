@@ -1,8 +1,7 @@
-import {networkingResourcesType, sharedResourcesType, apimRegionalSettingsType} from '../bicepParamTypes.bicep'
+import {networkingResourcesType, sharedResourcesType, apimRegionalSettingsType , locationSettingType} from '../bicepParamTypes.bicep'
 
 targetScope='resourceGroup'
 param resourceSuffix string
-
 
 @description('The subnet resource id to use for APIM.')
 @minLength(1)
@@ -22,30 +21,64 @@ param publisherName string
 @description('The pricing tier of the APIM resource.')
 param skuName string
 
-@description('The instance size of the APIM resource.')
-param capacity int
+param primaryRegionSettings locationSettingType
 
-@description('Location for Azure resources.')
-param location string = resourceGroup().location
+param additionalRegionSettings locationSettingType[]
 
 param appInsightsName string
 param appInsightsId string
 param appInsightsInstrumentationKey string
+
+param keyVaultName string
+param keyVaultRG string
 
 /*
  * Resources
 */
 
 var apimName = 'apim-${resourceSuffix}'
+var apimManagedIdentityId = 'identity-${apimName}'
+var keyVaultSecretsUserRoleDefinitionId = '4633458b-17de-408a-b874-0445c86b69e6'
+
+resource apimIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  name:     apimManagedIdentityId
+  location: primaryRegionSettings.location
+}
+
+module kvRoleAssignmentsCert 'kvAppRoleAssignment.bicep' = {
+  name: 'kvRoleAssignmentsCert'
+  scope: resourceGroup(keyVaultRG)
+  params: {
+    keyVaultName: keyVaultName
+    managedIdentity: apimIdentity
+    // Key Vault Certificates Officer
+    roleId: keyVaultSecretsUserRoleDefinitionId
+  }
+}
 
 resource apim 'Microsoft.ApiManagement/service@2021-08-01' = {
   name: apimName
-  location: location
+  location: primaryRegionSettings.location
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${apimIdentity.id}': {}
+    }
+  }
   sku:{
-    capacity: capacity
+    capacity: primaryRegionSettings.apimRegionalSettings.skuCapacity
     name: skuName
   }
+  
   properties:{
+    additionalLocations: [for settings in additionalRegionSettings: {
+      location: settings.location
+      sku: {
+        name: skuName
+        capacity: settings.apimRegionalSettings.skuCapacity
+      }
+    }]
+
     virtualNetworkType: 'Internal'
     publisherEmail: publisherEmail
     publisherName: publisherName

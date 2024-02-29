@@ -24,6 +24,3 @@ var subnets = concat(subnet1, subnet2, subnet3)
 
 
 output subnets array = subnets
-
-
-// az network firewall delete --name fw-dihk2-dev-westeurope --resource-group rg-apim-networking-dihk2-dev-westeurope-001

@@ -11,13 +11,14 @@
 		- Backlog
 		- Prod and Non-Project Subscriptions
 
+		- Conversation with Duncan / Reinier on Security
+			- Prepare the Questions - Firewall, Public IPs, NSGs, SIEM monitoring
+
 	Things I can work on:
 		- Deploy Sandbox
 			- Issue with:
-				- Bastion and Firewall
-
-		- Conversation with Duncan / Reinier on Security
-			- Prepare the Questions - Firewall, Public IPs, NSGs, SIEM monitoring
+				- Firewall - ongoing
+				- Bastion
 
 		- Prepare scripts for Contoso
 
@@ -30,14 +31,13 @@
 		- Deep dive into the other requirements:
 			 Security,  Networking & Resilience
 
+		
+
+	Explain Multi-Region x Region Pair
 		- Paired regions 
 			https://learn.microsoft.com/en-us/azure/reliability/cross-region-replication-azure
 
-	Explain Multi-Region x Region Pair
-
 	API Center
-
-	Outbound goes via Firewall
 
 	API Ops: https://azure.github.io/apiops/
 		- Check! 
@@ -123,6 +123,15 @@ Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in 
 	- https://github.com/Azure/apim-landing-zone-accelerator
 	- https://github.com/Azure/Integration-Services-Landing-Zone-Accelerator 
 
+## API Management Sample Bicep
+	- https://github.com/Azure/azure-quickstart-templates/tree/bbe8c22070bf9c88f2e10ee8bf925ccd97c40a09/quickstarts/microsoft.apimanagement
+
+	- https://github.com/Azure/azure-quickstart-templates/blob/bbe8c22070bf9c88f2e10ee8bf925ccd97c40a09/quickstarts/microsoft.apimanagement/api-management-key-vault-create/main.bicep#L86
+
+	- https://learn.microsoft.com/en-us/samples/azure/azure-quickstart-templates/api-management-create-with-multiregion/
+	- https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-deploy-multi-region
+	- https://github.com/nehalineogi/azure-cross-solution-network-architectures/blob/main/apim/README-mulitregion.md
+	
 
 ## App Gateway 
 	- [(Use API Management in a virtual network with Azure Application Gateway - Azure API Management | Microsoft Learn)](https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-integrate-internal-vnet-appgateway)
@@ -187,10 +196,7 @@ Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in 
 ## Deployment Script
 	- https://johnlokerse.dev/2022/12/04/run-powershell-scripts-with-azure-bicep/
 
-## Multi Region
-	- https://learn.microsoft.com/en-us/samples/azure/azure-quickstart-templates/api-management-create-with-multiregion/
-	- https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-deploy-multi-region
-	- https://github.com/nehalineogi/azure-cross-solution-network-architectures/blob/main/apim/README-mulitregion.md
+
 
 ## Migration of APIM to Stv2 
 	- [Azure-Orbital-STAC/deploy/bicep/modules/apim.bicep at 105c1af9c0b5d4749c4c94fa059fdf84b6f2c811 · Azure/Azure-Orbital-STAC (github.com)](https://github.com/Azure/Azure-Orbital-STAC/blob/105c1af9c0b5d4749c4c94fa059fdf84b6f2c811/deploy/bicep/modules/apim.bicep#L67)
@@ -199,6 +205,9 @@ Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in 
 
 ## Public IP Address
 	- https://learn.microsoft.com/en-us/security/benchmark/azure/baselines/azure-public-ip-security-baseline
+
+## Managed Identities
+	- https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/managed-identities-faq
 
 # Others
 

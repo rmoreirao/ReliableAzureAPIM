@@ -53,6 +53,7 @@ type apimRegionalSettingsType = {
 
 @export()
 type apimGlobalSettingsType = {
+  @description('MultiRegion must be Premium.')
   apimSkuName: 'Developer' | 'Premium'
   
   @description('The email address of the publisher of the APIM resource.')

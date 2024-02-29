@@ -129,15 +129,17 @@ module apimModule 'apim/apim.bicep'  = {
   params: {
     resourceSuffix: resourceSuffix
     apimSubnetId: networkingModule[0].outputs.resources.apimSubnetid
-    location: location
     appInsightsName: shared[0].outputs.resources.appInsightsName
     appInsightsId: shared[0].outputs.resources.appInsightsId
     appInsightsInstrumentationKey: shared[0].outputs.resources.appInsightsInstrumentationKey
     apimPublicIpId: networkingModule[0].outputs.resources.apimPublicIpId
     publisherEmail: apimGlobalSettings.apimPublisherEmail
     publisherName: apimGlobalSettings.apimPublisherName
-    capacity: locationSettings[0].apimRegionalSettings.skuCapacity
     skuName: apimGlobalSettings.apimSkuName
+    keyVaultName: shared[0].outputs.resources.keyVaultName!
+    keyVaultRG: sharedRG.name
+    primaryRegionSettings: locationSettings[0]
+    additionalRegionSettings: skip(locationSettings,1)
   }
 }
 

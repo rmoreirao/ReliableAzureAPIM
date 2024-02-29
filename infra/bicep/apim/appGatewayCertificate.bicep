@@ -27,33 +27,7 @@ var subjectName='CN=${appGatewayFQDN}'
 var certData = appGatewayCertType == 'selfsigned' ? 'null' : loadFileAsBase64('./appGwCerts/appgw.pfx')
 var certPwd = appGatewayCertType == 'selfsigned' ? 'null' : certPassword
 
-// TODO - not needed as using the RBAC for Key vault
-// resource accessPolicyGrant 'Microsoft.KeyVault/vaults/accessPolicies@2019-09-01' = {
-//   name: '${keyVaultName}/add'
-//   properties: {
-//     accessPolicies: [
-//       {
-//         objectId: managedIdentity.properties.principalId
-//         tenantId: managedIdentity.properties.tenantId
-//         permissions: {
-//           secrets: [ 
-//             'get' 
-//             'list'
-//           ]
-//           certificates: [
-//             'import'
-//             'get'
-//             'list'
-//             'update'
-//             'create'
-//           ]
-//         }                  
-//       }
-//     ]
-//   }
-// }
-
-module kvRoleAssignmentsCert 'kvAppGtwRoleAssignment.bicep' = {
+module kvRoleAssignmentsCert 'kvAppRoleAssignment.bicep' = {
   name: 'kvRoleAssignmentsCert'
   scope: resourceGroup(keyVaultRG)
   params: {
@@ -64,7 +38,7 @@ module kvRoleAssignmentsCert 'kvAppGtwRoleAssignment.bicep' = {
   }
 }
 
-module kvRoleAssignmentsSecret 'kvAppGtwRoleAssignment.bicep' = {
+module kvRoleAssignmentsSecret 'kvAppRoleAssignment.bicep' = {
   name: 'kvRoleAssignmentsSecret'
   scope: resourceGroup(keyVaultRG)
   params: {

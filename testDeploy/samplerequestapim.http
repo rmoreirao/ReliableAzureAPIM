@@ -1,4 +1,4 @@
-@domain = heineken-sandbox-apim.com
+@domain = contoso-sandbox-apim.com
 
 ### Request to Echo API
 POST https://api.{{domain}}/echo/resource HTTP/1.1
