@@ -19,7 +19,7 @@
 		- Conversation with Duncan / Reinier on Security
 			- Prepare the Questions - Firewall, Public IPs, NSGs, SIEM monitoring
 
-		- Prepare scripts for Heineken
+		- Prepare scripts for Contoso
 
 		- Documentation
 			- Document the scripts
@@ -70,10 +70,22 @@ This solution can be deployed to a Multi-Region environment. Not only APIM, but 
 ## Outbound Traffic from APIM goes via Azure Firewall
 Outbound traffic from APIM goes via Azure Firewall to increase the security of the solution.
 
+## Global Load Balance & Disaster Recovery for for External Inbound traffic - FrontDoor
+App Gateway is a Regional resource, so Frontdoor is the Global Loadbalancer.
+FrontDoor is able to do the Load Balance and also DR in case of Regional failure
+
+## Global Load Balance & Disaster Recovery for for Internal Inbound traffic - DNS
+Internal Inbound traffic should remain private - so FrontDoor was not an option for that.
+As of today (Fev 2024) there isn't an Azure Global Load Balancer for Internal traffic with API Management, so there ins't a Load Balancer solution - also not a requirement for now.
+DNS is used for the Disaster Recovery in case of Regional failure.
+
 # To deploy and test the Architecture
 
 ## Option 1 - Deploy it using Bicep
 1) Update the "main.dev.bicepparam" file with your configuration
+```
+Important! If you don't want to deploy a specific resource, then remove it from the "vNetSettings" for that specific region.
+```
 2) If you are deploying DevOps Agent and JumpBox VM, create the "/testDeploy/secrets.ps1" file with the following information:
 ```
 $env:DEVOPS_PAT="devops_pat"
@@ -177,6 +189,9 @@ Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in 
 	- [Azure-Orbital-STAC/deploy/bicep/modules/apim.bicep at 105c1af9c0b5d4749c4c94fa059fdf84b6f2c811 · Azure/Azure-Orbital-STAC (github.com)](https://github.com/Azure/Azure-Orbital-STAC/blob/105c1af9c0b5d4749c4c94fa059fdf84b6f2c811/deploy/bicep/modules/apim.bicep#L67)
 
 	- Have the Public IP set on APIM!
+
+## Public IP Address
+	- https://learn.microsoft.com/en-us/security/benchmark/azure/baselines/azure-public-ip-security-baseline
 
 # Others
 

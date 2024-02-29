@@ -531,6 +531,12 @@ var logicAppsStorageInboundSubnet = vNetSettings.?logicAppsStorageInboundAddress
   }
 }]
 
+var apimSubnetUdr = vNetSettings.?firewallAddressPrefix == null ? null : {
+  routeTable: {
+      id: udrApimFirewall.id
+    }
+}
+
 var apimSubnet = vNetSettings.?apimAddressPrefix == null ? [] : [{
   name: apimSubnetName
   properties: {
@@ -565,9 +571,7 @@ var apimSubnet = vNetSettings.?apimAddressPrefix == null ? [] : [{
         ]
       }
     ]
-    routeTable: {
-      id: udrApimFirewall.id
-    }
+    routeTable: apimSubnetUdr
   }
 }]
 

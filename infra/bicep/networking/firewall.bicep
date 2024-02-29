@@ -18,7 +18,7 @@ param firewallSubnetName string
 param firewallManagementSubnetName string 
 param udrApimFirewallName string
 param publicIpFirewallId string
-param publicIpFirewallMgmtId string
+param publicIpFirewallMgmtId string?
 
 var firewallPolicyName = 'fw-policy-${workloadName}-${deploymentEnvironment}-${location}'
 var firewallName = 'fw-${workloadName}-${deploymentEnvironment}-${location}'
@@ -87,6 +87,16 @@ resource firewallPolicies 'Microsoft.Network/firewallPolicies/ruleCollectionGrou
 var azureFirewallSubnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', apimVNetName, firewallSubnetName)
 var azureFirewallManagementSubnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', apimVNetName, firewallManagementSubnetName)
 
+var managementIpConfiguration = publicIpFirewallMgmtId == null ? null : {
+  name: 'ManagementIpConfiguration'
+  properties: {
+    subnet: json('{"id": "${azureFirewallManagementSubnetId}"}')
+    publicIPAddress: {
+      id: publicIpFirewallMgmtId
+    }
+  }
+}
+
 resource firewall 'Microsoft.Network/azureFirewalls@2020-04-01' = {
   name: firewallName
   location: location
@@ -105,15 +115,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2020-04-01' = {
         }
       }
     ]
-    managementIpConfiguration: {
-      name: 'ManagementIpConfiguration'
-      properties: {
-        subnet: json('{"id": "${azureFirewallManagementSubnetId}"}')
-        publicIPAddress: {
-          id: publicIpFirewallMgmtId
-        }
-      }
-    }
+    managementIpConfiguration: managementIpConfiguration
     firewallPolicy: {
       id: firewallPolicy.id
     }

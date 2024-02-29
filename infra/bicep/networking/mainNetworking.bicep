@@ -32,29 +32,30 @@ module networkingModule './virtualNetwork.bicep' = {
       workloadName: workloadName
       environment: environment
       location: location
+      vNetSettings: vNetSettings
     }
     dependsOn: [
       networkingModule
     ]
   }
 
-// module firewall './firewall.bicep' = if( vNetSettings.?firewallAddressPrefix != null) {
-//   name: 'networkingfirewallresources${workloadName}${environment}${location}'
-//   params: {
-//     workloadName: workloadName
-//     deploymentEnvironment: environment
-//     location: location
-//     apimVNetName: networkingModule.outputs.apimVNetName
-//     firewallSubnetName: networkingModule.outputs.firewallSubnetName
-//     udrApimFirewallName: networkingModule.outputs.udrApimFirewallName!
-//     firewallManagementSubnetName: networkingModule.outputs.firewallManagementSubnetName
-//     publicIpFirewallId: publicIps.outputs.publicIpFirewallId
-//     publicIpFirewallMgmtId: publicIps.outputs.publicIpFirewallMgmtId
-//   }
-//   dependsOn: [
-//     networkingModule
-//   ]
-// }
+module firewall './firewall.bicep' = if( vNetSettings.?firewallAddressPrefix != null) {
+  name: 'networkingfirewallresources${workloadName}${environment}${location}'
+  params: {
+    workloadName: workloadName
+    deploymentEnvironment: environment
+    location: location
+    apimVNetName: networkingModule.outputs.apimVNetName
+    firewallSubnetName: networkingModule.outputs.firewallSubnetName
+    udrApimFirewallName: networkingModule.outputs.udrApimFirewallName!
+    firewallManagementSubnetName: networkingModule.outputs.firewallManagementSubnetName
+    publicIpFirewallId: publicIps.outputs.publicIpFirewallId!
+    publicIpFirewallMgmtId: publicIps.outputs.publicIpFirewallMgmtId
+  }
+  dependsOn: [
+    networkingModule
+  ]
+}
 
 
 var bastionName = 'bastion-${workloadName}-${environment}-${location}'	
@@ -70,10 +71,10 @@ resource bastion 'Microsoft.Network/bastionHosts@2020-07-01' = if(vNetSettings.?
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
-            id: publicIps.outputs.publicIpBastionId
+            id: publicIps.outputs.?publicIpBastionId
           }
           subnet: {
-            id: networkingModule.outputs.bastionSubnetid
+            id: networkingModule.outputs.?bastionSubnetid
           }
         }
       }

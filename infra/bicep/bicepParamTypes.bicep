@@ -4,10 +4,11 @@
 type vNetSettingsType = {
   apimVNetNameAddressPrefix :  string
   apimAddressPrefix : string
-  firewallAddressPrefix : string
-  firewallManagementAddressPrefix : string
   appGatewayAddressPrefix : string
   
+  firewallAddressPrefix : string?
+  firewallManagementAddressPrefix : string?
+
   bastionAddressPrefix : string?
   devOpsNameAddressPrefix : string?
   jumpBoxAddressPrefix : string?

@@ -14,8 +14,15 @@ $DEPLOY_NAME="apimDeployment"
 # delete a deployment
 # az deployment sub  delete  --name testasedeployment
 
+
 # set current subscription to 68d83f24-120a-47bf-a523-0a42e8e6cad1
-az account set --subscription 2d172aeb-b927-43ec-9808-8c9585119364
+
+# DI
+az account set --subscription 2d172aeb-b927-43ec-9808-8c9585119364 
+
+# Non-Prod
+# az account set --subscription afb8f550-216d-4848-b6f1-73b1bbf58f1e
+
 
 # deploy the bicep file directly
 
@@ -29,7 +36,7 @@ Set-Location "..\infra\bicep"
 python bicepParamUpdate.py --bicep_param_filename $BICEPPARAM_FILE --bicep_param_output_filename $BICEPPARAM_TMP_FILE --new_devops_password $env:VMVMPASSWORD --new_pat $env:DEVOPS_PAT --new_jumpbox_password $env:VMVMPASSWORD
 
 Set-Location $current_dir
-az deployment sub create --location $LOCATION --name $DEPLOY_NAME$LOCATION --template-file ..\infra\bicep\main.bicep --parameters ..\infra\bicep\$BICEPPARAM_TMP_FILE
+az deployment sub create --subscription 2d172aeb-b927-43ec-9808-8c9585119364 --location $LOCATION --name $DEPLOY_NAME$LOCATION --template-file ..\infra\bicep\main.bicep --parameters ..\infra\bicep\$BICEPPARAM_TMP_FILE --debug
 
 
 # New-AzSubscriptionDeployment `

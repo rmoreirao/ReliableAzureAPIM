@@ -1,7 +1,9 @@
+import {vNetSettingsType} from '../bicepParamTypes.bicep'
 
 param workloadName string
 param environment string
 param location string
+param vNetSettings vNetSettingsType
 
 
 var apimPublicIPName = 'pip-apim-${workloadName}-${environment}-${location}' // 'publicIp'
@@ -29,7 +31,7 @@ resource pip 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
 }
 
 // Mind the PIP for bastion being Standard SKU, Static IP
-resource pipBastion 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
+resource pipBastion 'Microsoft.Network/publicIPAddresses@2020-07-01' = if (vNetSettings.?bastionAddressPrefix != null) {
   name: bastionPublicIPName
   location: location
   sku: {
@@ -60,7 +62,7 @@ resource appGatewayPublicIP 'Microsoft.Network/publicIPAddresses@2019-09-01' = {
   }
 }
 
-resource pipFw 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
+resource pipFw 'Microsoft.Network/publicIPAddresses@2020-07-01' = if (vNetSettings.?firewallAddressPrefix != null) {
   name: publicIPAddressNameFirewall
   location: location
   sku: {
@@ -77,7 +79,7 @@ resource pipFw 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
   
 }
 
-resource pipFwMgmt 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
+resource pipFwMgmt 'Microsoft.Network/publicIPAddresses@2020-07-01' = if (vNetSettings.?firewallManagementAddressPrefix != null) {
   name: publicIPAddressNameFirewallManagement
   location: location
   sku: {
@@ -95,6 +97,6 @@ resource pipFwMgmt 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
 
 output appGatewayPublicIpId string = appGatewayPublicIP.id
 output apimPublicIpId string = pip.id
-output publicIpBastionId string = pipBastion.id
-output publicIpFirewallId string = pipFw.id
-output publicIpFirewallMgmtId string = pipFwMgmt.id
+output publicIpBastionId string? = vNetSettings.?bastionAddressPrefix != null ? pipBastion.id : null
+output publicIpFirewallId string? = vNetSettings.?firewallAddressPrefix != null ? pipFw.id : null
+output publicIpFirewallMgmtId string? = vNetSettings.?firewallManagementAddressPrefix != null ? pipFwMgmt.id : null
