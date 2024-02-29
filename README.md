@@ -31,6 +31,7 @@
 			 Security,  Networking & Resilience
 
 		- Paired regions 
+			https://learn.microsoft.com/en-us/azure/reliability/cross-region-replication-azure
 
 	Explain Multi-Region x Region Pair
 
@@ -67,8 +68,14 @@ Not only APIM is internal, but also Logic Apps, Functions, Storage and Key Vault
 ## Multi-Region deployment
 This solution can be deployed to a Multi-Region environment. Not only APIM, but also the other Regional Resources.
 
+## Have Main & Disaster Recovery region for each Geo Location
+TBD - diagram ready!
+
 ## Outbound Traffic from APIM goes via Azure Firewall
 Outbound traffic from APIM goes via Azure Firewall to increase the security of the solution.
+
+## Inbound Traffic Diagram
+TBD - Diagram ready!
 
 ## Global Load Balance & Disaster Recovery for for External Inbound traffic - FrontDoor
 App Gateway is a Regional resource, so Frontdoor is the Global Loadbalancer.
