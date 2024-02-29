@@ -25,33 +25,37 @@ module networkingModule './virtualNetwork.bicep' = {
     }
   }
 
-module firewall './firewall.bicep' = if( vNetSettings.?firewallAddressPrefix != null) {
-  name: 'networkingfirewallresources${workloadName}${environment}${location}'
-  params: {
-    workloadName: workloadName
-    deploymentEnvironment: environment
-    location: location
-    apimVNetName: networkingModule.outputs.apimVNetName
-    firewallSubnetName: networkingModule.outputs.firewallSubnetName
-    udrApimFirewallName: networkingModule.outputs.udrApimFirewallName!
-    firewallManagementSubnetName: networkingModule.outputs.firewallManagementSubnetName
-  }
-  dependsOn: [
-    networkingModule
-  ]
-}
 
-module publicIps './publicIp.bicep' = {
-  name: 'networkpublicipresources${workloadName}${environment}${location}'
-  params: {
-    workloadName: workloadName
-    environment: environment
-    location: location
+  module publicIps './publicIp.bicep' = {
+    name: 'networkpublicipresources${workloadName}${environment}${location}'
+    params: {
+      workloadName: workloadName
+      environment: environment
+      location: location
+    }
+    dependsOn: [
+      networkingModule
+    ]
   }
-  dependsOn: [
-    networkingModule
-  ]
-}
+
+// module firewall './firewall.bicep' = if( vNetSettings.?firewallAddressPrefix != null) {
+//   name: 'networkingfirewallresources${workloadName}${environment}${location}'
+//   params: {
+//     workloadName: workloadName
+//     deploymentEnvironment: environment
+//     location: location
+//     apimVNetName: networkingModule.outputs.apimVNetName
+//     firewallSubnetName: networkingModule.outputs.firewallSubnetName
+//     udrApimFirewallName: networkingModule.outputs.udrApimFirewallName!
+//     firewallManagementSubnetName: networkingModule.outputs.firewallManagementSubnetName
+//     publicIpFirewallId: publicIps.outputs.publicIpFirewallId
+//     publicIpFirewallMgmtId: publicIps.outputs.publicIpFirewallMgmtId
+//   }
+//   dependsOn: [
+//     networkingModule
+//   ]
+// }
+
 
 var bastionName = 'bastion-${workloadName}-${environment}-${location}'	
 var bastionIPConfigName = 'bastionipcfg-${workloadName}-${environment}-${location}'

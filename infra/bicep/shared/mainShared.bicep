@@ -1,35 +1,17 @@
-import {vNetSettingsType,  locationSettingType, sharedResourcesType} from '../bicepParamTypes.bicep'
+import {vNetSettingsType,  locationSettingType, sharedResourcesType, devOpsResourcesSettingsType, jumpBoxResourcesSettingsType} from '../bicepParamTypes.bicep'
 // Parameters
 @description('Azure location to which the resources are to be deployed')
 param location string
 
+param jumpBoxResourcesSettings jumpBoxResourcesSettingsType?
+
 @description('The full id string identifying the target subnet for the jumpbox VM')
 param jumpboxSubnetId string?
 
+param devOpsResourcesSettings devOpsResourcesSettingsType?
+
 @description('The full id string identifying the target subnet for the CI/CD Agent VM')
 param devOpsAgentSubnetId string?
-
-@description('The user name to be used as the Administrator for all VMs created by this deployment')
-param vmUsername string
-
-@description('The password for the Administrator user for all VMs created by this deployment')
-@secure()
-param vmPassword string
-
-@description('The CI/CD platform to be used, and for which an agent will be configured for the ASE deployment. Specify \'none\' if no agent needed')
-@allowed([
-  'github'
-  'azuredevops'
-  'none'
-])
-param CICDAgentType string
-
-@description('The Azure DevOps or GitHub account name to be used when configuring the CI/CD agent, in the format https://dev.azure.com/ORGNAME OR github.com/ORGUSERNAME OR none')
-param accountName string
-
-@description('The Azure DevOps or GitHub personal access token (PAT) used to setup the CI/CD agent')
-@secure()
-param personalAccessToken string
 
 @description('The name of the shared resource group')
 param resourceGroupName string
@@ -64,32 +46,32 @@ module appInsights './monitoring.bicep' = {
   }
 }
 
-module vmDevOps './createvmwindows.bicep' = if (toLower(CICDAgentType)!='none' && devOpsAgentSubnetId != null) {
+module vmDevOps './createvmwindows.bicep' = if (devOpsResourcesSettings != null && devOpsResourcesSettings.?devOpsCICDAgentType != 'none' && devOpsAgentSubnetId != null) {
   name: 'devopsvm${workloadName}${environment}${location}'
   scope: resourceGroup(resourceGroupName)
   params: {
     location: location
     subnetId: devOpsAgentSubnetId!
-    username: vmUsername
-    password: vmPassword
-    vmName: '${CICDAgentType}-${environment}'
-    accountName: accountName
-    personalAccessToken: personalAccessToken
-    CICDAgentType: CICDAgentType
+    username: devOpsResourcesSettings!.devOpsVmUsername
+    password: devOpsResourcesSettings!.devOpsVmPassword
+    vmName: '${devOpsResourcesSettings!.devOpsCICDAgentType}-${environment}'
+    accountName: devOpsResourcesSettings!.devOpsAccountName
+    personalAccessToken: devOpsResourcesSettings!.devOpsPersonalAccessToken
+    CICDAgentType: devOpsResourcesSettings!.devOpsCICDAgentType
     deployAgent: true
     windowsOSVersion: defaultWindowsOSVersion
   }
 }
 
-module vmJumpBox './createvmwindows.bicep' = if (jumpboxSubnetId != null) {
+module vmJumpBox './createvmwindows.bicep' = if (jumpBoxResourcesSettings != null && jumpboxSubnetId != null) {
   name: 'vm-jumpbox${workloadName}${environment}${location}'
   scope: resourceGroup(resourceGroupName)
   params: {
     location: location
     subnetId: jumpboxSubnetId!
-    username: vmUsername
-    password: vmPassword
-    CICDAgentType: CICDAgentType
+    username: jumpBoxResourcesSettings!.jumpBoxVmUsername
+    password: jumpBoxResourcesSettings!.jumpBoxVmPassword
+    CICDAgentType: 'none'
     vmName: 'jumpbox-${environment}'
     windowsOSVersion: defaultWindowsOSVersion
   }

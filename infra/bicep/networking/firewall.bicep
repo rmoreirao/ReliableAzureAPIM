@@ -17,45 +17,11 @@ param apimVNetName string
 param firewallSubnetName string 
 param firewallManagementSubnetName string 
 param udrApimFirewallName string
+param publicIpFirewallId string
+param publicIpFirewallMgmtId string
 
-var publicIPAddressNameFirewall = 'pip-firewall-${workloadName}-${deploymentEnvironment}-${location}'
-var publicIPAddressNameFirewallManagement = 'pip-firewmgmt-${workloadName}-${deploymentEnvironment}-${location}'
 var firewallPolicyName = 'fw-policy-${workloadName}-${deploymentEnvironment}-${location}'
 var firewallName = 'fw-${workloadName}-${deploymentEnvironment}-${location}'
-
-
-resource pipFw 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
-  name: publicIPAddressNameFirewall
-  location: location
-  sku: {
-    name: 'Standard'
-    tier: 'Regional'
-  }
-  properties: {
-    publicIPAllocationMethod: 'Static'
-    publicIPAddressVersion: 'IPv4'
-    dnsSettings: {
-      domainNameLabel: toLower('${publicIPAddressNameFirewall}-${uniqueString(resourceGroup().id)}')
-    }
-  } 
-  
-}
-
-resource pipFwMgmt 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
-  name: publicIPAddressNameFirewallManagement
-  location: location
-  sku: {
-    name: 'Standard'
-    tier: 'Regional'
-  }
-  properties: {
-    publicIPAllocationMethod: 'Static'
-    publicIPAddressVersion: 'IPv4'
-    dnsSettings: {
-      domainNameLabel: toLower('${publicIPAddressNameFirewallManagement}-${uniqueString(resourceGroup().id)}')
-    }
-  } 
-}
 
 resource firewallPolicy 'Microsoft.Network/firewallPolicies@2022-07-01' = {
   name: firewallPolicyName
@@ -134,7 +100,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2020-04-01' = {
         properties: {
           subnet: json('{"id": "${azureFirewallSubnetId}"}')
           publicIPAddress: {
-            id: pipFw.id
+            id: publicIpFirewallId
           }
         }
       }
@@ -144,7 +110,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2020-04-01' = {
       properties: {
         subnet: json('{"id": "${azureFirewallManagementSubnetId}"}')
         publicIPAddress: {
-          id: pipFwMgmt.id
+          id: publicIpFirewallMgmtId
         }
       }
     }

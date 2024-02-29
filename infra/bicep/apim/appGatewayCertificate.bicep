@@ -114,18 +114,14 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   }
 }
 
-resource storageFileDataPrivilegedContributor 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: '69566ab7-960f-475b-8e7c-b3118f30c6bd' // Storage File Data Privileged Contributor
-  scope: tenant()
-}
-
+var storageFileDataPrivilegedContributorRoleId =  '69566ab7-960f-475b-8e7c-b3118f30c6bd'
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: storageAccount
 
-  name: guid(storageFileDataPrivilegedContributor.id, managedIdentity.properties.principalId, storageAccount.id)
+  name: guid(storageFileDataPrivilegedContributorRoleId, managedIdentity.properties.principalId, storageAccount.id)
   properties: {
     principalId: managedIdentity.properties.principalId
-    roleDefinitionId: storageFileDataPrivilegedContributor.id
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageFileDataPrivilegedContributorRoleId)
     principalType: 'ServicePrincipal'
   }
 }

@@ -397,6 +397,6 @@ FodyWeavers.xsd
 *.sln.iml
 
 # Solution items
-rmoreiraotest/
+testDeploy/secrets.ps1
 infra/bicep/main.json
 *.tmp.bicepparam

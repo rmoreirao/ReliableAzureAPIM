@@ -7,8 +7,8 @@ param location string
 var apimPublicIPName = 'pip-apim-${workloadName}-${environment}-${location}' // 'publicIp'
 var bastionPublicIPName = 'pip-bastion-${workloadName}-${environment}-${location}'
 var appGatewayPublicIpName = 'pip-appgw-${workloadName}-${environment}-${location}'
-
-
+var publicIPAddressNameFirewall = 'pip-firewall-${workloadName}-${environment}-${location}'
+var publicIPAddressNameFirewallManagement = 'pip-firewmgmt-${workloadName}-${environment}-${location}'
 
 resource pip 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
   name: apimPublicIPName
@@ -60,6 +60,41 @@ resource appGatewayPublicIP 'Microsoft.Network/publicIPAddresses@2019-09-01' = {
   }
 }
 
+resource pipFw 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
+  name: publicIPAddressNameFirewall
+  location: location
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    publicIPAddressVersion: 'IPv4'
+    dnsSettings: {
+      domainNameLabel: toLower('${publicIPAddressNameFirewall}-${uniqueString(resourceGroup().id)}')
+    }
+  } 
+  
+}
+
+resource pipFwMgmt 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
+  name: publicIPAddressNameFirewallManagement
+  location: location
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    publicIPAddressVersion: 'IPv4'
+    dnsSettings: {
+      domainNameLabel: toLower('${publicIPAddressNameFirewallManagement}-${uniqueString(resourceGroup().id)}')
+    }
+  } 
+}
+
 output appGatewayPublicIpId string = appGatewayPublicIP.id
 output apimPublicIpId string = pip.id
 output publicIpBastionId string = pipBastion.id
+output publicIpFirewallId string = pipFw.id
+output publicIpFirewallMgmtId string = pipFwMgmt.id

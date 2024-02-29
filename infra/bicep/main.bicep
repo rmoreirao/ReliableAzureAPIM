@@ -1,5 +1,5 @@
 targetScope='subscription'
-import {vNetSettingsType, locationSettingType, networkingResourcesType, sharedResourcesType, apimGlobalSettingsType, apimRegionalSettingsType} from 'bicepParamTypes.bicep'
+import {vNetSettingsType, devOpsResourcesSettingsType, jumpBoxResourcesSettingsType, locationSettingType, networkingResourcesType, sharedResourcesType, apimGlobalSettingsType, apimRegionalSettingsType} from 'bicepParamTypes.bicep'
 
 // Parameters
 @description('A short name for the workload being deployed alphanumberic only')
@@ -15,27 +15,8 @@ param workloadName string
 ])
 param environment string
 
-@description('The user name to be used as the Administrator for all VMs created by this deployment')
-param devOpsVmUsername string
-
-@description('The password for the Administrator user for all VMs created by this deployment')
-@secure()
-param devOpsVmPassword string = ''
-
-@description('The CI/CD platform to be used, and for which an agent will be configured for the ASE deployment. Specify \'none\' if no agent needed')
-@allowed([
-  'github'
-  'azuredevops'
-  'none'
-])
-param devOpsCICDAgentType string
-
-@description('The Azure DevOps or GitHub account name to be used when configuring the CI/CD agent, in the format https://dev.azure.com/ORGNAME OR github.com/ORGUSERNAME OR none')
-param devOpsAccountName string
-
-@description('The Azure DevOps or GitHub personal access token (PAT) used to setup the CI/CD agent')
-@secure()
-param devOpsPersonalAccessToken string = ''
+param jumpBoxResourcesSettings jumpBoxResourcesSettingsType
+param devOpsResourcesSettings devOpsResourcesSettingsType 
 
 param apimGlobalSettings apimGlobalSettingsType
 
@@ -108,15 +89,12 @@ module shared './shared/mainShared.bicep' = [for (locationSetting,i) in location
   name: 'sharedresources${workloadName}${environment}${locationSetting.location}'
   scope: resourceGroup(sharedRG.name)
   params: {
-    accountName: devOpsAccountName
     devOpsAgentSubnetId: networkingModule[i].outputs.resources.?devOpsAgentSubnetId
-    CICDAgentType: devOpsCICDAgentType
     environment: environment
     jumpboxSubnetId: networkingModule[i].outputs.resources.?jumpBoxSubnetid
-    personalAccessToken: devOpsPersonalAccessToken
     resourceGroupName: sharedRG.name
-    vmPassword: devOpsVmPassword
-    vmUsername: devOpsVmUsername
+    devOpsResourcesSettings: devOpsResourcesSettings
+    jumpBoxResourcesSettings:jumpBoxResourcesSettings
     workloadName: workloadName
     keyVaultPrivateEndpointSubnetid: networkingModule[i].outputs.resources.?keyVaultPrivateEndpointSubnetid
     location: locationSetting.location

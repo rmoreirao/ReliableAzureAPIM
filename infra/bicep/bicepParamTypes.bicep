@@ -21,6 +21,31 @@ type vNetSettingsType = {
 }
 
 @export()
+type devOpsResourcesSettingsType = {
+    @description('The user name to be used as the Administrator for all VMs created by this deployment')
+    devOpsVmUsername :string
+    @description('The password for the Administrator user for all VMs created by this deployment')
+    @secure()
+    devOpsVmPassword:string
+    @description('The CI/CD platform to be used, and for which an agent will be configured for the ASE deployment. Specify \'none\' if no agent needed')
+    devOpsCICDAgentType : 'github' | 'azuredevops' | 'none'
+    @description('The Azure DevOps or GitHub account name to be used when configuring the CI/CD agent, in the format https://dev.azure.com/ORGNAME OR github.com/ORGUSERNAME OR none')
+    devOpsAccountName :string
+    @description('The Azure DevOps or GitHub personal access token (PAT) used to setup the CI/CD agent')
+    @secure()
+    devOpsPersonalAccessToken:string
+}
+
+@export()
+type jumpBoxResourcesSettingsType = {
+    @description('The user name to be used as the Administrator for all VMs created by this deployment')
+    jumpBoxVmUsername :string
+    @description('The password for the Administrator user for all VMs created by this deployment')
+    @secure()
+    jumpBoxVmPassword :string
+}
+
+@export()
 type apimRegionalSettingsType = {
   skuCapacity: int
 }

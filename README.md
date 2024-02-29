@@ -3,101 +3,107 @@
 
 ## For today:
 	
-	Start preparing for Multi-Region 
-		
-		Private DNS Zone: https://learn.microsoft.com/en-us/azure/dns/dns-faq-private
-	
-	
+	Dependencies:
+		- Request my account 
+		- Azure DevOps Project
+			- Service Connections
 
-	Both Inbound and Outbound needs to go via Firewall???
+		- Backlog
+		- Prod and Non-Project Subscriptions
+
+	Things I can work on:
+		- Deploy Sandbox
+			- Issue with:
+				- Bastion and Firewall
+
+		- Conversation with Duncan / Reinier on Security
+			- Prepare the Questions - Firewall, Public IPs, NSGs, SIEM monitoring
+
+		- Prepare scripts for Heineken
+
+		- Documentation
+			- Document the scripts
+			- Architecture documents
+
+		- Continue for the Multi Region
+
+		- Deep dive into the other requirements:
+			 Security,  Networking & Resilience
+
+		- Paired regions 
+
+	Explain Multi-Region x Region Pair
+
+	API Center
+
+	Outbound goes via Firewall
 
 	API Ops: https://azure.github.io/apiops/
+		- Check! 
+			Documentation
+			Compliancy
+			Others?
+
+	Developer Portal Styling
 
 	Logic Apps - DevOps flow
 	
-	Developer Portal Styling
-
 	Functions - test the flow (Deploy to the External Subscription)
 		Low prio - but to explain why this is not there
 
 	Low Prio Improvements:
 		Check if Only on Subnet is Ok for all the Private Endpoints
 		Move things to the correct Resource Groups
-	
-## To Access the APIM locally:
-	C:\Windows\system32\drivers\etc\hosts
+		Private endpoint for the API Management - what are the timelines?
 
-	20.73.209.255 api.rmoreirao.net
-	20.73.209.255 devportalold.rmoreirao.net
-	20.73.209.255 devportal.rmoreirao.net
-	20.73.209.255 management.rmoreirao.net
+# Architecture & Design Decisions
 
-## Networking questions:
-	- VNet and Subnets:
-		- Who defines the VNets and Subnets on Prod and Non-Prod subscriptions?
-		- Who defines the IP adress ranges for the different environments?
+This repo is created on the top of APIM Landing Zone Accelerator, and most of the architectural decisions are following best practices of it.
+There are few improvements / changes to the discussed below.
 
-	- How do we connect Out of the Subscriptions?
-		- Both for On-prem and Internet?
-		- What is the flow for Azure Firewall?
-			- What are the requirements for Azure Firewall?
+## All resources are Internal
+Not only APIM is internal, but also Logic Apps, Functions, Storage and Key Vault - there are Private Endpoints for each of these services.
 
-	- How is the Inbound connection to the Subscription working?
+## Multi-Region deployment
+This solution can be deployed to a Multi-Region environment. Not only APIM, but also the other Regional Resources.
 
-	- There are many NSGs and UDRs for the Subnets
-		- Are there any guidance / limitations on these?
+## Outbound Traffic from APIM goes via Azure Firewall
+Outbound traffic from APIM goes via Azure Firewall to increase the security of the solution.
 
-	- There are Many Private DNS Zones and Private Endpoints - are there any requirements for this? [to list]
+# To deploy and test the Architecture
 
-	- There are some Public IP Addresses: what are the guidelines on Public IP Address on Prod and Non-Prod subscriptions?
-		- Ex.: Do we need to protect the inbound flow for Public IP? Do you have guidelines on that?
+## Option 1 - Deploy it using Bicep
+1) Update the "main.dev.bicepparam" file with your configuration
+2) If you are deploying DevOps Agent and JumpBox VM, create the "/testDeploy/secrets.ps1" file with the following information:
+```
+$env:DEVOPS_PAT="devops_pat"
+$env:VMVMPASSWORD="your_vm_admin_password"
+```
+3) Adjust variables on "/testDeploy/0_testpscript.ps1" script
+4) Execute "/testDeploy/0_testpscript.ps1" script from the "/testDeploy/" folder
 
-- Understand the flow for the Azure Firewall?
-- Access to Azure DevOps project
-- Have non-prod Subscription with access to it to test / deploy the solution
-- Depends on Networking team to work with us on setting up the Networking components (ex.: IP Address spaces for Subnets)
-- What are the Address Spaces for the Subnets?
-- **Per Environment:**
-		- **Subnets (Private IP ranges)** – Vnet Address Space? is networking team deciding on the Private Networks in our networks?
-			- DevOps
-			- JumpBox Subnet
-			- Bastion Subnet
-			- App Gateway Subnet
-			- APIM Subnet
-			- Private Endpoint Subnet
-			- Backend Subnet
-			- Azure Firewall
-		- **Public Ips** (what are the guidelines for Public Ips?)
-			- Bastion
-			- APIM
-	- **Private DNS Zones** (for sandbox – we do it in our subscriptions – how will it work for the other subscriptions? On the picture the DNS was outside):
-		•	azure-api.net - API Gateway
-		•	portal.azure-api.net - Developer portal (old)
-		•	developer.azure-api.net - The new developer portal
-		•	management.azure-api.net -  Management endpoint
-		•	scm.azure-api.net - Git (if required – maybe not)
-	- **App Gateway**
-•	We need to have the certificates for the endpoints
-		•	API Gateway
-		•	Developer Portal
-		•	Certificate is stored in the KeyVault
-		•	For the Sandbox, will start with Self-signed certificate – at least for now
+## Option 2 - Deploy it using Azure DevOps Pipeline
+Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in the file.
 
-	- **Custom Domain Names**
-		- What are the requirements for Custom Domain Names? Check the endpoints
-		- Custom Domain names on APIM and App Gateway
- 
-•	**Where to put the DNS Zones?**
-	•	[Not so urgent for now] How do we connect to om-prem / other subscriptions?
-	•	What are the requirements for Azure Firewall
- 
-- Are there naming conventions to be used? Work together on the name of the components
-- Decision on which other services to be installed - Azure Functions or Logic Apps – both there to start with
+## Testing with App Gateway
+
+1) Add the App Gateway FQDN to your "hosts" file ( C:\Windows\system32\drivers\etc\hosts )
+```
+	{{App Gateway Public IP Address}} api.{{app gateway FQDN}}
+	{{App Gateway Public IP Address}} devportalold.{{app gateway FQDN}}
+	{{App Gateway Public IP Address}} devportal.{{app gateway FQDN}}
+	{{App Gateway Public IP Address}} management.{{app gateway FQDN}}
+```
+
+2) Access the URLs directly from your browser
+3) Use the "samplerequestapim.http" from VS Code to test the endpoints
 
 # References
 
 ## APIM Landing Zone
-	- Add the Github Link here for APIM and Integration Services!
+	- https://github.com/Azure/apim-landing-zone-accelerator
+	- https://github.com/Azure/Integration-Services-Landing-Zone-Accelerator 
+
 
 ## App Gateway 
 	- [(Use API Management in a virtual network with Azure Application Gateway - Azure API Management | Microsoft Learn)](https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-integrate-internal-vnet-appgateway)
@@ -115,16 +121,14 @@
 		- stop: az network application-gateway stop -n appgw-rmor2-dev-westeurope-001 -g rg-apim-rmor2-dev-westeurope-001
 		- start: az network application-gateway start -n appgw-rmor4-dev-uksouth-001 -g rg-apim-rmor4-dev-uksouth-001
 
-## Stv2 
-	- [Azure-Orbital-STAC/deploy/bicep/modules/apim.bicep at 105c1af9c0b5d4749c4c94fa059fdf84b6f2c811 · Azure/Azure-Orbital-STAC (github.com)](https://github.com/Azure/Azure-Orbital-STAC/blob/105c1af9c0b5d4749c4c94fa059fdf84b6f2c811/deploy/bicep/modules/apim.bicep#L67)
 
-	- Have the Public IP set on APIM!
 
 ## Firewall
 	- https://techcommunity.microsoft.com/t5/azure-paas-blog/api-management-networking-faqs-demystifying-series-ii/ba-p/1502056
 	- Look for "Force tunneling": https://learn.microsoft.com/en-us/azure/api-management/api-management-using-with-internal-vnet?tabs=stv2
 	- https://github.com/nehalineogi/azure-cross-solution-network-architectures/blob/main/apim/README-firewall.md
 	- https://learn.microsoft.com/en-us/azure/app-service/network-secure-outbound-traffic-azure-firewall
+	- Error: "Put on Firewall Policy Failed with 1 faulted referenced firewalls"  https://cloudcurve.co.uk/azure/azure-firewall-policy-fix-failed-provisioning-state/
 
 	Firewall: [API Management - Networking FAQs (Demystifying Series II) - Microsoft Community Hub](https://techcommunity.microsoft.com/t5/azure-paas-blog/api-management-networking-faqs-demystifying-series-ii/ba-p/1502056#b1)
 		https://learn.microsoft.com/en-us/azure/app-service/network-secure-outbound-traffic-azure-firewall
@@ -168,6 +172,11 @@
 	- https://learn.microsoft.com/en-us/samples/azure/azure-quickstart-templates/api-management-create-with-multiregion/
 	- https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-deploy-multi-region
 	- https://github.com/nehalineogi/azure-cross-solution-network-architectures/blob/main/apim/README-mulitregion.md
+
+## Migration of APIM to Stv2 
+	- [Azure-Orbital-STAC/deploy/bicep/modules/apim.bicep at 105c1af9c0b5d4749c4c94fa059fdf84b6f2c811 · Azure/Azure-Orbital-STAC (github.com)](https://github.com/Azure/Azure-Orbital-STAC/blob/105c1af9c0b5d4749c4c94fa059fdf84b6f2c811/deploy/bicep/modules/apim.bicep#L67)
+
+	- Have the Public IP set on APIM!
 
 # Others
 
