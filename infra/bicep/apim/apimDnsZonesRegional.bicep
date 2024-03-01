@@ -6,47 +6,6 @@ param apimPrivateIPAddress      string
 param apimGatewayDnsZoneName string
 param apimDeveloperDnsZoneName string
 param apimManagementDnsZoneName string
-// param gatewayDnsZoneName string
-// param developerDnsZoneName string
-// param managementDnsZoneName string
-
-/*
-Createa a Private DNS ZOne, A Record and Vnet Link for each of the below endpoints
-
-API Gateway	                {APIM Name}.azure-api.net
-The new developer portal	  {APIM Name}.developer.azure-api.net
-Direct management endpoint	{APIM Name}.management.azure-api.net
-
-*/
-
-/*
- Retrieve APIM and Virtual Network
-*/
-
-// resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
-//   name: vnetName
-//   scope: resourceGroup(vnetRG)
-// }
-
-// DNS Zones
-
-// resource gatewayDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-//   name: 'azure-api.net'
-//   location: 'global'
-//   properties: {}
-// }
-
-// resource developerDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-//   name: 'developer.azure-api.net'
-//   location: 'global'
-//   properties: {}
-// }
-
-// resource managementDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-//   name: 'management.azure-api.net'
-//   location: 'global'
-//   properties: {}
-// }
 
 resource gatewayRecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
   name: '${apimGatewayDnsZoneName}/${apimName}'

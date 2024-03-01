@@ -48,7 +48,16 @@ type jumpBoxResourcesSettingsType = {
 
 @export()
 type apimRegionalSettingsType = {
+  @description('The instance size of this API Management service. This should be a multiple of the number of availability zones getting deployed.')
   skuCapacity: int
+
+  @description('Numbers for availability zones, for example, 1,2,3.')
+  availabilityZones: string[]?
+  // Example:
+  // [
+  // '1'
+  // '2'
+  // ]
 }
 
 @export()

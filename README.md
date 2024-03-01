@@ -17,7 +17,6 @@
 	Things I can work on:
 		- Deploy Sandbox
 			- Issue with:
-				- Firewall - ongoing
 				- Bastion
 
 		- Prepare scripts for Contoso
@@ -26,7 +25,15 @@
 			- Document the scripts
 			- Architecture documents
 
+		- Access App Gateway without adjusting the host files - how?
+
 		- Continue for the Multi Region
+
+		- Move to one Subnet for Private Endpoint 
+
+		- Add Zone Redundancy to all resources!
+
+		- Do WAF Assessment!
 
 		- Deep dive into the other requirements:
 			 Security,  Networking & Resilience
@@ -64,6 +71,8 @@ There are few improvements / changes to the discussed below.
 
 ## All resources are Internal
 Not only APIM is internal, but also Logic Apps, Functions, Storage and Key Vault - there are Private Endpoints for each of these services.
+The reason for that is to keep all the traffic in the internal network, without having traffic via the public internet.
+When you use APIM in External mode, APIM exposes the endpoints public, so the traffic goes via the public internet.
 
 ## Multi-Region deployment
 This solution can be deployed to a Multi-Region environment. Not only APIM, but also the other Regional Resources.
@@ -93,10 +102,11 @@ DNS is used for the Disaster Recovery in case of Regional failure.
 ```
 Important! If you don't want to deploy a specific resource, then remove it from the "vNetSettings" for that specific region.
 ```
-2) If you are deploying DevOps Agent and JumpBox VM, create the "/testDeploy/secrets.ps1" file with the following information:
+2) Create the "/testDeploy/secrets.ps1" file with the following information:
 ```
 $env:DEVOPS_PAT="devops_pat"
 $env:VMVMPASSWORD="your_vm_admin_password"
+$env:SUBSCRIPTION_ID="you subscription id to deploy to"
 ```
 3) Adjust variables on "/testDeploy/0_testpscript.ps1" script
 4) Execute "/testDeploy/0_testpscript.ps1" script from the "/testDeploy/" folder
@@ -131,6 +141,8 @@ Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in 
 	- https://learn.microsoft.com/en-us/samples/azure/azure-quickstart-templates/api-management-create-with-multiregion/
 	- https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-deploy-multi-region
 	- https://github.com/nehalineogi/azure-cross-solution-network-architectures/blob/main/apim/README-mulitregion.md
+
+	- https://github.com/kphan714/AzureDeploymentFramework/blob/2266fe9d37ac706c09027a9881583e5c23825533/ADF/bicep/APIM-APIM.bicep#L191
 	
 
 ## App Gateway 

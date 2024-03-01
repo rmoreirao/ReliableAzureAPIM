@@ -24,6 +24,7 @@ param skuName string
 param primaryRegionSettings locationSettingType
 
 param additionalRegionSettings locationSettingType[]
+param additionalRegionsNetworkingResources networkingResourcesType[]
 
 param appInsightsName string
 param appInsightsId string
@@ -69,16 +70,8 @@ resource apim 'Microsoft.ApiManagement/service@2021-08-01' = {
     capacity: primaryRegionSettings.apimRegionalSettings.skuCapacity
     name: skuName
   }
-  
+  zones: primaryRegionSettings.apimRegionalSettings.?availabilityZones
   properties:{
-    additionalLocations: [for settings in additionalRegionSettings: {
-      location: settings.location
-      sku: {
-        name: skuName
-        capacity: settings.apimRegionalSettings.skuCapacity
-      }
-    }]
-
     virtualNetworkType: 'Internal'
     publisherEmail: publisherEmail
     publisherName: publisherName
@@ -86,6 +79,18 @@ resource apim 'Microsoft.ApiManagement/service@2021-08-01' = {
     virtualNetworkConfiguration: {
       subnetResourceId: apimSubnetId
     }
+    additionalLocations: [for (settings,i) in additionalRegionSettings: {
+      location: settings.location
+      sku: {
+        name: skuName
+        capacity: settings.apimRegionalSettings.skuCapacity
+      }
+      virtualNetworkConfiguration:{
+          subnetResourceId: additionalRegionsNetworkingResources[i].apimSubnetid
+        }
+        publicIpAddressId: additionalRegionsNetworkingResources[i].apimPublicIpId
+        zones: settings.apimRegionalSettings.?availabilityZones
+    }]
   }
 }
 
