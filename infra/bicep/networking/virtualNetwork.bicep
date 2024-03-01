@@ -184,7 +184,7 @@ resource bastionNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = if (v
   }
 }
 
-resource devOpsNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = if (vNetSettings.?devOpsNameAddressPrefix != null) {
+resource devOpsNSG 'Microsoft.Network/networkSecurityGroups@2020-06-01' = if (vNetSettings.?devOpsAgentAddressPrefix != null) {
   name: devOpsNSGName
   location: location
   properties: {
@@ -399,10 +399,10 @@ var bastionSubnet = vNetSettings.?bastionAddressPrefix == null ? [] : [{
   }
 }]
 
-var devOpsSubnet = vNetSettings.?devOpsNameAddressPrefix == null ? [] : [{
+var devOpsSubnet = vNetSettings.?devOpsAgentAddressPrefix == null ? [] : [{
   name: devOpsSubnetName
   properties: {
-    addressPrefix: vNetSettings.devOpsNameAddressPrefix
+    addressPrefix: vNetSettings.devOpsAgentAddressPrefix
     networkSecurityGroup: {
       id: devOpsNSG.id
     }
@@ -616,7 +616,7 @@ resource vnetApim 'Microsoft.Network/virtualNetworks@2021-02-01' = {
 // output firewallManagementSubnetName string = firewallManagementSubnetName
 
 // output bastionSubnetid string? = vNetSettings.bastionAddressPrefix != null ? '${vnetApim.id}/subnets/${bastionSubnetName}' : null
-// output devOpsAgentSubnetId string? = vNetSettings.?devOpsNameAddressPrefix != null ? '${vnetApim.id}/subnets/${devOpsSubnetName}'  : null
+// output devOpsAgentSubnetId string? = vNetSettings.?devOpsAgentAddressPrefix != null ? '${vnetApim.id}/subnets/${devOpsSubnetName}'  : null
 // output jumpBoxSubnetid string? = vNetSettings.?jumpBoxAddressPrefix != null ? '${vnetApim.id}/subnets/${jumpBoxSubnetName}'  : null
 // output appGatewaySubnetid string? = vNetSettings.?appGatewayAddressPrefix != null ? '${vnetApim.id}/subnets/${appGatewaySubnetName}'  : null
 // output functionsInboundSubnetid string? = vNetSettings.?functionsInboundAddressPrefix != null ?'${vnetApim.id}/subnets/${functionsInboundPrivateEndpointSubnetName}'  : null
@@ -660,7 +660,7 @@ output firewallSubnetid string? = vNetSettings.?firewallAddressPrefix != null ?'
 output udrApimFirewallName string? = vNetSettings.?firewallAddressPrefix != null ? udrApimFirewallName: null
 
 output bastionSubnetid string? = vNetSettings.?bastionAddressPrefix != null ? '${vnetApim.id}/subnets/${bastionSubnetName}' : null
-output devOpsAgentSubnetId string? = vNetSettings.?devOpsNameAddressPrefix != null ? '${vnetApim.id}/subnets/${devOpsSubnetName}'  : null
+output devOpsAgentSubnetId string? = vNetSettings.?devOpsAgentAddressPrefix != null ? '${vnetApim.id}/subnets/${devOpsSubnetName}'  : null
 output jumpBoxSubnetid string? = vNetSettings.?jumpBoxAddressPrefix != null ? '${vnetApim.id}/subnets/${jumpBoxSubnetName}'  : null
 output functionsInboundSubnetid string? = vNetSettings.?functionsInboundAddressPrefix != null ?'${vnetApim.id}/subnets/${functionsInboundPrivateEndpointSubnetName}'  : null
 output functionsOutboundSubnetid string? = vNetSettings.?functionsOutboundAddressPrefix != null ?'${vnetApim.id}/subnets/${functionsOutboundSubnetName}': null

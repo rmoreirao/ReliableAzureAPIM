@@ -10,7 +10,7 @@ type vNetSettingsType = {
   firewallManagementAddressPrefix : string?
 
   bastionAddressPrefix : string?
-  devOpsNameAddressPrefix : string?
+  devOpsAgentAddressPrefix : string?
   jumpBoxAddressPrefix : string?
   functionsInboundAddressPrefix : string?
   functionsOutboundAddressPrefix : string?

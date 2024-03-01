@@ -31,7 +31,7 @@ param locationSettings = [
     vNetSettings: {
         apimVNetNameAddressPrefix :'10.5.0.0/16'
         bastionAddressPrefix : '10.5.1.0/24'
-        devOpsNameAddressPrefix : '10.5.2.0/24'
+        // devOpsAgentAddressPrefix : '10.5.2.0/24'
         jumpBoxAddressPrefix : '10.5.3.0/24'
         appGatewayAddressPrefix : '10.5.4.0/24'
         // functionsInboundAddressPrefix : '10.5.5.0/24'

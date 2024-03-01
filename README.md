@@ -17,7 +17,7 @@
 	Things I can work on:
 		- Deploy Sandbox
 			- Issue with:
-				- Bastion
+				- Bastion - ongoing
 
 		- Prepare scripts for Contoso
 
@@ -69,35 +69,47 @@
 This repo is created on the top of APIM Landing Zone Accelerator, and most of the architectural decisions are following best practices of it.
 There are few improvements / changes to the discussed below.
 
-## All resources are Internal
+### Detailed Architecture
+Full detail of the resources can be found [here](docs/ReferenceImplementation.md).
+![Global Scale Deployment](docs/diagrams/APIMMultiRegionInternal.png)
+
+
+### All resources are Internal
 Not only APIM is internal, but also Logic Apps, Functions, Storage and Key Vault - there are Private Endpoints for each of these services.
 The reason for that is to keep all the traffic in the internal network, without having traffic via the public internet.
 When you use APIM in External mode, APIM exposes the endpoints public, so the traffic goes via the public internet.
 
-## Multi-Region deployment
+### Multi-Region deployment
 This solution can be deployed to a Multi-Region environment. Not only APIM, but also the other Regional Resources.
 
-## Have Main & Disaster Recovery region for each Geo Location
-TBD - diagram ready!
+### Have Main & Disaster Recovery region for each Geo Location
+The solution consider that there are multiple Geo Locations (ex.: Americas and Europe), and each Geo Location contains 2 regions: 
+**- Main Region:** This will the main region receiving all the requests for a specific Geo Location.
+**- Disaster Recovery Region:**  In case of a Regional disaster on Main region, this region will be used for Disaster Recovery.
+For reliability, all the Regional resources must be deployed on both regions.
+![Global Scale Deployment](docs/diagrams/GlobalScaleDeployment.png)
 
-## Outbound Traffic from APIM goes via Azure Firewall
-Outbound traffic from APIM goes via Azure Firewall to increase the security of the solution.
 
-## Inbound Traffic Diagram
-TBD - Diagram ready!
+### Outbound Traffic from APIM goes via Azure Firewall
+Outbound traffic from APIM goes via Azure Firewall to increase the security of the solution. This is implemented by adding UDR to the APIM Vnet -> Azure Firewall IP.
 
-## Global Load Balance & Disaster Recovery for for External Inbound traffic - FrontDoor
+### Inbound Traffic
+There are 2 different scenarios for Inbound traffic: Internal and External. These are described below.
+![Global Scale Deployment](docs/diagrams/InboundTraffic.png)
+
+
+### External Inbound traffic - Global Load Balance & Disaster Recovery using FrontDoor
 App Gateway is a Regional resource, so Frontdoor is the Global Loadbalancer.
 FrontDoor is able to do the Load Balance and also DR in case of Regional failure
 
-## Global Load Balance & Disaster Recovery for for Internal Inbound traffic - DNS
+### Internal Inbound traffic - Global Load Balance & Disaster Recovery using DNS
 Internal Inbound traffic should remain private - so FrontDoor was not an option for that.
 As of today (Fev 2024) there isn't an Azure Global Load Balancer for Internal traffic with API Management, so there ins't a Load Balancer solution - also not a requirement for now.
 DNS is used for the Disaster Recovery in case of Regional failure.
 
 # To deploy and test the Architecture
 
-## Option 1 - Deploy it using Bicep
+### Option 1 - Deploy it using Bicep
 1) Update the "main.dev.bicepparam" file with your configuration
 ```
 Important! If you don't want to deploy a specific resource, then remove it from the "vNetSettings" for that specific region.
@@ -111,10 +123,10 @@ $env:SUBSCRIPTION_ID="you subscription id to deploy to"
 3) Adjust variables on "/testDeploy/0_testpscript.ps1" script
 4) Execute "/testDeploy/0_testpscript.ps1" script from the "/testDeploy/" folder
 
-## Option 2 - Deploy it using Azure DevOps Pipeline
+### Option 2 - Deploy it using Azure DevOps Pipeline
 Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in the file.
 
-## Testing with App Gateway
+### Testing with App Gateway
 
 1) Add the App Gateway FQDN to your "hosts" file ( C:\Windows\system32\drivers\etc\hosts )
 ```
