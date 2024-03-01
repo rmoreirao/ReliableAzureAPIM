@@ -83,10 +83,10 @@ When you use APIM in External mode, APIM exposes the endpoints public, so the tr
 This solution can be deployed to a Multi-Region environment. Not only APIM, but also the other Regional Resources.
 
 ### Have Main & Disaster Recovery region for each Geo Location
-The solution consider that there are multiple Geo Locations (ex.: Americas and Europe), and each Geo Location contains 2 regions: 
-**- Main Region:** This will the main region receiving all the requests for a specific Geo Location.
-**- Disaster Recovery Region:**  In case of a Regional disaster on Main region, this region will be used for Disaster Recovery.
-For reliability, all the Regional resources must be deployed on both regions.
+The solution consider that there are multiple Geo Locations (ex.: Americas and Europe), and each Geo Location contains 2 regions:  
+**- Main Region:** This will the main region receiving all the requests for a specific Geo Location.  
+**- Disaster Recovery Region:**  In case of a Regional disaster on Main region, this region will be used for Disaster Recovery.  
+For reliability, all the Regional resources must be deployed on both regions.  
 ![Global Scale Deployment](docs/diagrams/GlobalScaleDeployment.png)
 
 
@@ -94,17 +94,17 @@ For reliability, all the Regional resources must be deployed on both regions.
 Outbound traffic from APIM goes via Azure Firewall to increase the security of the solution. This is implemented by adding UDR to the APIM Vnet -> Azure Firewall IP.
 
 ### Inbound Traffic
-There are 2 different scenarios for Inbound traffic: Internal and External. These are described below.
+There are 2 different scenarios for Inbound traffic: Internal and External. These are described below.  
 ![Global Scale Deployment](docs/diagrams/InboundTraffic.png)
 
 
 ### External Inbound traffic - Global Load Balance & Disaster Recovery using FrontDoor
-App Gateway is a Regional resource, so Frontdoor is the Global Loadbalancer.
+App Gateway is a Regional resource, so Frontdoor is the Global Loadbalancer.  
 FrontDoor is able to do the Load Balance and also DR in case of Regional failure
 
 ### Internal Inbound traffic - Global Load Balance & Disaster Recovery using DNS
-Internal Inbound traffic should remain private - so FrontDoor was not an option for that.
-As of today (Fev 2024) there isn't an Azure Global Load Balancer for Internal traffic with API Management, so there ins't a Load Balancer solution - also not a requirement for now.
+Internal Inbound traffic should remain private - so FrontDoor was not an option for that.  
+As of today (Fev 2024) there isn't an Azure Global Load Balancer for Internal traffic with API Management, so there ins't a Load Balancer solution - also not a requirement for now.  
 DNS is used for the Disaster Recovery in case of Regional failure.
 
 # To deploy and test the Architecture
