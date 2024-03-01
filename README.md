@@ -11,7 +11,7 @@
 		- Backlog
 		- Prod and Non-Project Subscriptions
 
-		- Conversation with Duncan / Reinier on Security
+		- Conversations on Security
 			- Prepare the Questions - Firewall, Public IPs, NSGs, SIEM monitoring
 
 	Things I can work on:
