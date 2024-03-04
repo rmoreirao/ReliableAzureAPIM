@@ -3,66 +3,20 @@
 
 ## For today:
 	
-	Dependencies:
-		- Request my account 
-		- Azure DevOps Project
-			- Service Connections
-
-		- Backlog
-		- Prod and Non-Project Subscriptions
-
-		- Conversations on Security
-			- Prepare the Questions - Firewall, Public IPs, NSGs, SIEM monitoring
-
 	Things I can work on:
-		- Deploy Sandbox
-			- Issue with:
-				- Bastion - ongoing
-
-		- Prepare scripts for Contoso
-
-		- Documentation
-			- Document the scripts
-			- Architecture documents
-
-		- Access App Gateway without adjusting the host files - how?
+		- Deploy Sandbox - full! All resources!
+	
+		- Test Manual MultiAZ & Multi Region deploy on Sandbox
 
 		- Continue for the Multi Region
 
-		- Move to one Subnet for Private Endpoint 
-
-		- Add Zone Redundancy to all resources!
-
-		- Do WAF Assessment!
-
-		- Deep dive into the other requirements:
-			 Security,  Networking & Resilience
-
-		
+		- [Depends on Dev Portal requirements] Developer Portal Styling DevOps
 
 	Explain Multi-Region x Region Pair
 		- Paired regions 
 			https://learn.microsoft.com/en-us/azure/reliability/cross-region-replication-azure
 
 	API Center
-
-	API Ops: https://azure.github.io/apiops/
-		- Check! 
-			Documentation
-			Compliancy
-			Others?
-
-	Developer Portal Styling
-
-	Logic Apps - DevOps flow
-	
-	Functions - test the flow (Deploy to the External Subscription)
-		Low prio - but to explain why this is not there
-
-	Low Prio Improvements:
-		Check if Only on Subnet is Ok for all the Private Endpoints
-		Move things to the correct Resource Groups
-		Private endpoint for the API Management - what are the timelines?
 
 # Architecture & Design Decisions
 
@@ -232,6 +186,9 @@ Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in 
 
 ## Managed Identities
 	- https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/managed-identities-faq
+
+## API Ops
+	- https://azure.github.io/apiops/
 
 # Others
 

@@ -1,4 +1,4 @@
-import {networkingResourcesType, sharedResourcesType, apimRegionalSettingsType , locationSettingType} from '../bicepParamTypes.bicep'
+import {networkingResourcesType, sharedResourcesType, apimRegionalSettingsType , regionalSettingType} from '../bicepParamTypes.bicep'
 
 targetScope='resourceGroup'
 param resourceSuffix string
@@ -21,9 +21,9 @@ param publisherName string
 @description('The pricing tier of the APIM resource.')
 param skuName string
 
-param primaryRegionSettings locationSettingType
+param primaryRegionSettings regionalSettingType
 
-param additionalRegionSettings locationSettingType[]
+param additionalRegionSettings regionalSettingType[]
 param additionalRegionsNetworkingResources networkingResourcesType[]
 
 param appInsightsName string

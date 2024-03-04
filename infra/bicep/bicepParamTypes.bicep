@@ -1,7 +1,7 @@
 // Input parameters for the deployment
 
 @export()
-type vNetSettingsType = {
+type vNetRegionalSettingsType = {
   apimVNetNameAddressPrefix :  string
   apimAddressPrefix : string
   appGatewayAddressPrefix : string
@@ -22,8 +22,27 @@ type vNetSettingsType = {
 }
 
 @export()
-type devOpsResourcesSettingsType = {
-    @description('The user name to be used as the Administrator for all VMs created by this deployment')
+type avalabilityZoneType = '1' | '2' | '3'
+
+@export()
+type apimRegionalSettingsType = {
+  @description('The instance size of this API Management service. This should be a multiple of the number of availability zones getting deployed.')
+  skuCapacity: int
+
+  @description('Numbers for availability zones, for example, 1,2,3.')
+  availabilityZones: avalabilityZoneType[]?
+}
+
+@export()
+type regionalSettingType = {
+  location: string
+  vNetSettings: vNetRegionalSettingsType
+  apimRegionalSettings: apimRegionalSettingsType
+}
+
+@export()
+type devOpsAgentSettingsType = {
+  @description('The user name to be used as the Administrator for all VMs created by this deployment')
     devOpsVmUsername :string
     @description('The password for the Administrator user for all VMs created by this deployment')
     @secure()
@@ -38,57 +57,50 @@ type devOpsResourcesSettingsType = {
 }
 
 @export()
-type jumpBoxResourcesSettingsType = {
-    @description('The user name to be used as the Administrator for all VMs created by this deployment')
-    jumpBoxVmUsername :string
-    @description('The password for the Administrator user for all VMs created by this deployment')
-    @secure()
-    jumpBoxVmPassword :string
-}
-
-@export()
-type apimRegionalSettingsType = {
-  @description('The instance size of this API Management service. This should be a multiple of the number of availability zones getting deployed.')
-  skuCapacity: int
-
-  @description('Numbers for availability zones, for example, 1,2,3.')
-  availabilityZones: string[]?
-  // Example:
-  // [
-  // '1'
-  // '2'
-  // ]
-}
-
-@export()
-type apimGlobalSettingsType = {
-  @description('MultiRegion must be Premium.')
-  apimSkuName: 'Developer' | 'Premium'
-  
-  @description('The email address of the publisher of the APIM resource.')
-  @minLength(1)
-  apimPublisherEmail : string
-  
-  @description('Company name of the publisher of the APIM resource.')
-  @minLength(1)
-  apimPublisherName : string
-
-  @description('Custom domain for APIM - is used to API Management from the internet. This should also match the Domain name of your Certificate. Example - contoso.com.')
-  apimCustomDomainName : string
-  
-  @description('The password for the TLS certificate for the Application Gateway.  The pfx file needs to be copied to deployment/bicep/gateway/certs/appgw.pfx')
+type jumpBoxSettingsType = {
+  @description('The user name to be used as the Administrator for all VMs created by this deployment')
+  jumpBoxVmUsername :string
+  @description('The password for the Administrator user for all VMs created by this deployment')
   @secure()
-  apimAppGatewayCertificatePassword : string
-  
-  @description('Set to selfsigned if self signed certificates should be used for the Application Gateway. Set to custom and copy the pfx file to deployment/bicep/gateway/certs/appgw.pfx if custom certificates are to be used')
-  apimAppGatewayCertType : 'selfsigned' | 'custom'
+  jumpBoxVmPassword :string
+
 }
 
 @export()
-type locationSettingType = {
-  location: string
-  vNetSettings: vNetSettingsType
-  apimRegionalSettings: apimRegionalSettingsType
+type globalSettingsType = {
+  apimSettings : {
+    apimSkuName: 'Developer' | 'Premium'
+    @description('The email address of the publisher of the APIM resource.')
+    @minLength(1)
+    apimPublisherEmail : string
+    @description('Company name of the publisher of the APIM resource.')
+    @minLength(1)
+    apimPublisherName : string
+    @description('Custom domain for APIM - is used to API Management from the internet. This should also match the Domain name of your Certificate. Example - contoso.com.')
+    apimCustomDomainName : string
+  }
+  
+  appGatewaySettings: {
+    @description('The password for the TLS certificate for the Application Gateway.  The pfx file needs to be copied to deployment/bicep/gateway/certs/appgw.pfx')
+    @secure()
+    apimAppGatewayCertificatePassword : string
+  
+    @description('Set to selfsigned if self signed certificates should be used for the Application Gateway. Set to custom and copy the pfx file to deployment/bicep/gateway/certs/appgw.pfx if custom certificates are to be used')
+    apimAppGatewayCertType : 'selfsigned' | 'custom'
+    appGatewaySkuName: 'Standard_v2' | 'WAF_v2'
+    availabilityZones: avalabilityZoneType[]?
+    minCapacity: int
+    maxCapacity: int
+  }
+
+  firewallSettings : {
+    firewallSkuName: 'Basic' | 'Standard'
+    availabilityZones: avalabilityZoneType[]?
+  }
+
+  devOpsAgentSettings : devOpsAgentSettingsType?
+
+  jumpBoxSettings : jumpBoxSettingsType?
 }
 
 // Types related to the output of the deployment
@@ -107,6 +119,10 @@ type networkingResourcesType = {
   jumpBoxSubnetid: string?
   deployScriptStorageSubnetId: string?
   keyVaultPrivateEndpointSubnetid:string?
+  functionsInboundSubnetid: string?
+  functionsOutboundSubnetid: string?
+  logicAppsInboundSubnetid: string?
+  logicAppsOutboundSubnetid: string?
 }
 
 @export()

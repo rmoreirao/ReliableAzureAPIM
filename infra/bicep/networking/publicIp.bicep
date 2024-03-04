@@ -1,9 +1,9 @@
-import {vNetSettingsType} from '../bicepParamTypes.bicep'
+import {vNetRegionalSettingsType} from '../bicepParamTypes.bicep'
 
 param workloadName string
 param environment string
 param location string
-param vNetSettings vNetSettingsType
+param vNetSettings vNetRegionalSettingsType
 
 
 var apimPublicIPName = 'pip-apim-${workloadName}-${environment}-${location}' // 'publicIp'

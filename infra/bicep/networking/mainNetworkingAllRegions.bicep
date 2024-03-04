@@ -1,4 +1,4 @@
-import {vNetSettingsType, locationSettingType, networkingResourcesType} from '../bicepParamTypes.bicep'
+import {vNetRegionalSettingsType, regionalSettingType, networkingResourcesType} from '../bicepParamTypes.bicep'
 
 @description('A short name for the workload being deployed alphanumberic only')
 @maxLength(8)
@@ -13,7 +13,7 @@ param workloadName string
 ])
 param environment string
 
-param locationsSettings locationSettingType[]
+param locationsSettings regionalSettingType[]
 
 // Creation of this module is required to return the array of NetworkingResources - this could not be directly done on main.bicep
 

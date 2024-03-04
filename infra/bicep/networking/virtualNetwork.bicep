@@ -1,4 +1,4 @@
-import {vNetSettingsType} from '../bicepParamTypes.bicep'
+import {vNetRegionalSettingsType} from '../bicepParamTypes.bicep'
 
 // Parameters
 @description('A short name for the workload being deployed')
@@ -14,7 +14,7 @@ param workloadName string
 param deploymentEnvironment string
 param location string
 
-param vNetSettings vNetSettingsType
+param vNetSettings vNetRegionalSettingsType
 
 var apimVNetName = 'vnet-apim-${workloadName}-${deploymentEnvironment}-${location}'
 

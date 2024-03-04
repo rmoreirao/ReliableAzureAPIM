@@ -1,3 +1,4 @@
+import {avalabilityZoneType}  from '../bicepParamTypes.bicep'
 
 @description('A short name for the workload being deployed alphanumberic only')
 @maxLength(8)
@@ -12,6 +13,15 @@ param workloadName string
 ])
 param environment string
 param resourceSuffix string
+
+@allowed([
+  'Standard_v2'
+  'WAF_v2'
+])
+param sku string
+param zones avalabilityZoneType[]?
+param minCapacity int
+param maxCapacity int
 
 @description('The FQDN of the Application Gateawy.Must match the TLS Certificate.')
 param appGatewayFQDN                string = 'api.example.com'
@@ -87,10 +97,11 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
       '${appGatewayIdentity.id}': {}
     }
   }
+  zones: zones
   properties: {
     sku: {
-      name: 'WAF_v2'
-      tier: 'WAF_v2'
+      name: sku
+      tier: sku
     }
     gatewayIPConfigurations: [
       {
@@ -425,8 +436,8 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
     }
     enableHttp2: true
     autoscaleConfiguration: {
-      minCapacity: 2
-      maxCapacity: 3
+      minCapacity: minCapacity
+      maxCapacity: maxCapacity
     }
   }
 }

@@ -1,49 +1,63 @@
 using './main.bicep'
 
-param workloadName = 'mltd2'
+//max length of 128 characters
+param workloadName = 'dimt1'
 param environment = 'dev'
+param globalSettings = {
+  apimSettings:{
+    apimPublisherEmail : 'rmoreirao@microsoft.com'
+    apimPublisherName : 'Contoso Sandbox APIM'
+    apimCustomDomainName : 'contoso-sandbox-apim.com'
+    apimSkuName: 'Developer'
+    
+  }
+  appGatewaySettings:{
+    apimAppGatewayCertificatePassword : ''
+    apimAppGatewayCertType : 'selfsigned'
+    appGatewaySkuName: 'Standard_v2'
+    minCapacity: 1
+    maxCapacity: 2
+    availabilityZones:['1']
+  }
+  
+  devOpsAgentSettings: {
+    devOpsAccountName: 'https://dev.azure.com/rmoreiraoms'
+    devOpsCICDAgentType: 'none'
+    devOpsPersonalAccessToken: '{{DEVOPS_PAT}}'
+    devOpsVmPassword: '{{DEVOPS_VMPASSWORD}}'
+    devOpsVmUsername: 'vmadmin'
+  }
 
-param devOpsResourcesSettings = {
-   devOpsAccountName: 'https://dev.azure.com/rmoreiraoms'
-   devOpsCICDAgentType: 'none'
-   devOpsPersonalAccessToken: '{{DEVOPS_PAT}}'
-   devOpsVmPassword: '{{DEVOPS_VMPASSWORD}}'
-   devOpsVmUsername: 'vmadmin'
-}
+  jumpBoxSettings:{
+    jumpBoxVmPassword: '{{JUMPBOX_VMPASSWORD}}'
+    jumpBoxVmUsername: 'vmadmin'
+  }
 
-param jumpBoxResourcesSettings = {
-  jumpBoxVmPassword: '{{JUMPBOX_VMPASSWORD}}'
-  jumpBoxVmUsername: 'vmadmin'
-}
+  firewallSettings:{
+    firewallSkuName:'Basic'
+    availabilityZones:['1']
+  }
+}  
 
-param apimGlobalSettings = {
-  apimPublisherEmail : 'rmoreirao@microsoft.com'
-  apimPublisherName : 'Contoso Sandbox APIM'
-  apimAppGatewayCertificatePassword : ''
-  apimAppGatewayCertType : 'selfsigned'
-  apimCustomDomainName : 'contoso-sandbox-apim.com'
-  apimSkuName: 'Premium'
-}
-
-param locationSettings = [
+param regionalSettings = [
   {
-    location: 'uksouth'
+    location: 'westeurope'
     vNetSettings: {
-        apimVNetNameAddressPrefix :'10.7.0.0/16'
-        // bastionAddressPrefix : '10.7.1.0/24'
-        // devOpsAgentAddressPrefix : '10.7.2.0/24'
-        // jumpBoxAddressPrefix : '10.7.3.0/24'
-        appGatewayAddressPrefix : '10.7.4.0/24'
-        // functionsInboundAddressPrefix : '10.7.5.0/24'
-        // functionsOutboundAddressPrefix : '10.7.6.0/24'
-        apimAddressPrefix : '10.7.7.0/24'
-        firewallAddressPrefix : '10.7.8.0/24'
-        firewallManagementAddressPrefix : '10.7.9.0/24'
-        // logicAppsOutboundAddressPrefix : '10.7.10.0/24'
-        // logicAppsInboundAddressPrefix : '10.7.11.0/24'
-        // logicAppsStorageInboundAddressPrefix : '10.7.12.0/24'
-        deployScriptStorageSubnetAddressPrefix: '10.7.14.0/24'
-        keyVaultInboundPrivateEndpointAddressPrefix : '10.7.15.0/24'
+        apimVNetNameAddressPrefix :'10.10.0.0/16'
+        // bastionAddressPrefix : '10.10.1.0/24'
+        // devOpsAgentAddressPrefix : '10.10.2.0/24'
+        // jumpBoxAddressPrefix : '10.10.3.0/24'
+        appGatewayAddressPrefix : '10.10.4.0/24'
+        // functionsInboundAddressPrefix : '10.10.5.0/24'
+        // functionsOutboundAddressPrefix : '10.10.6.0/24'
+        apimAddressPrefix : '10.10.7.0/24'
+        firewallAddressPrefix : '10.10.8.0/24'
+        firewallManagementAddressPrefix : '10.10.9.0/24'
+        // logicAppsOutboundAddressPrefix : '10.10.10.0/24'
+        // logicAppsInboundAddressPrefix : '10.10.11.0/24'
+        // logicAppsStorageInboundAddressPrefix : '10.10.12.0/24'
+        deployScriptStorageSubnetAddressPrefix: '10.10.14.0/24'
+        keyVaultInboundPrivateEndpointAddressPrefix : '10.10.15.0/24'
     }
     apimRegionalSettings:{
       skuCapacity: 1
@@ -52,13 +66,13 @@ param locationSettings = [
   {
     location: 'germanywestcentral'
     vNetSettings: {
-        apimVNetNameAddressPrefix :'10.8.0.0/16'
-        appGatewayAddressPrefix : '10.8.4.0/24'
-        apimAddressPrefix : '10.8.7.0/24'
-        firewallAddressPrefix : '10.8.8.0/24'
-        firewallManagementAddressPrefix : '10.8.9.0/24'
-        deployScriptStorageSubnetAddressPrefix: '10.8.14.0/24'
-        keyVaultInboundPrivateEndpointAddressPrefix : '10.8.15.0/24'
+        apimVNetNameAddressPrefix :'10.11.0.0/16'
+        appGatewayAddressPrefix : '10.11.4.0/24'
+        apimAddressPrefix : '10.11.7.0/24'
+        firewallAddressPrefix : '10.11.8.0/24'
+        firewallManagementAddressPrefix : '10.11.9.0/24'
+        deployScriptStorageSubnetAddressPrefix: '10.11.14.0/24'
+        keyVaultInboundPrivateEndpointAddressPrefix : '10.11.15.0/24'
     }
     apimRegionalSettings:{
       skuCapacity: 1

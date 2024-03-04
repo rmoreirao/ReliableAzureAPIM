@@ -1,9 +1,9 @@
 targetScope='subscription'
-import {vNetSettingsType, devOpsResourcesSettingsType, jumpBoxResourcesSettingsType, locationSettingType, networkingResourcesType, sharedResourcesType, apimGlobalSettingsType, apimRegionalSettingsType} from 'bicepParamTypes.bicep'
+import {vNetRegionalSettingsType, regionalSettingType, networkingResourcesType, sharedResourcesType, apimRegionalSettingsType, globalSettingsType} from 'bicepParamTypes.bicep'
 
 // Parameters
 @description('A short name for the workload being deployed alphanumberic only')
-@maxLength(8)
+@maxLength(5)
 param workloadName string
 
 @description('The environment for which the deployment is being executed')
@@ -15,14 +15,11 @@ param workloadName string
 ])
 param environment string
 
-param jumpBoxResourcesSettings jumpBoxResourcesSettingsType
-param devOpsResourcesSettings devOpsResourcesSettingsType 
-
-param apimGlobalSettings apimGlobalSettingsType
+param globalSettings globalSettingsType
 
 param location string = deployment().location
 
-param locationSettings locationSettingType[]
+param regionalSettings regionalSettingType[]
 
 // Variables
 var resourceSuffix = '${workloadName}-${environment}-${location}-001'
@@ -36,49 +33,54 @@ resource networkingRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   location: location
 }
 
-// module networkingModule './networking/mainNetworking.bicep' = [for (locationSetting,i) in locationSettings: {
-//   name: 'networkingresources${workloadName}${environment}${locationSetting.location}'
-//   scope: resourceGroup(networkingRG.name)
-//   params: {
-//     workloadName: workloadName
-//     environment: environment
-//     location: locationSetting.location
-//     vNetSettings: locationSetting.vNetSettings
-//   }
-// }]
-
 module networkingModule './networking/mainNetworkingAllRegions.bicep' = {
   name: 'networkingresourcesallregions${workloadName}${environment}${location}'
   scope: resourceGroup(networkingRG.name)
   params: {
     workloadName: workloadName
     environment: environment
-    locationsSettings:locationSettings
+    locationsSettings:regionalSettings
   }
 }
 
-// resource backendRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-//   name: backendResourceGroupName
-//   location: location
-// }
+resource backendRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
+  name: backendResourceGroupName
+  location: location
+}
 
-// module backend './backend/mainBackend.bicep' = {
-//   name: 'backendresources${workloadName}${environment}${locationSetting.location}'
-//   scope: resourceGroup(backendRG.name)
-//   params: {
-//     workloadName: workloadName
-//     environment: environment
-//     location: location    
-//     apimVNetName: networkingModule.outputs.apimVNetName
-//     backendRGName: backendRG.name
-//     functionsInboundSubnetid: networkingModule.outputs.functionsInboundSubnetid
-//     functionsOutboundSubnetid: networkingModule.outputs.functionsOutboundSubnetid
-//     logicAppsInboundSubnetid: networkingModule.outputs.logicAppsInboundSubnetid
-//     logicAppsOutboundSubnetid: networkingModule.outputs.logicAppsOutboundSubnetid
-//     logicAppsStorageInboundSubnetid: networkingModule.outputs.logicAppsStorageInboundSubnetid
-//     vnetRGName: networkingRG.name
-//   }
-// }
+module backendDns './backend/backendPrivateDnsGlobal.bicep' = {
+  name: 'backendPrivateDnsGlobal${workloadName}${environment}${regionalSettings[0].location}'
+  scope: resourceGroup(backendRG.name)
+}
+
+// Deoploy the Backend resources (Logic Apps & Functions) only to a Single Region
+// This can be adjusted to deploy to multiple regions in the future by adding a loop similar to the networking module
+module backend './backend/mainBackend.bicep' = {
+  name: 'backendresources${workloadName}${environment}${regionalSettings[0].location}'
+  scope: resourceGroup(backendRG.name)
+  params: {
+    workloadName: workloadName
+    environment: environment
+    location: location    
+    backendRGName: backendRG.name
+    functionsInboundSubnetid: networkingModule.outputs.networkingResourcesArray[0].?functionsInboundSubnetid
+    functionsOutboundSubnetid: networkingModule.outputs.networkingResourcesArray[0].?functionsOutboundSubnetid
+    logicAppsInboundSubnetid: networkingModule.outputs.networkingResourcesArray[0].?logicAppsInboundSubnetid
+    logicAppsOutboundSubnetid: networkingModule.outputs.networkingResourcesArray[0].?logicAppsOutboundSubnetid
+    logicAppsStorageInboundSubnetid: networkingModule.outputs.networkingResourcesArray[0].?logicAppsStorageInboundSubnetid
+    vnetId: networkingModule.outputs.networkingResourcesArray[0].vnetId
+    backendPrivateDnsZoneId: backendDns.outputs.backendPrivateDnsZoneId
+    backendPrivateDNSZoneName: backendDns.outputs.backendPrivateDNSZoneName
+    storageBlobPrivateDnsZoneId: backendDns.outputs.storageBlobPrivateDnsZoneId
+    storageBlobPrivateDNSZoneName: backendDns.outputs.storageBlobPrivateDNSZoneName
+    storageFilePrivateDnsZoneId: backendDns.outputs.storageFilePrivateDnsZoneId
+    storageFilePrivateDNSZoneName: backendDns.outputs.storageFilePrivateDNSZoneName
+    storageQueuePrivateDnsZoneId: backendDns.outputs.storageQueuePrivateDnsZoneId
+    storageQueuePrivateDNSZoneName: backendDns.outputs.storageQueuePrivateDNSZoneName
+    storageTablePrivateDnsZoneId: backendDns.outputs.storageTablePrivateDnsZoneId
+    storageTablePrivateDNSZoneName: backendDns.outputs.storageTablePrivateDNSZoneName
+  }
+}
 
 resource sharedRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: sharedResourceGroupName
@@ -95,7 +97,7 @@ module sharedPrivateDNSZone 'shared/sharedPrivateDNSZonesGlobal.bicep' = {
   }
 }
 
-module shared './shared/mainShared.bicep' = [for (locationSetting,i) in locationSettings: {
+module shared './shared/mainShared.bicep' = [for (locationSetting,i) in regionalSettings: {
   name: 'sharedresources${workloadName}${environment}${locationSetting.location}'
   scope: resourceGroup(sharedRG.name)
   params: {
@@ -103,8 +105,8 @@ module shared './shared/mainShared.bicep' = [for (locationSetting,i) in location
     environment: environment
     jumpboxSubnetId: networkingModule.outputs.networkingResourcesArray[i].?jumpBoxSubnetid
     resourceGroupName: sharedRG.name
-    devOpsResourcesSettings: devOpsResourcesSettings
-    jumpBoxResourcesSettings:jumpBoxResourcesSettings
+    devOpsResourcesSettings: globalSettings.devOpsAgentSettings
+    jumpBoxResourcesSettings: globalSettings.jumpBoxSettings
     workloadName: workloadName
     keyVaultPrivateEndpointSubnetid: networkingModule.outputs.networkingResourcesArray[i].?keyVaultPrivateEndpointSubnetid
     location: locationSetting.location
@@ -118,85 +120,89 @@ module shared './shared/mainShared.bicep' = [for (locationSetting,i) in location
 }]
 
 
-// resource apimRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-//   name: apimResourceGroupName
-//   location: location
-//   dependsOn: [
-//     shared
-//   ]
-// }
+resource apimRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
+  name: apimResourceGroupName
+  location: location
+  dependsOn: [
+    shared
+  ]
+}
 
-// module apimPrivateDNSZone 'apim/apimPrivateDNSZonesGlobal.bicep' = {
-//   name: 'apimPrivateDnsZoneDeploy${workloadName}${environment}${location}'
-//   scope: resourceGroup(apimRG.name)
-//   params: {
-//   }
-// }
+module apimPrivateDNSZone 'apim/apimPrivateDNSZonesGlobal.bicep' = {
+  name: 'apimPrivateDnsZoneDeploy${workloadName}${environment}${location}'
+  scope: resourceGroup(apimRG.name)
+  params: {
+  }
+}
 
-// module apimModule 'apim/apim.bicep'  = {
-//   name: 'apimDeploy${workloadName}${environment}${location}'
-//   scope: resourceGroup(apimRG.name)
-//   params: {
-//     resourceSuffix: resourceSuffix
-//     apimSubnetId: networkingModule.outputs.networkingResourcesArray[0].apimSubnetid
-//     appInsightsName: shared[0].outputs.resources.appInsightsName
-//     appInsightsId: shared[0].outputs.resources.appInsightsId
-//     appInsightsInstrumentationKey: shared[0].outputs.resources.appInsightsInstrumentationKey
-//     apimPublicIpId: networkingModule.outputs.networkingResourcesArray[0].apimPublicIpId
-//     publisherEmail: apimGlobalSettings.apimPublisherEmail
-//     publisherName: apimGlobalSettings.apimPublisherName
-//     skuName: apimGlobalSettings.apimSkuName
-//     keyVaultName: shared[0].outputs.resources.keyVaultName!
-//     keyVaultRG: sharedRG.name
-//     primaryRegionSettings: locationSettings[0]
-//     additionalRegionSettings: skip(locationSettings,1)
-//     additionalRegionsNetworkingResources: skip(networkingModule.outputs.networkingResourcesArray,1) 
-//   }
-// }
-
-
-
-// //Creation of private DNS zones for APIM
-// module dnsZoneModule 'apim/apimDnsZonesRegional.bicep'  =   [for (locationSetting,i) in locationSettings:{
-//   name: 'apimDnsZoneDeploy${workloadName}${environment}${locationSetting.location}${i}'
-//   scope: resourceGroup(apimRG.name)
-//   dependsOn: [
-//     apimModule
-//   ]
-//   params: {
-//     vnetId: networkingModule.outputs.networkingResourcesArray[i].vnetId
-//     apimName: apimModule.outputs.apimName
-//     // TO DO: to add the private IP addresses of APIM regions here!!!
-//     apimPrivateIPAddress: apimModule.outputs.apimPrivateIpAddress
-//     apimDeveloperDnsZoneName: apimPrivateDNSZone.outputs.apimDeveloperDnsZoneName
-//     apimManagementDnsZoneName: apimPrivateDNSZone.outputs.apimManagementDnsZoneName
-//     apimGatewayDnsZoneName: apimPrivateDNSZone.outputs.apimGatewayDnsZoneName
-//   }
-// }]
+module apimModule 'apim/apim.bicep'  = {
+  name: 'apimDeploy${workloadName}${environment}${location}'
+  scope: resourceGroup(apimRG.name)
+  params: {
+    resourceSuffix: resourceSuffix
+    apimSubnetId: networkingModule.outputs.networkingResourcesArray[0].apimSubnetid
+    appInsightsName: shared[0].outputs.resources.appInsightsName
+    appInsightsId: shared[0].outputs.resources.appInsightsId
+    appInsightsInstrumentationKey: shared[0].outputs.resources.appInsightsInstrumentationKey
+    apimPublicIpId: networkingModule.outputs.networkingResourcesArray[0].apimPublicIpId
+    publisherEmail: globalSettings.apimSettings.apimPublisherEmail
+    publisherName: globalSettings.apimSettings.apimPublisherName
+    skuName: globalSettings.apimSettings.apimSkuName
+    keyVaultName: shared[0].outputs.resources.keyVaultName!
+    keyVaultRG: sharedRG.name
+    primaryRegionSettings: regionalSettings[0]
+    additionalRegionSettings: skip(regionalSettings,1)
+    additionalRegionsNetworkingResources: skip(networkingModule.outputs.networkingResourcesArray,1) 
+  }
+}
 
 
-// module appgwModule 'apim/appGateway.bicep' = {
-//   name: 'appgwDeploy${workloadName}${environment}${location}'
-//   scope: resourceGroup(apimRG.name)
-//   dependsOn: [
-//     apimModule
-//     dnsZoneModule
-//   ]
-//   params: {
-//     resourceSuffix: resourceSuffix
-//     appGatewayFQDN: apimGlobalSettings.apimCustomDomainName
-//     location: location
-//     appGatewaySubnetId: networkingModule.outputs.networkingResourcesArray[0].appGatewaySubnetid
-//     keyVaultName: shared[0].outputs.resources.keyVaultName!
-//     keyVaultResourceGroupName: sharedRG.name
-//     appGatewayCertType: apimGlobalSettings.apimAppGatewayCertType
-//     certPassword: apimGlobalSettings.apimAppGatewayCertificatePassword
-//     logAnalyticsWorkspaceResourceId: shared[0].outputs.resources.logAnalyticsWorkspaceId
-//     deployScriptStorageSubnetId: networkingModule.outputs.networkingResourcesArray[0].deployScriptStorageSubnetId!
-//     environment: environment
-//     workloadName: workloadName
-//     appGatewayPublicIPAddressId: networkingModule.outputs.networkingResourcesArray[0].appGatewayPublicIpId
-//     apimName: apimModule.outputs.apimName
-//     apimCustomDomainName: apimGlobalSettings.apimCustomDomainName
-//   }
-// }
+
+//Creation of private DNS zones for APIM
+module dnsZoneModule 'apim/apimDnsZonesRegional.bicep'  =   [for (locationSetting,i) in regionalSettings:{
+  name: 'apimDnsZoneDeploy${workloadName}${environment}${locationSetting.location}${i}'
+  scope: resourceGroup(apimRG.name)
+  dependsOn: [
+    apimModule
+  ]
+  params: {
+    vnetId: networkingModule.outputs.networkingResourcesArray[i].vnetId
+    apimName: apimModule.outputs.apimName
+    // TO DO: to add the private IP addresses of APIM regions here!!!
+    apimPrivateIPAddress: apimModule.outputs.apimPrivateIpAddress
+    apimDeveloperDnsZoneName: apimPrivateDNSZone.outputs.apimDeveloperDnsZoneName
+    apimManagementDnsZoneName: apimPrivateDNSZone.outputs.apimManagementDnsZoneName
+    apimGatewayDnsZoneName: apimPrivateDNSZone.outputs.apimGatewayDnsZoneName
+  }
+}]
+
+
+module appgwModule 'apim/appGateway.bicep' = {
+  name: 'appgwDeploy${workloadName}${environment}${location}'
+  scope: resourceGroup(apimRG.name)
+  dependsOn: [
+    apimModule
+    dnsZoneModule
+  ]
+  params: {
+    resourceSuffix: resourceSuffix
+    appGatewayFQDN: globalSettings.apimSettings.apimCustomDomainName
+    location: location
+    appGatewaySubnetId: networkingModule.outputs.networkingResourcesArray[0].appGatewaySubnetid
+    keyVaultName: shared[0].outputs.resources.keyVaultName!
+    keyVaultResourceGroupName: sharedRG.name
+    appGatewayCertType: globalSettings.appGatewaySettings.apimAppGatewayCertType
+    certPassword: globalSettings.appGatewaySettings.apimAppGatewayCertificatePassword
+    logAnalyticsWorkspaceResourceId: shared[0].outputs.resources.logAnalyticsWorkspaceId
+    deployScriptStorageSubnetId: networkingModule.outputs.networkingResourcesArray[0].deployScriptStorageSubnetId!
+    environment: environment
+    workloadName: workloadName
+    appGatewayPublicIPAddressId: networkingModule.outputs.networkingResourcesArray[0].appGatewayPublicIpId
+    apimName: apimModule.outputs.apimName
+    apimCustomDomainName: globalSettings.apimSettings.apimCustomDomainName
+    sku:globalSettings.appGatewaySettings.appGatewaySkuName
+    minCapacity: globalSettings.appGatewaySettings.minCapacity
+    maxCapacity: globalSettings.appGatewaySettings.maxCapacity
+    zones: globalSettings.appGatewaySettings.?availabilityZones
+  }
+}

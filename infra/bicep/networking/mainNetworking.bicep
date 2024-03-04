@@ -1,4 +1,4 @@
-import {vNetSettingsType, locationSettingType, networkingResourcesType} from '../bicepParamTypes.bicep'
+import {vNetRegionalSettingsType, regionalSettingType, networkingResourcesType} from '../bicepParamTypes.bicep'
 
 @description('A short name for the workload being deployed alphanumberic only')
 @maxLength(8)
@@ -13,7 +13,7 @@ param workloadName string
 ])
 param environment string
 param location string 
-param vNetSettings vNetSettingsType
+param vNetSettings vNetRegionalSettingsType
 
 module networkingModule './virtualNetwork.bicep' = {
     name: 'networkinvnetgresources${workloadName}${environment}${location}'
@@ -95,5 +95,10 @@ output resources networkingResourcesType = {
   deployScriptStorageSubnetId : networkingModule.outputs.?deployScriptStorageSubnetId
   
   keyVaultPrivateEndpointSubnetid: networkingModule.outputs.?keyVaultStorageInboundSubnetid
+  
+  functionsInboundSubnetid: networkingModule.outputs.?functionsInboundSubnetid
+  functionsOutboundSubnetid: networkingModule.outputs.?functionsOutboundSubnetid
+  logicAppsInboundSubnetid: networkingModule.outputs.?logicAppsInboundSubnetid
+  logicAppsOutboundSubnetid: networkingModule.outputs.?logicAppsOutboundSubnetid
 }
 

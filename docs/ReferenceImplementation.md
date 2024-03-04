@@ -8,7 +8,6 @@ This is a detailed list of all resources deployed by the Bicep templates. Change
 **API Management:** API Management using Internal Mode (no public access) - Global Resource with API Gateway deployed to Multiple Regions  
 **API Management Managed Identity:** API Management identity to interact with other services  
 **App Gateway:** Expose publically API Management endpoints - Regional resource deployed to all regions  
-**App Gateway Public IP Address:** Public IP address of App Gatweway - Regional resource deployed to all regions  
 
 ## RG-NETWORKING: Networking Resources
 **Virtual Nework & Subnets:** Virtual Network for the APIM solution. It has an Address space of /16 - Regional resouce deployed to all regions.  Contains the following Subnets, UDRs and Service Endpoints:
@@ -43,8 +42,10 @@ This is a detailed list of all resources deployed by the Bicep templates. Change
 
 **Public IP Addresses:** these are required for the different servicers. List below:
 * APIM Public IP Address: Used only for control plane traffic to the management endpoint over port 3443. Can be locked down to the ApiManagement service tag. Regional resource only deployed to main region.
+* App Gateway Public IP Address: Public IP address of App Gatweway - Regional resource deployed to all regions.  
 * Bastion Public IP Address: connect to Bastion. Regional resource only deployed to main region.
 * Azure Firewall Public IP Address: required for Azure Firewall - Regional resource only deployed to all regions.
+* Azure Firewall Management Public IP Address: required for Azure Firewall 'Basic' SKU (Development) - Regional resource only deployed to all regions.
 
 **Azure Firewall:** firewall to protect outbound traffic from APIM - Regional service deployed to all regions.  
 **Azure Firewall Policy:** defines the firewall rules to block / allow specific traffic. Currently this is allowing all outbound connectivity on HTTP/HTTPS.  
@@ -56,6 +57,7 @@ This is a detailed list of all resources deployed by the Bicep templates. Change
 **Application Insights:** Monitoring tool for API Management and other services. Regional resource deployed in all regions.  
 **Key Vault:** store secrets and certificates - Regional resource deployed in all regions.  
 **Deployment Script: Self Signed Certificate:** create the self signed certificate - should only be used for Development environment.  
+**Storage Account: Self Signed Certificate:** this storage account is required to use the "Deployment Script" VNet injected.  
 
 ## RG-Backend Logic App: Logic App resources
 **Logic App (Standard):** logic app vnet injected / restricted both inbound and outboud. Regional resource - to be deployed every region.  

@@ -12,9 +12,17 @@ param workloadName string
 ])
 param environment string
 param location string
-param vnetName string
-param vnetRG string
 param storageInboundSubnetId string
+param vnetId string
+
+param storageQueuePrivateDNSZoneName string
+param storageQueuePrivateDnsZoneId string
+param storageBlobPrivateDNSZoneName string
+param storageBlobPrivateDnsZoneId string
+param storageTablePrivateDNSZoneName string
+param storageTablePrivateDnsZoneId string
+param storageFilePrivateDNSZoneName string
+param storageFilePrivateDnsZoneId string
 
 var storageAccountName  = toLower(take(replace('stbbackend${workloadName}${environment}${location}', '-',''), 24))
 
@@ -72,9 +80,10 @@ module queueStoragePrivateEndpoint './backendStorageNetworking.bicep' = {
     storageAcountName: storageAccountName
     groupId: 'queue'
     storageAccountId: storageAccount.id
-    vnetName: vnetName
-    vnetRG: vnetRG
+    vnetId: vnetId
     subnetId: storageInboundSubnetId
+    privateDnsZoneId: storageQueuePrivateDnsZoneId
+    privateDnsZoneName: storageQueuePrivateDNSZoneName
   }
 }
 
@@ -86,9 +95,10 @@ module blobStoragePrivateEndpoint './backendStorageNetworking.bicep' = {
     storageAcountName: storageAccountName
     groupId: 'blob'
     storageAccountId: storageAccount.id
-    vnetName: vnetName
-    vnetRG: vnetRG
+    vnetId: vnetId
     subnetId: storageInboundSubnetId
+    privateDnsZoneId: storageBlobPrivateDnsZoneId
+    privateDnsZoneName: storageBlobPrivateDNSZoneName
   }
 }
 
@@ -100,9 +110,10 @@ module tableStoragePrivateEndpoint './backendStorageNetworking.bicep' = {
     storageAcountName: storageAccountName
     groupId: 'table'
     storageAccountId: storageAccount.id
-    vnetName: vnetName
-    vnetRG: vnetRG
+    vnetId: vnetId
     subnetId: storageInboundSubnetId
+    privateDnsZoneId: storageTablePrivateDnsZoneId
+    privateDnsZoneName: storageTablePrivateDNSZoneName
   }
 }
 
@@ -114,9 +125,10 @@ module fileStoragePrivateEndpoint './backendStorageNetworking.bicep' = {
     storageAcountName: storageAccountName
     groupId: 'file'
     storageAccountId: storageAccount.id
-    vnetName: vnetName
-    vnetRG: vnetRG
+    vnetId: vnetId
     subnetId: storageInboundSubnetId
+    privateDnsZoneId: storageFilePrivateDnsZoneId
+    privateDnsZoneName: storageFilePrivateDNSZoneName
   }
 }
 

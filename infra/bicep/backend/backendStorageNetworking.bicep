@@ -1,32 +1,25 @@
 param privateEndpointName string
 param groupId string
 param location string
-param vnetName string
-param vnetRG string
+param vnetId string
 param subnetId string
 param storageAccountId string
 param storageAcountName string
-param standardDomain string = 'windows.net'
-param domain string = 'privatelink.${groupId}.core.${standardDomain}'
+param privateDnsZoneName string
+param privateDnsZoneId string
 
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' existing = {
-  name: vnetName
-  scope: resourceGroup(vnetRG)
-}
+// resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+//   name: domain
+//   location: 'global'
+// }
 
-resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-  name: domain
-  location: 'global'
-}
-
-resource vnetLinks 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: privateDnsZone
-  name: uniqueString(vnet.id)
+resource vnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  name: '${privateDnsZoneName}/${uniqueString(vnetId)}' 
   location: 'global'
   properties: {
     virtualNetwork: {
-      id: vnet.id
+      id: vnetId
     }
     registrationEnabled: false
   }
@@ -62,17 +55,16 @@ resource dnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2
       {      
         name: '${storageAcountName}-${groupId}-core-windows-net'
         properties: {
-          privateDnsZoneId: privateDnsZone.id          
+          privateDnsZoneId: privateDnsZoneId       
         }
       }
     ]
   }
   dependsOn: [
-    vnetLinks
+    vnetLink
   ]
 }
 
 output privateEndpointId string = privateEndpoint.id
-output dnsZoneId string = privateDnsZone.id
 output dnsZoneGroupId string = dnsZoneGroup.id
-output vnetLinksId string = vnetLinks.id
+output vnetLinksId string = vnetLink.id

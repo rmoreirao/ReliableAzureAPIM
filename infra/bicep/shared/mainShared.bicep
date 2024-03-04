@@ -1,14 +1,14 @@
-import {vNetSettingsType,  locationSettingType, sharedResourcesType, devOpsResourcesSettingsType, jumpBoxResourcesSettingsType} from '../bicepParamTypes.bicep'
+import {vNetRegionalSettingsType,  regionalSettingType, sharedResourcesType,devOpsAgentSettingsType, jumpBoxSettingsType} from '../bicepParamTypes.bicep'
 // Parameters
 @description('Azure location to which the resources are to be deployed')
 param location string
 
-param jumpBoxResourcesSettings jumpBoxResourcesSettingsType?
+param jumpBoxResourcesSettings jumpBoxSettingsType?
 
 @description('The full id string identifying the target subnet for the jumpbox VM')
 param jumpboxSubnetId string?
 
-param devOpsResourcesSettings devOpsResourcesSettingsType?
+param devOpsResourcesSettings devOpsAgentSettingsType?
 
 @description('The full id string identifying the target subnet for the CI/CD Agent VM')
 param devOpsAgentSubnetId string?

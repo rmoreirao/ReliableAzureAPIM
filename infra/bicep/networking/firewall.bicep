@@ -1,3 +1,4 @@
+import {avalabilityZoneType}  from '../bicepParamTypes.bicep'
 
 param location string
 
@@ -12,7 +13,10 @@ param workloadName string
   'prod'
   'dr'
 ])
+
 param deploymentEnvironment string
+param sku 'Basic' | 'Standard' = 'Basic'
+param availabilityZones avalabilityZoneType[]?
 param apimVNetName string
 param firewallSubnetName string 
 param firewallManagementSubnetName string 
@@ -28,7 +32,7 @@ resource firewallPolicy 'Microsoft.Network/firewallPolicies@2022-07-01' = {
   location: location
   properties: {
     sku: {
-      tier: 'Basic'
+      tier: sku
     }
     threatIntelMode: 'Off'
     threatIntelWhitelist: {
@@ -100,9 +104,10 @@ var managementIpConfiguration = publicIpFirewallMgmtId == null ? null : {
 resource firewall 'Microsoft.Network/azureFirewalls@2020-04-01' = {
   name: firewallName
   location: location
+  zones: availabilityZones    
   properties: {
     sku: {
-      tier: 'Basic'
+      tier: sku
     }
     ipConfigurations: [
       {
