@@ -1,10 +1,15 @@
-import {vNetRegionalSettingsType} from '../bicepParamTypes.bicep'
+import {vNetRegionalSettingsType, avalabilityZoneType} from '../bicepParamTypes.bicep'
 
 param workloadName string
 param environment string
 param location string
 param vNetSettings vNetRegionalSettingsType
+param availabilityZones avalabilityZoneType[]?
 
+var pipSku = {
+  name: 'Standard'
+  tier: 'Regional'
+}
 
 var apimPublicIPName = 'pip-apim-${workloadName}-${environment}-${location}' // 'publicIp'
 var bastionPublicIPName = 'pip-bastion-${workloadName}-${environment}-${location}'
@@ -15,10 +20,8 @@ var publicIPAddressNameFirewallManagement = 'pip-firewmgmt-${workloadName}-${env
 resource pip 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
   name: apimPublicIPName
   location: location
-  sku: {
-    name: 'Standard'
-    tier: 'Regional'
-  }
+  sku: pipSku
+  zones:availabilityZones
   
   properties: {
     publicIPAllocationMethod: 'Static'
@@ -34,10 +37,8 @@ resource pip 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
 resource pipBastion 'Microsoft.Network/publicIPAddresses@2020-07-01' = if (vNetSettings.?bastionAddressPrefix != null) {
   name: bastionPublicIPName
   location: location
-  sku: {
-    name: 'Standard'
-    tier: 'Regional'
-  }
+  sku: pipSku
+  zones:availabilityZones
   properties: {
     publicIPAllocationMethod: 'Static'
     publicIPAddressVersion: 'IPv4'
@@ -47,12 +48,11 @@ resource pipBastion 'Microsoft.Network/publicIPAddresses@2020-07-01' = if (vNetS
   }  
 }
 
-resource appGatewayPublicIP 'Microsoft.Network/publicIPAddresses@2019-09-01' = {
+resource appGatewayPublicIP 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
   name: appGatewayPublicIpName
   location: location
-  sku: {
-    name: 'Standard'
-  }
+  sku: pipSku
+  zones:availabilityZones
   properties: {
     publicIPAddressVersion: 'IPv4'
     publicIPAllocationMethod: 'Static'
@@ -65,10 +65,8 @@ resource appGatewayPublicIP 'Microsoft.Network/publicIPAddresses@2019-09-01' = {
 resource pipFw 'Microsoft.Network/publicIPAddresses@2020-07-01' = if (vNetSettings.?firewallAddressPrefix != null) {
   name: publicIPAddressNameFirewall
   location: location
-  sku: {
-    name: 'Standard'
-    tier: 'Regional'
-  }
+  sku: pipSku
+  zones:availabilityZones
   properties: {
     publicIPAllocationMethod: 'Static'
     publicIPAddressVersion: 'IPv4'
@@ -82,10 +80,8 @@ resource pipFw 'Microsoft.Network/publicIPAddresses@2020-07-01' = if (vNetSettin
 resource pipFwMgmt 'Microsoft.Network/publicIPAddresses@2020-07-01' = if (vNetSettings.?firewallManagementAddressPrefix != null) {
   name: publicIPAddressNameFirewallManagement
   location: location
-  sku: {
-    name: 'Standard'
-    tier: 'Regional'
-  }
+  sku: pipSku
+  zones:availabilityZones
   properties: {
     publicIPAllocationMethod: 'Static'
     publicIPAddressVersion: 'IPv4'

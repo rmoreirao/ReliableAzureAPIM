@@ -22,7 +22,7 @@ param certPassword            string
 param appGatewayCertType      string
 
 var secretName = replace(appGatewayFQDN,'.', '-')
-var subjectName='CN=${appGatewayFQDN}'
+// var subjectName='CN=${appGatewayFQDN}'
 
 var certData = appGatewayCertType == 'selfsigned' ? 'null' : loadFileAsBase64('./appGwCerts/appgw.pfx')
 var certPwd = appGatewayCertType == 'selfsigned' ? 'null' : certPassword
@@ -32,7 +32,7 @@ module kvRoleAssignmentsCert 'kvAppRoleAssignment.bicep' = {
   scope: resourceGroup(keyVaultRG)
   params: {
     keyVaultName: keyVaultName
-    managedIdentity: managedIdentity
+    principalId: managedIdentity.properties.principalId
     // Key Vault Certificates Officer
     roleId: 'a4417e6f-fecd-4de8-b567-7b0420556985'
   }
@@ -43,7 +43,7 @@ module kvRoleAssignmentsSecret 'kvAppRoleAssignment.bicep' = {
   scope: resourceGroup(keyVaultRG)
   params: {
     keyVaultName: keyVaultName
-    managedIdentity: managedIdentity
+    principalId: managedIdentity.properties.principalId
     // Key Vault Secrets User
     roleId: '4633458b-17de-408a-b874-0445c86b69e6'
   }
@@ -120,7 +120,7 @@ resource appGatewayCertificate 'Microsoft.Resources/deploymentScripts@2023-08-01
       ]
     }
     azPowerShellVersion: '6.6'
-    arguments: ' -vaultName ${keyVaultName} -certificateName ${secretName} -subjectName ${subjectName} -certPwd ${certPwd} -certDataString ${certData} -certType ${appGatewayCertType}'
+    arguments: ' -vaultName ${keyVaultName} -certificateName ${secretName} -domainName ${appGatewayFQDN} -certPwd ${certPwd} -certDataString ${certData} -certType ${appGatewayCertType}'
     scriptContent: loadTextContent('./scripts/appGatewayCertToKv.ps1')
     retentionInterval: 'P1D'
     // timeout 20 minutes

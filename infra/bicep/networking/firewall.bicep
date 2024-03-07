@@ -15,7 +15,7 @@ param workloadName string
 ])
 
 param deploymentEnvironment string
-param sku 'Basic' | 'Standard' = 'Basic'
+param sku 'Basic' | 'Standard'
 param availabilityZones avalabilityZoneType[]?
 param apimVNetName string
 param firewallSubnetName string 

@@ -32,6 +32,8 @@ param storageTablePrivateDnsZoneId string
 param storageFilePrivateDNSZoneName string
 param storageFilePrivateDnsZoneId string
 
+param storageSku string
+
 module backendStorage './backendStorage.bicep' = if (logicAppsStorageInboundSubnetid != null) {
   name: 'backendstorageresources'
   scope: resourceGroup(backendRGName)
@@ -49,6 +51,7 @@ module backendStorage './backendStorage.bicep' = if (logicAppsStorageInboundSubn
     storageQueuePrivateDNSZoneName: storageQueuePrivateDNSZoneName
     storageTablePrivateDNSZoneName: storageTablePrivateDNSZoneName
     storageFilePrivateDNSZoneName: storageFilePrivateDNSZoneName
+    sku: storageSku
   }
 }
 

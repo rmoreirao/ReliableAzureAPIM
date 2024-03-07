@@ -68,6 +68,10 @@ type jumpBoxSettingsType = {
 
 @export()
 type globalSettingsType = {
+  networkingSettings : {
+    publicIpAvailabilityZones: avalabilityZoneType[]?    
+  }
+ 
   apimSettings : {
     apimSkuName: 'Developer' | 'Premium'
     @description('The email address of the publisher of the APIM resource.')
@@ -79,7 +83,7 @@ type globalSettingsType = {
     @description('Custom domain for APIM - is used to API Management from the internet. This should also match the Domain name of your Certificate. Example - contoso.com.')
     apimCustomDomainName : string
   }
-  
+
   appGatewaySettings: {
     @description('The password for the TLS certificate for the Application Gateway.  The pfx file needs to be copied to deployment/bicep/gateway/certs/appgw.pfx')
     @secure()
@@ -101,6 +105,10 @@ type globalSettingsType = {
   devOpsAgentSettings : devOpsAgentSettingsType?
 
   jumpBoxSettings : jumpBoxSettingsType?
+
+  backendSettings : {
+    storageSku : 'Standard_LRS' | 'Standard_ZRS'
+  }?
 }
 
 // Types related to the output of the deployment

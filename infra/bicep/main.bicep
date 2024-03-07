@@ -40,47 +40,50 @@ module networkingModule './networking/mainNetworkingAllRegions.bicep' = {
     workloadName: workloadName
     environment: environment
     locationsSettings:regionalSettings
+    firewallSku: globalSettings.firewallSettings.firewallSkuName
+    firewallAvailabilityZones: globalSettings.firewallSettings.availabilityZones
   }
 }
 
-resource backendRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
+resource backendRG 'Microsoft.Resources/resourceGroups@2021-04-01' = if (globalSettings.?backendSettings != null) {
   name: backendResourceGroupName
   location: location
 }
 
-module backendDns './backend/backendPrivateDnsGlobal.bicep' = {
-  name: 'backendPrivateDnsGlobal${workloadName}${environment}${regionalSettings[0].location}'
-  scope: resourceGroup(backendRG.name)
-}
+// module backendDns './backend/backendPrivateDnsGlobal.bicep' = if (globalSettings.?backendSettings != null) {
+//   name: 'backendPrivateDnsGlobal${workloadName}${environment}${regionalSettings[0].location}'
+//   scope: resourceGroup(backendRG.name)
+// }
 
 // Deoploy the Backend resources (Logic Apps & Functions) only to a Single Region
-// This can be adjusted to deploy to multiple regions in the future by adding a loop similar to the networking module
-module backend './backend/mainBackend.bicep' = {
-  name: 'backendresources${workloadName}${environment}${regionalSettings[0].location}'
-  scope: resourceGroup(backendRG.name)
-  params: {
-    workloadName: workloadName
-    environment: environment
-    location: location    
-    backendRGName: backendRG.name
-    functionsInboundSubnetid: networkingModule.outputs.networkingResourcesArray[0].?functionsInboundSubnetid
-    functionsOutboundSubnetid: networkingModule.outputs.networkingResourcesArray[0].?functionsOutboundSubnetid
-    logicAppsInboundSubnetid: networkingModule.outputs.networkingResourcesArray[0].?logicAppsInboundSubnetid
-    logicAppsOutboundSubnetid: networkingModule.outputs.networkingResourcesArray[0].?logicAppsOutboundSubnetid
-    logicAppsStorageInboundSubnetid: networkingModule.outputs.networkingResourcesArray[0].?logicAppsStorageInboundSubnetid
-    vnetId: networkingModule.outputs.networkingResourcesArray[0].vnetId
-    backendPrivateDnsZoneId: backendDns.outputs.backendPrivateDnsZoneId
-    backendPrivateDNSZoneName: backendDns.outputs.backendPrivateDNSZoneName
-    storageBlobPrivateDnsZoneId: backendDns.outputs.storageBlobPrivateDnsZoneId
-    storageBlobPrivateDNSZoneName: backendDns.outputs.storageBlobPrivateDNSZoneName
-    storageFilePrivateDnsZoneId: backendDns.outputs.storageFilePrivateDnsZoneId
-    storageFilePrivateDNSZoneName: backendDns.outputs.storageFilePrivateDNSZoneName
-    storageQueuePrivateDnsZoneId: backendDns.outputs.storageQueuePrivateDnsZoneId
-    storageQueuePrivateDNSZoneName: backendDns.outputs.storageQueuePrivateDNSZoneName
-    storageTablePrivateDnsZoneId: backendDns.outputs.storageTablePrivateDnsZoneId
-    storageTablePrivateDNSZoneName: backendDns.outputs.storageTablePrivateDNSZoneName
-  }
-}
+// // This can be adjusted to deploy to multiple regions in the future by adding a loop similar to the networking module
+// module backend './backend/mainBackend.bicep' = if (globalSettings.?backendSettings != null) {
+//   name: 'backendresources${workloadName}${environment}${regionalSettings[0].location}'
+//   scope: resourceGroup(backendRG.name)
+//   params: {
+//     workloadName: workloadName
+//     environment: environment
+//     location: location    
+//     backendRGName: backendRG.name
+//     functionsInboundSubnetid: networkingModule.outputs.networkingResourcesArray[0].?functionsInboundSubnetid
+//     functionsOutboundSubnetid: networkingModule.outputs.networkingResourcesArray[0].?functionsOutboundSubnetid
+//     logicAppsInboundSubnetid: networkingModule.outputs.networkingResourcesArray[0].?logicAppsInboundSubnetid
+//     logicAppsOutboundSubnetid: networkingModule.outputs.networkingResourcesArray[0].?logicAppsOutboundSubnetid
+//     logicAppsStorageInboundSubnetid: networkingModule.outputs.networkingResourcesArray[0].?logicAppsStorageInboundSubnetid
+//     vnetId: networkingModule.outputs.networkingResourcesArray[0].vnetId
+//     backendPrivateDnsZoneId: backendDns.outputs.backendPrivateDnsZoneId
+//     backendPrivateDNSZoneName: backendDns.outputs.backendPrivateDNSZoneName
+//     storageBlobPrivateDnsZoneId: backendDns.outputs.storageBlobPrivateDnsZoneId
+//     storageBlobPrivateDNSZoneName: backendDns.outputs.storageBlobPrivateDNSZoneName
+//     storageFilePrivateDnsZoneId: backendDns.outputs.storageFilePrivateDnsZoneId
+//     storageFilePrivateDNSZoneName: backendDns.outputs.storageFilePrivateDNSZoneName
+//     storageQueuePrivateDnsZoneId: backendDns.outputs.storageQueuePrivateDnsZoneId
+//     storageQueuePrivateDNSZoneName: backendDns.outputs.storageQueuePrivateDNSZoneName
+//     storageTablePrivateDnsZoneId: backendDns.outputs.storageTablePrivateDnsZoneId
+//     storageTablePrivateDNSZoneName: backendDns.outputs.storageTablePrivateDNSZoneName
+//     storageSku: globalSettings.backendSettings!.storageSku!
+//   }
+// }
 
 resource sharedRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: sharedResourceGroupName
@@ -105,7 +108,7 @@ module shared './shared/mainShared.bicep' = [for (locationSetting,i) in regional
     environment: environment
     jumpboxSubnetId: networkingModule.outputs.networkingResourcesArray[i].?jumpBoxSubnetid
     resourceGroupName: sharedRG.name
-    devOpsResourcesSettings: globalSettings.devOpsAgentSettings
+    devOpsResourcesSettings: globalSettings.?devOpsAgentSettings
     jumpBoxResourcesSettings: globalSettings.jumpBoxSettings
     workloadName: workloadName
     keyVaultPrivateEndpointSubnetid: networkingModule.outputs.networkingResourcesArray[i].?keyVaultPrivateEndpointSubnetid
@@ -128,14 +131,14 @@ resource apimRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   ]
 }
 
-module apimPrivateDNSZone 'apim/apimPrivateDNSZonesGlobal.bicep' = {
+module apimPrivateDNSZone 'apim/apimPrivateDNSZonesGlobal.bicep' = if (globalSettings.apimSettings != null) {
   name: 'apimPrivateDnsZoneDeploy${workloadName}${environment}${location}'
   scope: resourceGroup(apimRG.name)
   params: {
   }
 }
 
-module apimModule 'apim/apim.bicep'  = {
+module apimModule 'apim/apim.bicep'  = if (globalSettings.apimSettings != null) {
   name: 'apimDeploy${workloadName}${environment}${location}'
   scope: resourceGroup(apimRG.name)
   params: {
@@ -159,7 +162,7 @@ module apimModule 'apim/apim.bicep'  = {
 
 
 //Creation of private DNS zones for APIM
-module dnsZoneModule 'apim/apimDnsZonesRegional.bicep'  =   [for (locationSetting,i) in regionalSettings:{
+module dnsZoneModule 'apim/apimDnsZonesRegional.bicep'  =  [for (locationSetting,i) in regionalSettings: if (globalSettings.apimSettings != null){
   name: 'apimDnsZoneDeploy${workloadName}${environment}${locationSetting.location}${i}'
   scope: resourceGroup(apimRG.name)
   dependsOn: [
@@ -177,7 +180,7 @@ module dnsZoneModule 'apim/apimDnsZonesRegional.bicep'  =   [for (locationSettin
 }]
 
 
-module appgwModule 'apim/appGateway.bicep' = {
+module appgwModule 'apim/appGateway.bicep' = if (globalSettings.appGatewaySettings != null) {
   name: 'appgwDeploy${workloadName}${environment}${location}'
   scope: resourceGroup(apimRG.name)
   dependsOn: [

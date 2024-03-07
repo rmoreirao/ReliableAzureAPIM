@@ -1,4 +1,4 @@
-import {vNetRegionalSettingsType, regionalSettingType, networkingResourcesType} from '../bicepParamTypes.bicep'
+import {vNetRegionalSettingsType, regionalSettingType, networkingResourcesType, avalabilityZoneType} from '../bicepParamTypes.bicep'
 
 @description('A short name for the workload being deployed alphanumberic only')
 @maxLength(8)
@@ -12,8 +12,10 @@ param workloadName string
   'dr'
 ])
 param environment string
-
+param firewallSku string
+param firewallAvailabilityZones avalabilityZoneType[]?
 param locationsSettings regionalSettingType[]
+param publicIpAvailabilityZones avalabilityZoneType[]?
 
 // Creation of this module is required to return the array of NetworkingResources - this could not be directly done on main.bicep
 
@@ -24,6 +26,9 @@ module networkingModule './mainNetworking.bicep' = [for (locationSetting,i) in l
     environment: environment
     location: locationSetting.location
     vNetSettings: locationSetting.vNetSettings
+    firewallSku: firewallSku
+    firewallAvailabilityZones: firewallAvailabilityZones
+    publicIpAvailabilityZones: publicIpAvailabilityZones
   }
 }]
 

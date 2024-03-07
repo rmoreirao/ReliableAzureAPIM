@@ -1,6 +1,6 @@
-<mxfile host="Electron" modified="2024-03-01T14:23:10.617Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/23.1.5 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="r0NVy_m0UGvo452hVpi7" version="23.1.5" type="device" pages="3">
+<mxfile host="Electron" modified="2024-03-07T13:59:03.969Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/23.1.5 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="GmeqkFeTakWwwRapG4rU" version="23.1.5" type="device" pages="3">
   <diagram name="Detailed Architecture" id="p9JjJDFMiqPpwYb60AGx">
-    <mxGraphModel dx="2924" dy="1196" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="2537" dy="984" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -256,7 +256,7 @@
         <mxCell id="HZX7L_CJMlEelsvMmSV1-14" value="" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Network_Security_Groups.svg;" parent="1" vertex="1">
           <mxGeometry x="67.30000000000001" y="483" width="35.41" height="43" as="geometry" />
         </mxCell>
-        <mxCell id="HZX7L_CJMlEelsvMmSV1-15" value="- Exposes Regional Endpoints and Developer Portal to Public network" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+        <mxCell id="HZX7L_CJMlEelsvMmSV1-15" value="- Exposes Regional Endpoints &lt;br&gt;- Developer Portal to Public network" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="83" y="603" width="130" height="100" as="geometry" />
         </mxCell>
         <mxCell id="xmqiqfXqY9F5yD9lkMKn-1" value="Public Ip" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Public_IP_Addresses.svg;" parent="1" vertex="1">
@@ -713,6 +713,9 @@
             <mxPoint x="-223" y="1073" as="sourcePoint" />
             <mxPoint x="-201" y="1037" as="targetPoint" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="8tKJGbWKFcpS7qHaD2rS-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.313;entryY=0.048;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="kGYqhjz5_eaiPWrvCsue-1" target="kgUtwR3Hj3pK3bdL-UKG-60">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

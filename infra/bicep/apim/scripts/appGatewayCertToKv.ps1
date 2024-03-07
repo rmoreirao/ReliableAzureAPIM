@@ -1,9 +1,12 @@
+#  .\appGatewayCertToKv.ps1 -certType "selfsigned" -vaultName "kv-rmo8-dev-uksouth-001" -domainName "contoso-sandbox-apim.com" -certificateName "apicontososandboxapimcom"
+
+
 param(
       [string] [Parameter(Mandatory=$true)] $vaultName,
       [string] [Parameter(Mandatory=$true)] $certificateName,
-      [string] [Parameter(Mandatory=$true)] $subjectName,
-      [string] [Parameter(Mandatory=$true)] $certPwd,
-      [string] [Parameter(Mandatory=$true)] $certDataString,
+      [string] [Parameter(Mandatory=$true)] $domainName,
+      [string] [Parameter(Mandatory=$false)] $certPwd,
+      [string] [Parameter(Mandatory=$false)] $certDataString,
       [string] [Parameter(Mandatory=$true)] $certType
       )
 
@@ -12,7 +15,7 @@ param(
       if ($certType -eq 'selfsigned') {
         Write-Host 'Starting creation of certificate $certificateName in vault $vaultName...'
 
-        $policy = New-AzKeyVaultCertificatePolicy -SubjectName $subjectName -IssuerName Self -ValidityInMonths 12 -Verbose
+        $policy = New-AzKeyVaultCertificatePolicy -SubjectName "CN=$domainName" -DnsName "api.$domainName", "developer.$domainName", "management.$domainName"  -IssuerName Self -ValidityInMonths 12 -Verbose
         
         # private key is added as a secret that can be retrieved in the ARM template
         Add-AzKeyVaultCertificate -VaultName $vaultName -Name $certificateName -CertificatePolicy $policy -Verbose

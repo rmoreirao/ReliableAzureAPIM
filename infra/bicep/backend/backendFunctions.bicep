@@ -36,7 +36,7 @@ resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2021-0
   name: '${storageAccountName}/default/${functionContentShareName}'
 }
 
-resource appServicePlanFunction 'Microsoft.Web/serverfarms@2018-02-01' = {
+resource appServicePlanFunction 'Microsoft.Web/serverfarms@2022-09-01' = {
   name: appServicePlanFunctionName
   location: location
   sku: {
@@ -53,6 +53,7 @@ resource appServicePlanFunction 'Microsoft.Web/serverfarms@2018-02-01' = {
     hyperV: false
     targetWorkerCount: 0
     targetWorkerSizeId: 0
+    zoneRedundant: true
   }
 }
 

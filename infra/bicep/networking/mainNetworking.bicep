@@ -1,4 +1,4 @@
-import {vNetRegionalSettingsType, regionalSettingType, networkingResourcesType} from '../bicepParamTypes.bicep'
+import {vNetRegionalSettingsType, regionalSettingType, networkingResourcesType, avalabilityZoneType} from '../bicepParamTypes.bicep'
 
 @description('A short name for the workload being deployed alphanumberic only')
 @maxLength(8)
@@ -14,6 +14,9 @@ param workloadName string
 param environment string
 param location string 
 param vNetSettings vNetRegionalSettingsType
+param firewallSku string
+param firewallAvailabilityZones avalabilityZoneType[]?
+param publicIpAvailabilityZones avalabilityZoneType[]?
 
 module networkingModule './virtualNetwork.bicep' = {
     name: 'networkinvnetgresources${workloadName}${environment}${location}'
@@ -33,6 +36,7 @@ module networkingModule './virtualNetwork.bicep' = {
       environment: environment
       location: location
       vNetSettings: vNetSettings
+      availabilityZones: publicIpAvailabilityZones
     }
     dependsOn: [
       networkingModule
@@ -51,6 +55,8 @@ module firewall './firewall.bicep' = if( vNetSettings.?firewallAddressPrefix != 
     firewallManagementSubnetName: networkingModule.outputs.firewallManagementSubnetName
     publicIpFirewallId: publicIps.outputs.publicIpFirewallId!
     publicIpFirewallMgmtId: publicIps.outputs.publicIpFirewallMgmtId
+    sku: firewallSku
+    availabilityZones: firewallAvailabilityZones
   }
   dependsOn: [
     networkingModule

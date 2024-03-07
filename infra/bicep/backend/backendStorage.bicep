@@ -14,6 +14,7 @@ param environment string
 param location string
 param storageInboundSubnetId string
 param vnetId string
+param sku 'Standard_LRS' | 'Standard_ZRS'
 
 param storageQueuePrivateDNSZoneName string
 param storageQueuePrivateDnsZoneId string
@@ -26,7 +27,6 @@ param storageFilePrivateDnsZoneId string
 
 var storageAccountName  = toLower(take(replace('stbbackend${workloadName}${environment}${location}', '-',''), 24))
 
-var storageAccountSku  = 'Standard_LRS'
 var storageAccountKind  = 'StorageV2'
 
 var storageAccounts_minTLSVersion = 'TLS1_2'
@@ -40,7 +40,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   name: storageAccountName
   location: location
   sku: {
-    name: storageAccountSku
+    name: sku
   }
   kind: storageAccountKind
   properties: {

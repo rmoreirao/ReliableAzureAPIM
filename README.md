@@ -2,21 +2,7 @@
 
 
 ## For today:
-	
-	Things I can work on:
-		- Deploy Sandbox - full! All resources!
-	
-		- Test Manual MultiAZ & Multi Region deploy on Sandbox
-
-		- Continue for the Multi Region
-
-		- [Depends on Dev Portal requirements] Developer Portal Styling DevOps
-
-	Explain Multi-Region x Region Pair
-		- Paired regions 
-			https://learn.microsoft.com/en-us/azure/reliability/cross-region-replication-azure
-
-	API Center
+	Custom DNS & Msgs to Security!
 
 # Architecture & Design Decisions
 
@@ -60,6 +46,42 @@ FrontDoor is able to do the Load Balance and also DR in case of Regional failure
 Internal Inbound traffic should remain private - so FrontDoor was not an option for that.  
 As of today (Fev 2024) there isn't an Azure Global Load Balancer for Internal traffic with API Management, so there ins't a Load Balancer solution - also not a requirement for now.  
 DNS is used for the Disaster Recovery in case of Regional failure.
+
+### App Gateway x API Management x Certificates
+When exposing the endpoints via App Gateway, you need to define a certificate for it. Here is the link for the documentation: https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-integrate-internal-vnet-appgateway.  
+When exposing the Developer Portal via App Gateway, APIM must have Custom Domains so the Developer Portal can point to the correct endpoints.
+Below is the list of Certificates, App Gateway URLs (+routes) and Api Management Custom Domains:
+
+- **Certificate**
+  - Subject : CN=contoso-sandbox-apim.com
+	- DNS Entries:
+		- api.contoso-sandbox-apim.com
+		- developer.contoso-sandbox-apim.com
+		- management.contoso-sandbox-apim.com
+
+- **App Gateway:**
+  - Front End Urls:
+    - api.contoso-sandbox-apim.com
+      - Redirects to: {env}.azure-api.net
+    - developer.contoso-sandbox-apim.com
+      - Redirects to: {env}.developer.azure-api.net
+    - management.contoso-sandbox-apim.com
+      - Redirects to: {env}.management.azure-api.net
+
+- **API Management:**
+  - Original Urls:
+    - {env}.azure-api.net
+    - {env}.developer.azure-api.net
+    - {env}.management.azure-api.net
+  - Custom DNS Entries (****same as App Gateway Front End URLs):
+    - api.contoso-sandbox-apim.com
+    - developer.contoso-sandbox-apim.com
+    - management.contoso-sandbox-apim.com
+
+*** The API Management Custom DNS Entries are the same as the App Gateway FrontEnd URLs because when users are testing the APIs via the Developer Portal, the request is done via the Browser, so the request must follow this path:
+  1) Browser connect to "api.contoso-sandbox-apim.com" via App Gateway
+  2) App Gateway redirects the request to API Management using the original URL "{env}.azure-api.net"
+  3) App Gateway uses the "{env}.azure-api.net" as source URL, so this URL must be added to the CORS "allow list" via a Global Policy
 
 # To deploy and test the Architecture
 
@@ -110,6 +132,17 @@ Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in 
 
 	- https://github.com/kphan714/AzureDeploymentFramework/blob/2266fe9d37ac706c09027a9881583e5c23825533/ADF/bicep/APIM-APIM.bicep#L191
 	
+
+## APIM Management Custom Domain Name
+	- https://github.com/azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.web/private-webapp-with-app-gateway-and-apim
+
+	- https://learn.microsoft.com/en-us/powershell/module/az.apimanagement/new-azapimanagementcustomhostnameconfiguration?view=azps-11.3.0 
+
+	- https://github.com/MicrosoftDocs/azure-docs/blob/2a640210439fda7ee7d86f313f6e497cff7c9192/articles/api-management/api-management-howto-integrate-internal-vnet-appgateway.md
+
+	- https://github.com/maikoldiaz/-fantastic-pancake/blob/58bee2dc7a13d13332baa9daa4ea1f956996516b/Deploy/Scripts/Bind-SSL-APIM.ps1#L17
+
+	- https://github.com/MicrosoftDocs/azure-docs-powershell/blob/345438d814aa0d7a2969b42e9535709aeba88dc8/azps-10.4.1/Az.ApiManagement/Set-AzApiManagement.md?plain=1#L56
 
 ## App Gateway 
 	- [(Use API Management in a virtual network with Azure Application Gateway - Azure API Management | Microsoft Learn)](https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-integrate-internal-vnet-appgateway)
@@ -198,3 +231,18 @@ Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in 
 		3) Adjust the url to the App Gateway url
 		4) Login and open the Portal
 		5) From the Developer Portal, click on "Operations" -> "Publish"
+
+## Role Assignment for Key Vault to a specific User - PowerShell Script
+This can be handy to debug / test certificates
+```
+$USER_OBJECT_ID = "xxxxxx-xxxxxxxx-xxxxxxxxx-xxxxxx"
+$KV_RESOURCE_ID = "/subscriptions/xxxxxxxxxxxxx/resourceGroups/xxxxxxxxxxx/providers/Microsoft.KeyVault/vaults/xxxxxxxxx"
+
+az role assignment create --assignee-object-id $USER_OBJECT_ID --assignee-principal-type User `
+--role "Key Vault Certificates Officer" `
+--scope $KV_RESOURCE_ID
+
+az role assignment create --assignee-object-id $USER_OBJECT_ID --assignee-principal-type User `
+--role "Key Vault Secrets User" `
+--scope $KV_RESOURCE_ID
+```

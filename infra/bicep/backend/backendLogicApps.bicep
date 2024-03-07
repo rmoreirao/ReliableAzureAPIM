@@ -35,7 +35,7 @@ resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2021-0
 
 
 // Azure Application Service Plan
-resource appServicePlanFunction 'Microsoft.Web/serverfarms@2018-02-01' = {
+resource appServicePlanFunction 'Microsoft.Web/serverfarms@2022-09-01' = {
   name: appServicePlanLogicAppsName
   location: location
   sku: {
@@ -44,6 +44,7 @@ resource appServicePlanFunction 'Microsoft.Web/serverfarms@2018-02-01' = {
   }
   kind: 'windows'
   properties: {
+    zoneRedundant: true
   }
 }
 
@@ -115,8 +116,7 @@ resource logicApp 'Microsoft.Web/sites@2022-09-01' = {
       numberOfWorkers: 1
       linuxFxVersion: ''
       alwaysOn: false
-      http20Enabled: false
-      
+      http20Enabled: false      
     }
     enabled: true
     hostNameSslStates: [

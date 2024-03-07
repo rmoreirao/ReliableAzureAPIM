@@ -37,34 +37,21 @@ param keyVaultRG string
  * Resources
 */
 
-var apimName = 'apim-${resourceSuffix}'
+var apimName = 'apima-${resourceSuffix}'
 var apimManagedIdentityId = 'identity-${apimName}'
 var keyVaultSecretsUserRoleDefinitionId = '4633458b-17de-408a-b874-0445c86b69e6'
+var keyVaultCertificatesOfficer = 'a4417e6f-fecd-4de8-b567-7b0420556985'
 
 resource apimIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name:     apimManagedIdentityId
   location: primaryRegionSettings.location
 }
 
-module kvRoleAssignmentsCert 'kvAppRoleAssignment.bicep' = {
-  name: 'kvRoleAssignmentsCert'
-  scope: resourceGroup(keyVaultRG)
-  params: {
-    keyVaultName: keyVaultName
-    managedIdentity: apimIdentity
-    // Key Vault Certificates Officer
-    roleId: keyVaultSecretsUserRoleDefinitionId
-  }
-}
-
 resource apim 'Microsoft.ApiManagement/service@2021-08-01' = {
   name: apimName
   location: primaryRegionSettings.location
   identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${apimIdentity.id}': {}
-    }
+    type: 'SystemAssigned'
   }
   sku:{
     capacity: primaryRegionSettings.apimRegionalSettings.skuCapacity
@@ -86,11 +73,43 @@ resource apim 'Microsoft.ApiManagement/service@2021-08-01' = {
         capacity: settings.apimRegionalSettings.skuCapacity
       }
       virtualNetworkConfiguration:{
-          subnetResourceId: additionalRegionsNetworkingResources[i].apimSubnetid
-        }
-        publicIpAddressId: additionalRegionsNetworkingResources[i].apimPublicIpId
-        zones: settings.apimRegionalSettings.?availabilityZones
+        subnetResourceId: additionalRegionsNetworkingResources[i].apimSubnetid
+      }
+      publicIpAddressId: additionalRegionsNetworkingResources[i].apimPublicIpId
+      zones: settings.apimRegionalSettings.?availabilityZones
     }]
+  }
+}
+
+module kvRoleAssignmentsCert 'kvAppRoleAssignment.bicep' = {
+  name: 'kvRoleAssignmentsCert'
+  scope: resourceGroup(keyVaultRG)
+  params: {
+    keyVaultName: keyVaultName
+    principalId: apim.identity.principalId
+    // Key Vault Certificates Officer
+    roleId: keyVaultSecretsUserRoleDefinitionId
+  }
+}
+
+module kvRoleAssignmentsSecret 'kvAppRoleAssignment.bicep' = {
+  name: 'kvRoleAssignmentsSecret'
+  scope: resourceGroup(keyVaultRG)
+  params: {
+    keyVaultName: keyVaultName
+    principalId: apim.identity.principalId
+    // Key Vault Secrets User
+    roleId: keyVaultCertificatesOfficer
+  }
+  dependsOn: [
+    kvRoleAssignmentsCert
+  ]
+}
+
+module globalPolicy 'apimGlobalPolicy.bicep' = {
+  name: 'globalPolicy'
+  params: {
+    apimServiceName: apimName
   }
 }
 

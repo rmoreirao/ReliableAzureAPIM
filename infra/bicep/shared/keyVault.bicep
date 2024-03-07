@@ -23,7 +23,7 @@ var resourceSuffix = '${workloadName}-${environment}-${location}-001'
 
 var keyvaultPrivateEndpointName   = 'pep-kv-${resourceSuffix}'
 
-var tempKeyVaultName = take('kx-${resourceSuffix}', 24) // Must be between 3-24 alphanumeric characters 
+var tempKeyVaultName = take('kv-${resourceSuffix}', 24) // Must be between 3-24 alphanumeric characters 
 var keyVaultName = endsWith(tempKeyVaultName, '-') ? substring(tempKeyVaultName, 0, length(tempKeyVaultName) - 1) : tempKeyVaultName
 
 resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
@@ -45,10 +45,6 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
     }
   }
 }
-
-// resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
-//   name: 'your-keyvault-private-dns-zone-name'
-// }
 
 resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
   name: '${keyVaultPrivateDnsZoneName}/${resourceSuffix}' 
