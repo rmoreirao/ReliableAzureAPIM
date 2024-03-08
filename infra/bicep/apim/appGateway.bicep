@@ -117,7 +117,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
       {
         name: appGatewayFQDN
         properties: {
-          keyVaultSecretId:  apiGatewayCertificate.outputs.secretUri
+          keyVaultSecretId:  apiGatewayCertificate.outputs.secretUriWithVersion
         }
       }
     ]
@@ -462,3 +462,5 @@ resource diagnosticSetting 'Microsoft.Insights/diagnosticSettings@2021-05-01-pre
     ]
   }
 }
+
+output certificateSecretUriWithoutVersion string = apiGatewayCertificate.outputs.secretUriWithoutVersion

@@ -146,5 +146,6 @@ module getKeyVaultCertificateSecret 'getKeyVaultCertificateSecret.bicep' = {
   ]
 }
 
-output secretUri string = getKeyVaultCertificateSecret.outputs.secretUri
+output secretUriWithVersion string = getKeyVaultCertificateSecret.outputs.secretUriWithVersion
+output secretUriWithoutVersion string = getKeyVaultCertificateSecret.outputs.secretUriWithoutVersion
 

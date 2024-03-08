@@ -1,6 +1,6 @@
 using './main.bicep'
 
-param workloadName = 'rmo9'
+param workloadName = 'rmo3'
 param environment = 'dev'
 
 param globalSettings = {
@@ -47,21 +47,21 @@ param regionalSettings = [
   {
     location: 'uksouth'
     vNetSettings: {
-        apimVNetNameAddressPrefix :'10.3.0.0/16'
-        bastionAddressPrefix : '10.3.1.0/24'
-        // devOpsAgentAddressPrefix : '10.3.2.0/24'
-        jumpBoxAddressPrefix : '10.3.3.0/24'
-        appGatewayAddressPrefix : '10.3.4.0/24'
-        functionsInboundAddressPrefix : '10.3.5.0/24'
-        functionsOutboundAddressPrefix : '10.3.6.0/24'
-        apimAddressPrefix : '10.3.7.0/24'
-        firewallAddressPrefix : '10.3.8.0/24'
-        firewallManagementAddressPrefix : '10.3.9.0/24'
-        logicAppsOutboundAddressPrefix : '10.3.10.0/24'
-        logicAppsInboundAddressPrefix : '10.3.11.0/24'
-        logicAppsStorageInboundAddressPrefix : '10.3.12.0/24'
-        deployScriptStorageSubnetAddressPrefix: '10.3.14.0/24'
-        keyVaultInboundPrivateEndpointAddressPrefix : '10.3.15.0/24'
+        apimVNetNameAddressPrefix :'10.5.0.0/16'
+        bastionAddressPrefix : '10.5.1.0/24'
+        // devOpsAgentAddressPrefix : '10.5.2.0/24'
+        jumpBoxAddressPrefix : '10.5.3.0/24'
+        appGatewayAddressPrefix : '10.5.4.0/24'
+        functionsInboundAddressPrefix : '10.5.5.0/24'
+        functionsOutboundAddressPrefix : '10.5.6.0/24'
+        apimAddressPrefix : '10.5.7.0/24'
+        firewallAddressPrefix : '10.5.8.0/24'
+        firewallManagementAddressPrefix : '10.5.9.0/24'
+        logicAppsOutboundAddressPrefix : '10.5.10.0/24'
+        logicAppsInboundAddressPrefix : '10.5.11.0/24'
+        logicAppsStorageInboundAddressPrefix : '10.5.12.0/24'
+        deployScriptStorageSubnetAddressPrefix: '10.5.14.0/24'
+        keyVaultInboundPrivateEndpointAddressPrefix : '10.5.15.0/24'
     }
     apimRegionalSettings:{
       skuCapacity: 1

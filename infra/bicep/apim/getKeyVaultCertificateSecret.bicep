@@ -7,4 +7,6 @@ resource keyVaultCertificate 'Microsoft.KeyVault/vaults/secrets@2021-06-01-previ
   scope: resourceGroup(keyVaultRG)
 }
 
-output secretUri string = keyVaultCertificate.properties.secretUriWithVersion
+output secretUriWithVersion string = keyVaultCertificate.properties.secretUriWithVersion
+output secretUriWithoutVersion string = keyVaultCertificate.properties.secretUri
+

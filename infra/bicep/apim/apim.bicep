@@ -33,19 +33,39 @@ param appInsightsInstrumentationKey string
 param keyVaultName string
 param keyVaultRG string
 
-/*
- * Resources
-*/
+param deployCustomDnsNames bool = false
+param certificateSecretUriWithoutVersion string?
+param apimCustomDomainName string?
+
 
 var apimName = 'apima-${resourceSuffix}'
-var apimManagedIdentityId = 'identity-${apimName}'
 var keyVaultSecretsUserRoleDefinitionId = '4633458b-17de-408a-b874-0445c86b69e6'
 var keyVaultCertificatesOfficer = 'a4417e6f-fecd-4de8-b567-7b0420556985'
 
-resource apimIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
-  name:     apimManagedIdentityId
-  location: primaryRegionSettings.location
-}
+var hostNameConfigurations = [
+  {
+    type: 'Proxy'
+    hostName: 'api.${apimCustomDomainName}'
+    defaultSslBinding: true
+    negotiateClientCertificate: false
+    keyVaultId: certificateSecretUriWithoutVersion
+  }
+  {
+    type: 'DeveloperPortal'
+    hostName: 'developer.${apimCustomDomainName}'
+    defaultSslBinding: false
+    negotiateClientCertificate: false
+    keyVaultId: certificateSecretUriWithoutVersion
+  }
+  // {
+  //   type: 'Management'
+  //   encodedCertificate: certificate
+  //   defaultSslBinding: false
+  //   hostName: managementHostName
+  //   negotiateClientCertificate: false
+  //   certificatePassword: certificatePassword
+  // }
+]
 
 resource apim 'Microsoft.ApiManagement/service@2021-08-01' = {
   name: apimName
@@ -78,6 +98,7 @@ resource apim 'Microsoft.ApiManagement/service@2021-08-01' = {
       publicIpAddressId: additionalRegionsNetworkingResources[i].apimPublicIpId
       zones: settings.apimRegionalSettings.?availabilityZones
     }]
+    hostnameConfigurations: (deployCustomDnsNames ? hostNameConfigurations : json('null'))
   }
 }
 
@@ -109,7 +130,7 @@ module kvRoleAssignmentsSecret 'kvAppRoleAssignment.bicep' = {
 module globalPolicy 'apimGlobalPolicy.bicep' = {
   name: 'globalPolicy'
   params: {
-    apimServiceName: apimName
+    apimServiceName: apim.name
   }
 }
 

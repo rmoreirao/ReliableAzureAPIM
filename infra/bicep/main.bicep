@@ -209,3 +209,30 @@ module appgwModule 'apim/appGateway.bicep' = if (globalSettings.appGatewaySettin
     zones: globalSettings.appGatewaySettings.?availabilityZones
   }
 }
+
+// This second deploy of APIM is required to add the custom domain name to the APIM instance
+// Currently APIM can only access KeyVault via VNET integration using System Assigned Managed Identity
+// So we need to deploy the APIM instance first to get the Managed Identity and then deploy the custom domain name
+module apimModuleWithCustomDns 'apim/apim.bicep'  = if (globalSettings.apimSettings != null) {
+  name: 'apimModuleWithCustomDns${workloadName}${environment}${location}'
+  scope: resourceGroup(apimRG.name)
+  params: {
+    resourceSuffix: resourceSuffix
+    apimSubnetId: networkingModule.outputs.networkingResourcesArray[0].apimSubnetid
+    appInsightsName: shared[0].outputs.resources.appInsightsName
+    appInsightsId: shared[0].outputs.resources.appInsightsId
+    appInsightsInstrumentationKey: shared[0].outputs.resources.appInsightsInstrumentationKey
+    apimPublicIpId: networkingModule.outputs.networkingResourcesArray[0].apimPublicIpId
+    publisherEmail: globalSettings.apimSettings.apimPublisherEmail
+    publisherName: globalSettings.apimSettings.apimPublisherName
+    skuName: globalSettings.apimSettings.apimSkuName
+    keyVaultName: shared[0].outputs.resources.keyVaultName!
+    keyVaultRG: sharedRG.name
+    primaryRegionSettings: regionalSettings[0]
+    additionalRegionSettings: skip(regionalSettings,1)
+    additionalRegionsNetworkingResources: skip(networkingModule.outputs.networkingResourcesArray,1) 
+    deployCustomDnsNames: true
+    apimCustomDomainName: globalSettings.apimSettings.apimCustomDomainName
+    certificateSecretUriWithoutVersion: appgwModule.outputs.certificateSecretUriWithoutVersion
+  }
+}
