@@ -2,6 +2,7 @@
     <inbound>
         <cors allow-credentials="true">
             <allowed-origins>
+                <origin>https://developer.contoso-sandbox-apim.com</origin>
                 <origin>https://{{apimServiceName}}.developer.azure-api.net</origin>
             </allowed-origins>
             <allowed-methods preflight-result-max-age="300">

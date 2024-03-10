@@ -158,7 +158,7 @@ Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in 
 	- https://learn.microsoft.com/en-us/answers/questions/1006626/application-gateway-backend-end-pool-not-getting-u
 
 		- stop: az network application-gateway stop -n appgw-rmor2-dev-westeurope-001 -g rg-apim-rmor2-dev-westeurope-001
-		- start: az network application-gateway start -n appgw-rmor4-dev-uksouth-001 -g rg-apim-rmor4-dev-uksouth-001
+		- start: az network application-gateway start -n appgw-rmo3-dev-uksouth-001 -g rg-apim-rmo3-dev-uksouth-001
 
 
 
@@ -223,14 +223,30 @@ Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in 
 ## API Ops
 	- https://azure.github.io/apiops/
 
+## Developer Portal
+	- https://learn.microsoft.com/en-us/azure/api-management/automate-portal-deployments
+
+
+## Monitoring
+	- https://techcommunity.microsoft.com/t5/fasttrack-for-azure/end-to-end-logging-with-azure-front-door-application-gateway-and/ba-p/3673671
+
 # Others
 
-## To publish the Developer Portal:
+## To manually publish the Developer Portal:
 		1) Go to the Portal via APIM: Developer portal-> Portal overview
 		2) Click on "Developer Portal" link on the top of the page
 		3) Adjust the url to the App Gateway url
 		4) Login and open the Portal
 		5) From the Developer Portal, click on "Operations" -> "Publish"
+
+## To test with Developer Portal and Self-Service certificates
+	If you are receiving "CORS" errors when trying to test using Developer Portal, it could be because:  
+
+	1) CORS is not enabled - to fix you need to so enable it
+	2) The Certificate is not valid / insecure - try to open the URL with the API call url in a browser window, and accept / trust the certificate  
+
+	After these, you should be able to test the APIs using Developer Portal with Self-signed certificates
+	
 
 ## Role Assignment for Key Vault to a specific User - PowerShell Script
 This can be handy to debug / test certificates

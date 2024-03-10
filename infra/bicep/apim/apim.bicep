@@ -57,14 +57,13 @@ var hostNameConfigurations = [
     negotiateClientCertificate: false
     keyVaultId: certificateSecretUriWithoutVersion
   }
-  // {
-  //   type: 'Management'
-  //   encodedCertificate: certificate
-  //   defaultSslBinding: false
-  //   hostName: managementHostName
-  //   negotiateClientCertificate: false
-  //   certificatePassword: certificatePassword
-  // }
+  {
+    type: 'Management'
+    hostName: 'management.${apimCustomDomainName}'
+    defaultSslBinding: false
+    negotiateClientCertificate: false
+    keyVaultId: certificateSecretUriWithoutVersion
+  }
 ]
 
 resource apim 'Microsoft.ApiManagement/service@2021-08-01' = {
@@ -102,7 +101,7 @@ resource apim 'Microsoft.ApiManagement/service@2021-08-01' = {
   }
 }
 
-module kvRoleAssignmentsCert 'kvAppRoleAssignment.bicep' = {
+module kvRoleAssignmentsCert 'kvAppRoleAssignment.bicep' = if(deployCustomDnsNames == false) {
   name: 'kvRoleAssignmentsCert'
   scope: resourceGroup(keyVaultRG)
   params: {
@@ -113,7 +112,7 @@ module kvRoleAssignmentsCert 'kvAppRoleAssignment.bicep' = {
   }
 }
 
-module kvRoleAssignmentsSecret 'kvAppRoleAssignment.bicep' = {
+module kvRoleAssignmentsSecret 'kvAppRoleAssignment.bicep' = if(deployCustomDnsNames == false) {
   name: 'kvRoleAssignmentsSecret'
   scope: resourceGroup(keyVaultRG)
   params: {
@@ -127,14 +126,14 @@ module kvRoleAssignmentsSecret 'kvAppRoleAssignment.bicep' = {
   ]
 }
 
-module globalPolicy 'apimGlobalPolicy.bicep' = {
+module globalPolicy 'apimConfig.bicep' = if(deployCustomDnsNames == false) {
   name: 'globalPolicy'
   params: {
     apimServiceName: apim.name
   }
 }
 
-resource appInsightsLogger 'Microsoft.ApiManagement/service/loggers@2019-01-01' = {
+resource appInsightsLogger 'Microsoft.ApiManagement/service/loggers@2019-01-01' = if(deployCustomDnsNames == false) {
   parent: apim
   name: appInsightsName
   properties: {
@@ -146,7 +145,7 @@ resource appInsightsLogger 'Microsoft.ApiManagement/service/loggers@2019-01-01' 
   }
 }
 
-resource applicationinsights 'Microsoft.ApiManagement/service/diagnostics@2019-01-01' = {
+resource applicationinsights 'Microsoft.ApiManagement/service/diagnostics@2019-01-01' = if(deployCustomDnsNames == false) {
   parent: apim
   name: 'applicationinsights'
   properties: {

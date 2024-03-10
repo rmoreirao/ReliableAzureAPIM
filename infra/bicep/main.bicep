@@ -109,7 +109,7 @@ module shared './shared/mainShared.bicep' = [for (locationSetting,i) in regional
     jumpboxSubnetId: networkingModule.outputs.networkingResourcesArray[i].?jumpBoxSubnetid
     resourceGroupName: sharedRG.name
     devOpsResourcesSettings: globalSettings.?devOpsAgentSettings
-    jumpBoxResourcesSettings: globalSettings.jumpBoxSettings
+    jumpBoxResourcesSettings: globalSettings.?jumpBoxSettings
     workloadName: workloadName
     keyVaultPrivateEndpointSubnetid: networkingModule.outputs.networkingResourcesArray[i].?keyVaultPrivateEndpointSubnetid
     location: locationSetting.location

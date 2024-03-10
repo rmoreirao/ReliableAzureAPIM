@@ -32,10 +32,10 @@ param globalSettings = {
   //   devOpsVmUsername: 'vmadmin'
   // }
 
-  jumpBoxSettings:{
-    jumpBoxVmPassword: '{{JUMPBOX_VMPASSWORD}}'
-    jumpBoxVmUsername: 'vmadmin'
-  }
+  // jumpBoxSettings:{
+  //   jumpBoxVmPassword: '{{JUMPBOX_VMPASSWORD}}'
+  //   jumpBoxVmUsername: 'vmadmin'
+  // }
 
   firewallSettings:{
     firewallSkuName:'Basic'
