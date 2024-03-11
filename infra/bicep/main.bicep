@@ -156,6 +156,8 @@ module apimModule 'apim/apim.bicep'  = if (globalSettings.apimSettings != null) 
     primaryRegionSettings: regionalSettings[0]
     additionalRegionSettings: skip(regionalSettings,1)
     additionalRegionsNetworkingResources: skip(networkingModule.outputs.networkingResourcesArray,1) 
+    entraIdClientId: globalSettings.apimSettings.?entraIdClientId
+    entraIdClientSecret: globalSettings.apimSettings.?entraIdClientSecret
   }
 }
 

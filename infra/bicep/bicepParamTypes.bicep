@@ -82,6 +82,12 @@ type globalSettingsType = {
     apimPublisherName : string
     @description('Custom domain for APIM - is used to API Management from the internet. This should also match the Domain name of your Certificate. Example - contoso.com.')
     apimCustomDomainName : string
+    
+    @description('Client Id for of the Entra ID application for Authorization. Set this to enable Entra ID integration for Developer Portal.')
+    entraIdClientId:string?
+    @description('Client Secret for of the Entra ID application for Authorization.')
+    @secure()
+    entraIdClientSecret: string?
   }
 
   appGatewaySettings: {

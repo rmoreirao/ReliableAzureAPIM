@@ -178,9 +178,6 @@ Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in 
 		|-----------------------|----------------|-----------------|---------------------|
 		| route-apim-to-firewall | 0.0.0.0/0      | VirtualAppliance | 10.2.8.4 (FW private ID)          |
 		| fw-apim               | ApiManagement  | Internet        |                     |
-		
-
-![alt text](docs/images/urd.png)
 
 ## Azure Functions
 
@@ -207,8 +204,6 @@ Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in 
 ## Deployment Script
 	- https://johnlokerse.dev/2022/12/04/run-powershell-scripts-with-azure-bicep/
 
-
-
 ## Migration of APIM to Stv2 
 	- [Azure-Orbital-STAC/deploy/bicep/modules/apim.bicep at 105c1af9c0b5d4749c4c94fa059fdf84b6f2c811 · Azure/Azure-Orbital-STAC (github.com)](https://github.com/Azure/Azure-Orbital-STAC/blob/105c1af9c0b5d4749c4c94fa059fdf84b6f2c811/deploy/bicep/modules/apim.bicep#L67)
 
@@ -226,6 +221,8 @@ Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in 
 ## Developer Portal
 	- https://learn.microsoft.com/en-us/azure/api-management/automate-portal-deployments
 
+## Entra ID for Authententication:
+	- Developer Portal with Entra ID Authtentication: https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-aad?WT.mc_id=Portal-fx
 
 ## Monitoring
 	- https://techcommunity.microsoft.com/t5/fasttrack-for-azure/end-to-end-logging-with-azure-front-door-application-gateway-and/ba-p/3673671
@@ -238,6 +235,27 @@ Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in 
 		3) Adjust the url to the App Gateway url
 		4) Login and open the Portal
 		5) From the Developer Portal, click on "Operations" -> "Publish"
+
+## To Export / Import Developer Portal styling
+- Pre-Reg:
+```
+git clone https://github.com/Azure/api-management-developer-portal.git
+cd api-management-developer-portal
+npm install
+cd scripts.v3
+```
+- To export: 
+```
+az login
+az account set --subscription afb8f550-216d-4848-b6f1-73b1bbf58f1e
+node ./capture --subscriptionId afb8f550-216d-4848-b6f1-73b1bbf58f1e --resourceGroupName rg-apim-hnk --serviceName apimheineken
+```
+- To import: 
+```
+az login
+az account set --subscription 2d172aeb-b927-43ec-9808-8c9585119364
+node ./generate --subscriptionId 2d172aeb-b927-43ec-9808-8c9585119364 --resourceGroupName rg-apim-hkdi1-dev-westeurope-001 --serviceName apima-hkdi1-dev-westeurope-001 --publish true
+```
 
 ## To test with Developer Portal and Self-Service certificates
 	If you are receiving "CORS" errors when trying to test using Developer Portal, it could be because:  

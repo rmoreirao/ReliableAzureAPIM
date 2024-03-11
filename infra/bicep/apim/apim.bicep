@@ -37,6 +37,10 @@ param deployCustomDnsNames bool = false
 param certificateSecretUriWithoutVersion string?
 param apimCustomDomainName string?
 
+param entraIdClientId string?
+@secure()
+param entraIdClientSecret string?
+
 
 var apimName = 'apima-${resourceSuffix}'
 var keyVaultSecretsUserRoleDefinitionId = '4633458b-17de-408a-b874-0445c86b69e6'
@@ -155,6 +159,19 @@ resource applicationinsights 'Microsoft.ApiManagement/service/diagnostics@2019-0
       percentage: 100
       samplingType: 'fixed'
     }
+  }
+}
+
+resource service_apima_rmo3_dev_uksouth_001_name_aad 'Microsoft.ApiManagement/service/identityProviders@2023-05-01-preview' = if (entraIdClientId != null && deployCustomDnsNames == false) {
+  parent: apim
+  name: 'entraId'
+  properties: {
+    clientId: entraIdClientId
+    type: 'aad'
+    authority: 'login.windows.net'
+    allowedTenants: ['MngEnvMCAP124364.onmicrosoft.com']
+    clientLibrary: 'MSAL-2'
+    clientSecret: entraIdClientSecret
   }
 }
 
