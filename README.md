@@ -227,6 +227,15 @@ Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in 
 ## Monitoring
 	- https://techcommunity.microsoft.com/t5/fasttrack-for-azure/end-to-end-logging-with-azure-front-door-application-gateway-and/ba-p/3673671
 
+## OAuth 2.0
+	- https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-protect-backend-with-aad
+	- https://techcommunity.microsoft.com/t5/azure-paas-blog/protect-api-s-using-oauth-2-0-in-apim/ba-p/2309538
+	- https://azure.github.io/apim-lab/apim-lab/7-security/security-7-2-1-oauth2-apim-integration.html
+	- https://medium.com/@gulshan.bajaj/how-to-implement-oauth2-0-for-an-api-in-azure-apim-e2cdba4ff2ba
+
+## APIM Developer Portal Customizations
+	- https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-developer-portal-customize
+
 # Others
 
 ## To manually publish the Developer Portal:
@@ -265,6 +274,13 @@ node ./generate --subscriptionId 2d172aeb-b927-43ec-9808-8c9585119364 --resource
 
 	After these, you should be able to test the APIs using Developer Portal with Self-signed certificates
 	
+
+## How to Test APIs from Azure Portal APIM
+	1) Login to the Jumpbox using Bastion and login to Azure Portal
+	2) Open the API Operation you would like to test
+	3) On the "Host" field, select the original endpoint from the API Gateway
+	4) Check the "Bypass CORS proxy" checkbox
+	5) Send the request
 
 ## Role Assignment for Key Vault to a specific User - PowerShell Script
 This can be handy to debug / test certificates

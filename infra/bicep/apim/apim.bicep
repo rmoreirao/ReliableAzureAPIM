@@ -41,7 +41,6 @@ param entraIdClientId string?
 @secure()
 param entraIdClientSecret string?
 
-
 var apimName = 'apima-${resourceSuffix}'
 var keyVaultSecretsUserRoleDefinitionId = '4633458b-17de-408a-b874-0445c86b69e6'
 var keyVaultCertificatesOfficer = 'a4417e6f-fecd-4de8-b567-7b0420556985'
