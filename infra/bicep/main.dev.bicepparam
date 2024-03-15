@@ -8,6 +8,10 @@ param globalSettings = {
     publicIpAvailabilityZones:['1']
   }
 
+  backendSettings: {
+    storageSku: 'Standard_LRS'
+  }
+
   apimSettings:{
     apimPublisherEmail : 'rmoreirao@microsoft.com'
     apimPublisherName : 'Contoso'
