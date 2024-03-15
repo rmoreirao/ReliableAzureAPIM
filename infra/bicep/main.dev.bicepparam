@@ -10,8 +10,8 @@ param globalSettings = {
 
   apimSettings:{
     apimPublisherEmail : 'rmoreirao@microsoft.com'
-    apimPublisherName : 'Heineken DI'
-    apimCustomDomainName : 'sandbox.heineken-apim.com'
+    apimPublisherName : 'Contoso'
+    apimCustomDomainName : 'contoso-sandbox-apim.com'
     apimSkuName: 'Developer'
     
   }
