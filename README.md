@@ -260,7 +260,7 @@ cd scripts.v3
 ```
 az login
 az account set --subscription afb8f550-216d-4848-b6f1-73b1bbf58f1e
-node ./capture --subscriptionId afb8f550-216d-4848-b6f1-73b1bbf58f1e --resourceGroupName rg-apim-hnk --serviceName apimheineken
+node ./capture --subscriptionId afb8f550-216d-4848-b6f1-73b1bbf58f1e --resourceGroupName rg-name --serviceName apimservicename
 ```
 - To import: 
 ```

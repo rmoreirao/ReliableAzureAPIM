@@ -1,4 +1,5 @@
 param apimServiceName string
+param developerPortalURL string
 
 resource apiManagementService 'Microsoft.ApiManagement/service@2020-12-01' existing = {
   name: apimServiceName
@@ -9,6 +10,16 @@ resource apiManagementService 'Microsoft.ApiManagement/service@2020-12-01' exist
     properties: {
       displayName: 'apimServiceName'
       value: apimServiceName
+      secret: false
+    }
+  }
+
+  resource developerPortalURLNamedValue 'namedValues' = {
+    name: 'developerPortalURL'
+
+    properties: {
+      displayName: 'developerPortalURL'
+      value: developerPortalURL
       secret: false
     }
   }

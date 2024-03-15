@@ -133,6 +133,7 @@ module globalPolicy 'apimConfig.bicep' = if(deployCustomDnsNames == false) {
   name: 'globalPolicy'
   params: {
     apimServiceName: apim.name
+    developerPortalURL: 'https://developer.${apimCustomDomainName}'
   }
 }
 
