@@ -7,8 +7,8 @@
 ./secrets.ps1
 
 # Parameters
-$resourceGroupName = "rg-apim-hkdi1-dev-westeurope-001"
-$apimServiceName = "apima-hkdi1-dev-westeurope-001"
+$resourceGroupName = "rg-apim-hkdi2-dev-westeurope-001"
+$apimServiceName = "apima-hkdi2-dev-westeurope-001"
 
 az account set --subscription $env:SUBSCRIPTION_ID
 

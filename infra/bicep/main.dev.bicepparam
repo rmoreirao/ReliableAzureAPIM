@@ -1,6 +1,6 @@
 using './main.bicep'
 
-param workloadName = 'rmo3'
+param workloadName = 'hkdi2'
 param environment = 'dev'
 
 param globalSettings = {
@@ -10,8 +10,8 @@ param globalSettings = {
 
   apimSettings:{
     apimPublisherEmail : 'rmoreirao@microsoft.com'
-    apimPublisherName : 'Contoso Sandbox APIM'
-    apimCustomDomainName : 'contoso-sandbox-apim.com'
+    apimPublisherName : 'Heineken DI'
+    apimCustomDomainName : 'sandbox.heineken-apim.com'
     apimSkuName: 'Developer'
     
   }
@@ -32,10 +32,10 @@ param globalSettings = {
   //   devOpsVmUsername: 'vmadmin'
   // }
 
-  // jumpBoxSettings:{
-  //   jumpBoxVmPassword: '{{JUMPBOX_VMPASSWORD}}'
-  //   jumpBoxVmUsername: 'vmadmin'
-  // }
+  jumpBoxSettings:{
+    jumpBoxVmPassword: '{{JUMPBOX_VMPASSWORD}}'
+    jumpBoxVmUsername: 'vmadmin'
+  }
 
   firewallSettings:{
     firewallSkuName:'Basic'
@@ -45,7 +45,7 @@ param globalSettings = {
 
 param regionalSettings = [
   {
-    location: 'uksouth'
+    location: 'westeurope'
     vNetSettings: {
         apimVNetNameAddressPrefix :'10.5.0.0/16'
         bastionAddressPrefix : '10.5.1.0/24'

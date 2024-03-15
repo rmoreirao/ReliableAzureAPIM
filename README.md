@@ -215,8 +215,11 @@ Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in 
 ## Managed Identities
 	- https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/managed-identities-faq
 
-## API Ops
+## DevOps & API Ops
 	- https://azure.github.io/apiops/
+	- https://learn.microsoft.com/en-us/azure/api-management/devops-api-development-templates
+	- https://medium.com/version-1/shared-azure-api-management-service-design-f0a6f0e12bd8
+	- https://www.youtube.com/watch?v=8ZIt_DlNCoo
 
 ## Developer Portal
 	- https://learn.microsoft.com/en-us/azure/api-management/automate-portal-deployments
@@ -263,7 +266,7 @@ node ./capture --subscriptionId afb8f550-216d-4848-b6f1-73b1bbf58f1e --resourceG
 ```
 az login
 az account set --subscription 2d172aeb-b927-43ec-9808-8c9585119364
-node ./generate --subscriptionId 2d172aeb-b927-43ec-9808-8c9585119364 --resourceGroupName rg-apim-hkdi1-dev-westeurope-001 --serviceName apima-hkdi1-dev-westeurope-001 --publish true
+node ./generate --subscriptionId 2d172aeb-b927-43ec-9808-8c9585119364 --resourceGroupName rg-apim-hkdi2-dev-westeurope-001 --serviceName apima-hkdi2-dev-westeurope-001 --publish true
 ```
 
 ## To test with Developer Portal and Self-Service certificates
