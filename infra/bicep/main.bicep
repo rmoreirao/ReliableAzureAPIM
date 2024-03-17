@@ -196,7 +196,7 @@ module appgwModule 'apim/appGateway.bicep' = [for (locationSetting,i) in regiona
   ]
   params: {
     appGatewayFQDN: globalSettings.apimRGSettings.apimSettings.apimCustomDomainName
-    location: location
+    location: locationSetting.location
     appGatewaySubnetId: networkingModule.outputs.networkingResourcesArray[i].appGatewaySubnetid
     keyVaultName: shared[i].outputs.resources.keyVaultName!
     keyVaultResourceGroupName: sharedRG.name

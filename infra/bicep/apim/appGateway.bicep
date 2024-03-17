@@ -72,6 +72,286 @@ var apimDevPortalCustomHostname = 'developer.${apimCustomDomainName}'
 // var apimManagementBackendEndURL = '${apimName}.management.azure-api.net'
 var apimManagementBackendEndCustomHostname = 'management.${apimCustomDomainName}'
 
+var apiGatewayBackendPool = [
+  {
+    name: 'apigateway'
+    properties: {
+      backendAddresses: [
+        {
+          fqdn: apimGatewayFQDN
+        }
+      ]
+    }
+  }
+]
+
+var devPortalBackendPool = apimDevPortalFQDN == null ? [] : [
+  {
+    name: 'devportal'
+    properties: {
+      backendAddresses: [
+        {
+          fqdn: apimDevPortalFQDN
+        }
+      ]
+    }
+  }
+]
+
+var apimManagementBackendPool = apimManagementBackendEndFQDN == null ? [] : [
+  {
+    name: 'apimanagement'
+    properties: {
+      backendAddresses: [
+        {
+          fqdn: apimManagementBackendEndFQDN
+        }
+      ]
+    }
+  }
+]
+
+var backendAddressPools = concat(apiGatewayBackendPool, devPortalBackendPool, apimManagementBackendPool)
+
+var apiGatewayBackendHttpSettings = [
+  {
+    name: 'httpsapigateway'
+    properties: {
+      port: 443
+      protocol: 'Https'
+      cookieBasedAffinity: 'Disabled'
+      hostName: apimGatewayFQDN
+      pickHostNameFromBackendAddress: false
+      requestTimeout: 20
+      probe: {
+        id: resourceId('Microsoft.Network/applicationGateways/probes', appGatewayName, 'apigatewayprobe')
+      }
+    }
+  }
+]
+
+var devPortalBackendHttpSettings = apimDevPortalFQDN == null ? [] : [
+  {
+    name: 'httpsdevportal'
+    properties: {
+      port: 443
+      protocol: 'Https'
+      cookieBasedAffinity: 'Disabled'
+      hostName: apimDevPortalFQDN
+      pickHostNameFromBackendAddress: false
+      requestTimeout: 20
+      probe: {
+        id: resourceId('Microsoft.Network/applicationGateways/probes', appGatewayName, 'devportalprobe')
+      }
+    }
+  }
+]
+
+var apimManagementBackendHttpSettings = apimManagementBackendEndFQDN == null ? [] : [
+  {
+    name: 'httpsapimanagement'
+    properties: {
+      port: 443
+      protocol: 'Https'
+      cookieBasedAffinity: 'Disabled'
+      hostName: apimManagementBackendEndFQDN
+      pickHostNameFromBackendAddress: false
+      requestTimeout: 20
+      probe: {
+        id: resourceId('Microsoft.Network/applicationGateways/probes', appGatewayName, 'apimanagementprobe')
+      }
+    }
+  }
+]
+
+var backendHttpSettingsCollection = concat(apiGatewayBackendHttpSettings, devPortalBackendHttpSettings, apimManagementBackendHttpSettings)
+
+var apimGatewayHttpListener = [
+  {
+    name: 'httpsapigateway'
+    properties: {
+      frontendIPConfiguration: {
+        id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGatewayName, 'appGwPublicFrontendIp')
+      }
+      frontendPort: {
+        id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGatewayName, 'port_443')
+      }
+      protocol: 'Https'
+      sslCertificate: {
+        id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGatewayName, appGatewayFQDN)
+      }
+      hostName: apimGatewayCustomHostname
+      hostnames: []
+      requireServerNameIndication: true
+    }
+  }
+]
+
+var devPortalHttpListener = apimDevPortalFQDN == null ? [] : [
+  {
+    name: 'httpsdevportal'
+    properties: {
+      frontendIPConfiguration: {
+        id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGatewayName, 'appGwPublicFrontendIp')
+      }
+      frontendPort: {
+        id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGatewayName, 'port_443')
+      }
+      protocol: 'Https'
+      sslCertificate: {
+        id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGatewayName, appGatewayFQDN)
+      }
+      hostName: apimDevPortalCustomHostname
+      hostnames: []
+      requireServerNameIndication: true
+    }
+  }
+]
+
+var apimManagementHttpListener = apimManagementBackendEndFQDN == null ? [] : [
+  {
+    name: 'httpsapimanagement'
+    properties: {
+      frontendIPConfiguration: {
+        id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGatewayName, 'appGwPublicFrontendIp')
+      }
+      frontendPort: {
+        id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGatewayName, 'port_443')
+      }
+      protocol: 'Https'
+      sslCertificate: {
+        id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGatewayName, appGatewayFQDN)
+      }
+      hostName: apimManagementBackendEndCustomHostname
+      hostnames: []
+      requireServerNameIndication: true
+    }
+  }
+]
+
+var httpListeners = concat(apimGatewayHttpListener, devPortalHttpListener, apimManagementHttpListener)
+
+var apiGatewayRequestRoutingRule = [
+  {
+    name: 'apigateway'
+    properties: {
+      ruleType: 'Basic'
+      httpListener: {
+        id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGatewayName, 'httpsapigateway')
+      }
+      backendAddressPool: {
+        id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGatewayName, 'apigateway')
+      }
+      backendHttpSettings: {
+        id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGatewayName, 'httpsapigateway')
+      }
+    }
+  }
+]
+
+var devPortalRequestRoutingRule = apimDevPortalFQDN == null ? [] : [
+  {
+    name: 'devportal'
+    properties: {
+      ruleType: 'Basic'
+      httpListener: {
+        id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGatewayName, 'httpsdevportal')
+      }
+      backendAddressPool: {
+        id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGatewayName, 'devportal')
+      }
+      backendHttpSettings: {
+        id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGatewayName, 'httpsdevportal')
+      }
+    }
+  }
+]
+
+var apimManagementRequestRoutingRule = apimManagementBackendEndFQDN == null ? [] : [
+  {
+    name: 'apimanagement'
+    properties: {
+      ruleType: 'Basic'
+      httpListener: {
+        id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGatewayName, 'httpsapimanagement')
+      }
+      backendAddressPool: {
+        id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGatewayName, 'apimanagement')
+      }
+      backendHttpSettings: {
+        id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGatewayName, 'httpsapimanagement')
+      }
+    }
+  }
+]
+
+var requestRoutingRules = concat(apiGatewayRequestRoutingRule, devPortalRequestRoutingRule, apimManagementRequestRoutingRule)
+
+var apiGatewayProbe = [
+  {
+    name: 'apigatewayprobe'
+    properties: {
+      protocol: 'Https'
+      host: apimGatewayFQDN
+      path: '/status-0123456789abcdef'
+      interval: 30
+      timeout: 30
+      unhealthyThreshold: 3
+      pickHostNameFromBackendHttpSettings: false
+      minServers: 0
+      match: {
+        statusCodes: [
+          '200-399'
+        ]
+      }
+    }
+  }
+]
+
+var devPortalProbe = apimDevPortalFQDN == null ? [] : [
+  {
+    name: 'devportalprobe'
+    properties: {
+      protocol: 'Https'
+      host: apimDevPortalFQDN
+      path: '/signin-sso'
+      interval: 30
+      timeout: 30
+      unhealthyThreshold: 3
+      pickHostNameFromBackendHttpSettings: false
+      minServers: 0
+      match: {
+        statusCodes: [
+          '200-399'
+        ]
+      }
+    }
+  }
+]
+
+var apimManagementProbe = apimManagementBackendEndFQDN == null ? [] : [
+  {
+    name: 'apimanagementprobe'
+    properties: {
+      protocol: 'Https'
+      host: apimManagementBackendEndFQDN
+      path: '/ServiceStatus'
+      interval: 30
+      timeout: 30
+      unhealthyThreshold: 3
+      pickHostNameFromBackendHttpSettings: false
+      minServers: 0
+      match: {
+        statusCodes: [
+          '200-399'
+        ]
+      }
+    }
+  }
+]
+
+var probes = concat(apiGatewayProbe, devPortalProbe, apimManagementProbe)
+
 resource appGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name:     appGatewayIdentityId
   location: location
@@ -171,279 +451,18 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = if (dep
     ]
     frontendPorts: [
       {
-        name: 'port_80'
-        properties: {
-          port: 80
-        }
-      }
-      {
         name: 'port_443'
         properties: {
           port: 443
         }
       }
     ]
-    backendAddressPools: [
-      {
-        name: 'apigateway'
-        properties: {
-          backendAddresses: [
-            {
-              fqdn: apimGatewayFQDN
-            }
-          ]
-        }
-      }
-      {
-        name: 'devportal'
-        properties: {
-          backendAddresses: [
-            {
-              fqdn: apimDevPortalFQDN
-            }
-          ]
-        }
-      }
-      {
-        name: 'apimanagement'
-        properties: {
-          backendAddresses: [
-            {
-              fqdn: apimManagementBackendEndFQDN
-            }
-          ]
-        }
-      }
-    ]
-    backendHttpSettingsCollection: [
-      {
-        name: 'default'
-        properties: {
-          port: 80
-          protocol: 'Http'
-          cookieBasedAffinity: 'Disabled'
-          pickHostNameFromBackendAddress: false
-          affinityCookieName: 'ApplicationGatewayAffinity'
-          requestTimeout: 20
-        }
-      }
-      {
-        name: 'httpsapigateway'
-        properties: {
-          port: 443
-          protocol: 'Https'
-          cookieBasedAffinity: 'Disabled'
-          hostName: apimGatewayFQDN
-          pickHostNameFromBackendAddress: false
-          requestTimeout: 20
-          probe: {
-            id: resourceId('Microsoft.Network/applicationGateways/probes', appGatewayName, 'apigatewayprobe')
-          }
-        }
-      }
-      {
-        name: 'httpsdevportal'
-        properties: {
-          port: 443
-          protocol: 'Https'
-          cookieBasedAffinity: 'Disabled'
-          hostName: apimDevPortalFQDN
-          pickHostNameFromBackendAddress: false
-          requestTimeout: 20
-          probe: {
-            id: resourceId('Microsoft.Network/applicationGateways/probes', appGatewayName, 'devportalprobe')
-          }
-        }
-      }
-      {
-        name: 'httpsapimanagement'
-        properties: {
-          port: 443
-          protocol: 'Https'
-          cookieBasedAffinity: 'Disabled'
-          hostName: apimManagementBackendEndFQDN
-          pickHostNameFromBackendAddress: false
-          requestTimeout: 20
-          probe: {
-            id: resourceId('Microsoft.Network/applicationGateways/probes', appGatewayName, 'apimanagementprobe')
-          }
-        }
-      }
-    ]
-    httpListeners: [
-      {
-        name: 'default'
-        properties: {
-          frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGatewayName, 'appGwPublicFrontendIp')
-          }
-          frontendPort: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGatewayName, 'port_80')
-          }
-          protocol: 'Http'
-          hostnames: []
-          requireServerNameIndication: false
-        }
-      }
-      {
-        name: 'httpsapigateway'
-        properties: {
-          frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGatewayName, 'appGwPublicFrontendIp')
-          }
-          frontendPort: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGatewayName, 'port_443')
-          }
-          protocol: 'Https'
-          sslCertificate: {
-            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGatewayName, appGatewayFQDN)
-          }
-          hostName: apimGatewayCustomHostname
-          hostnames: []
-          requireServerNameIndication: true
-        }
-      }
-      {
-        name: 'httpsdevportal'
-        properties: {
-          frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGatewayName, 'appGwPublicFrontendIp')
-          }
-          frontendPort: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGatewayName, 'port_443')
-          }
-          protocol: 'Https'
-          sslCertificate: {
-            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGatewayName, appGatewayFQDN)
-          }
-          hostName: apimDevPortalCustomHostname
-          hostnames: []
-          requireServerNameIndication: true
-        }
-      }
-      {
-        name: 'httpsapimanagement'
-        properties: {
-          frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGatewayName, 'appGwPublicFrontendIp')
-          }
-          frontendPort: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGatewayName, 'port_443')
-          }
-          protocol: 'Https'
-          sslCertificate: {
-            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGatewayName, appGatewayFQDN)
-          }
-          hostName: apimManagementBackendEndCustomHostname
-          hostnames: []
-          requireServerNameIndication: true
-        }
-      }
-    ]
+    backendAddressPools: backendAddressPools
+    backendHttpSettingsCollection: backendHttpSettingsCollection
+    httpListeners: httpListeners
     urlPathMaps: []
-    requestRoutingRules: [
-      {
-        name: 'apigateway'
-        properties: {
-          ruleType: 'Basic'
-          httpListener: {
-            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGatewayName, 'httpsapigateway')
-          }
-          backendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGatewayName, 'apigateway')
-          }
-          backendHttpSettings: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGatewayName, 'httpsapigateway')
-          }
-        }
-      }
-      {
-        name: 'devportal'
-        properties: {
-          ruleType: 'Basic'
-          httpListener: {
-            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGatewayName, 'httpsdevportal')
-          }
-          backendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGatewayName, 'devportal')
-          }
-          backendHttpSettings: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGatewayName, 'httpsdevportal')
-          }
-        }
-      }
-      {
-        name: 'apimanagement'
-        properties: {
-          ruleType: 'Basic'
-          httpListener: {
-            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGatewayName, 'httpsapimanagement')
-          }
-          backendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGatewayName, 'apimanagement')
-          }
-          backendHttpSettings: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGatewayName, 'httpsapimanagement')
-          }
-        }
-      }
-    ]
-    probes: [
-      {
-        name: 'apigatewayprobe'
-        properties: {
-          protocol: 'Https'
-          host: apimGatewayFQDN
-          path: '/status-0123456789abcdef'
-          interval: 30
-          timeout: 30
-          unhealthyThreshold: 3
-          pickHostNameFromBackendHttpSettings: false
-          minServers: 0
-          match: {
-            statusCodes: [
-              '200-399'
-            ]
-          }
-        }
-      }
-      {
-        name: 'devportalprobe'
-        properties: {
-          protocol: 'Https'
-          host: apimDevPortalFQDN
-          path: '/signin-sso'
-          interval: 30
-          timeout: 30
-          unhealthyThreshold: 3
-          pickHostNameFromBackendHttpSettings: false
-          minServers: 0
-          match: {
-            statusCodes: [
-              '200-399'
-            ]
-          }
-        }
-      }
-      {
-        name: 'apimanagementprobe'
-        properties: {
-          protocol: 'Https'
-          host: apimManagementBackendEndFQDN
-          path: '/ServiceStatus'
-          interval: 30
-          timeout: 30
-          unhealthyThreshold: 3
-          pickHostNameFromBackendHttpSettings: false
-          minServers: 0
-          match: {
-            statusCodes: [
-              '200-399'
-            ]
-          }
-        }
-      }
-    ]
+    requestRoutingRules: requestRoutingRules
+    probes: probes
     rewriteRuleSets: []
     redirectConfigurations: []
     webApplicationFirewallConfiguration: webApplicationFirewallConfiguration
