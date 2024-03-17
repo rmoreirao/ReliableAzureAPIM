@@ -23,11 +23,12 @@ param firewallManagementSubnetName string
 param udrApimFirewallName string
 param publicIpFirewallId string
 param publicIpFirewallMgmtId string?
+param deployResources bool
 
 var firewallPolicyName = 'fw-policy-${workloadName}-${deploymentEnvironment}-${location}'
 var firewallName = 'fw-${workloadName}-${deploymentEnvironment}-${location}'
 
-resource firewallPolicy 'Microsoft.Network/firewallPolicies@2022-07-01' = {
+resource firewallPolicy 'Microsoft.Network/firewallPolicies@2022-07-01' = if (deployResources) {
   name: firewallPolicyName
   location: location
   properties: {
@@ -42,7 +43,7 @@ resource firewallPolicy 'Microsoft.Network/firewallPolicies@2022-07-01' = {
   }
 }
 
-resource firewallPolicies 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2023-06-01' = {
+resource firewallPolicies 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2023-06-01' = if (deployResources) {
   parent: firewallPolicy
   name: 'DefaultApplicationRuleCollectionGroup'
   properties: {
@@ -101,7 +102,7 @@ var managementIpConfiguration = publicIpFirewallMgmtId == null ? null : {
   }
 }
 
-resource firewall 'Microsoft.Network/azureFirewalls@2020-04-01' = {
+resource firewall 'Microsoft.Network/azureFirewalls@2020-04-01' = if (deployResources) {
   name: firewallName
   location: location
   zones: availabilityZones    
@@ -130,7 +131,7 @@ resource firewall 'Microsoft.Network/azureFirewalls@2020-04-01' = {
   ]
 }
 
-resource udrApimFirewall 'Microsoft.Network/routeTables@2023-06-01' = {
+resource udrApimFirewall 'Microsoft.Network/routeTables@2023-06-01' = if (deployResources) {
   name: udrApimFirewallName
   location: location
   properties: {

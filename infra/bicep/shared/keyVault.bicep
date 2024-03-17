@@ -18,6 +18,7 @@ param vnetId string
 param keyVaultPrivateEndpointSubnetid string
 param keyVaultPrivateDnsZoneName string
 param keyVaultPrivateDnsZoneId string
+param deployResources bool
 
 var resourceSuffix = '${workloadName}-${environment}-${location}-001'
 
@@ -26,7 +27,7 @@ var keyvaultPrivateEndpointName   = 'pep-kv-${resourceSuffix}'
 var tempKeyVaultName = take('kv-${resourceSuffix}', 24) // Must be between 3-24 alphanumeric characters 
 var keyVaultName = endsWith(tempKeyVaultName, '-') ? substring(tempKeyVaultName, 0, length(tempKeyVaultName) - 1) : tempKeyVaultName
 
-resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = if (deployResources) {
   name: keyVaultName
   location: location
   properties: {
@@ -46,7 +47,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
   }
 }
 
-resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' = {
+resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2018-09-01' =  if (deployResources)  {
   name: '${keyVaultPrivateDnsZoneName}/${resourceSuffix}' 
   location: 'global'
   properties: {
@@ -57,7 +58,7 @@ resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLin
   }
 }
 
-resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-03-01' = {
+resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-03-01' =  if (deployResources)  {
   name: keyvaultPrivateEndpointName
   location: location
   properties: {
@@ -81,7 +82,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-03-01' = {
   ]
 }
 
-resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-03-01' = {
+resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-03-01' = if (deployResources) {
   parent: privateEndpoint
   name: 'default'
   properties: {

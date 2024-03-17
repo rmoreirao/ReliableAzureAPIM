@@ -20,6 +20,7 @@ param appGatewayFQDN          string
 @secure()
 param certPassword            string  
 param appGatewayCertType      string
+param deployResources bool
 
 var secretName = replace(appGatewayFQDN,'.', '-')
 // var subjectName='CN=${appGatewayFQDN}'
@@ -27,8 +28,8 @@ var secretName = replace(appGatewayFQDN,'.', '-')
 var certData = appGatewayCertType == 'selfsigned' ? 'null' : loadFileAsBase64('./appGwCerts/appgw.pfx')
 var certPwd = appGatewayCertType == 'selfsigned' ? 'null' : certPassword
 
-module kvRoleAssignmentsCert 'kvAppRoleAssignment.bicep' = {
-  name: 'kvRoleAssignmentsCert'
+module kvRoleAssignmentsCert 'kvAppRoleAssignment.bicep' = if (deployResources) {
+  name: 'kvRoleAssignmentsCert${workloadName}${environment}${location}'
   scope: resourceGroup(keyVaultRG)
   params: {
     keyVaultName: keyVaultName
@@ -38,8 +39,8 @@ module kvRoleAssignmentsCert 'kvAppRoleAssignment.bicep' = {
   }
 }
 
-module kvRoleAssignmentsSecret 'kvAppRoleAssignment.bicep' = {
-  name: 'kvRoleAssignmentsSecret'
+module kvRoleAssignmentsSecret 'kvAppRoleAssignment.bicep' = if (deployResources) {
+  name: 'kvRoleAssignmentsSecret${workloadName}${environment}${location}'
   scope: resourceGroup(keyVaultRG)
   params: {
     keyVaultName: keyVaultName
@@ -61,7 +62,7 @@ var storageAccounts_minTLSVersion = 'TLS1_2'
 
 param deployScriptStorageSubnetId string
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = if (deployResources) {
   name: storageAccountName
   location: location
   sku: {
@@ -89,7 +90,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
 }
 
 var storageFileDataPrivilegedContributorRoleId =  '69566ab7-960f-475b-8e7c-b3118f30c6bd'
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployResources) {
   scope: storageAccount
 
   name: guid(storageFileDataPrivilegedContributorRoleId, managedIdentity.properties.principalId, storageAccount.id)
@@ -100,8 +101,8 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   }
 }
 
-resource appGatewayCertificate 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
-  name: '${secretName}-certificate'
+resource appGatewayCertificate 'Microsoft.Resources/deploymentScripts@2023-08-01' = if (deployResources) {
+  name: '${secretName}-certificate-${workloadName}${environment}${location}'
   dependsOn: [
     kvRoleAssignmentsSecret
   ]
@@ -135,7 +136,7 @@ resource appGatewayCertificate 'Microsoft.Resources/deploymentScripts@2023-08-01
 }
 
 module getKeyVaultCertificateSecret 'getKeyVaultCertificateSecret.bicep' = {
-  name: 'getKeyVaultCertificateSecret'
+  name: 'getKeyVaultCertificateSecret${workloadName}${environment}${location}'
   params: {
     keyVaultName: keyVaultName
     secretName: secretName

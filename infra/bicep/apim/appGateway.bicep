@@ -12,7 +12,6 @@ param workloadName string
   'dr'
 ])
 param environment string
-param resourceSuffix string
 
 @allowed([
   'Standard_v2'
@@ -49,19 +48,29 @@ param certPassword string
 param deployScriptStorageSubnetId string 
 param appGatewayPublicIPAddressId string
 
-param apimName string
+// param apimName string
 param apimCustomDomainName string
 
+param apimGatewayURL string
+param apimDevPortalURL string?
+param apimManagementBackendEndURL string?
+param deployResources bool
+
+var apimGatewayFQDN = replace(apimGatewayURL, 'https://', '')
+var apimDevPortalFQDN = apimDevPortalURL == null ? null : replace(apimDevPortalURL!, 'https://', '')
+var apimManagementBackendEndFQDN  = apimManagementBackendEndURL == null ? null : replace(apimManagementBackendEndURL!, 'https://', '')
+
+var resourceSuffix = '${workloadName}-${environment}-${location}-001'
 var appGatewayName = 'appgw-${resourceSuffix}'
 var appGatewayIdentityId            = 'identity-${appGatewayName}'
 var appGatewayDiagnosticSettingsName = 'diag-${appGatewayName}'
 
-var apimGatewayFQDN = '${apimName}.azure-api.net'
+// var apimGatewayURL = '${apimName}.azure-api.net'
 var apimGatewayCustomHostname = 'api.${apimCustomDomainName}'
-var devPortalFQDN = '${apimName}.developer.azure-api.net'
-var devPortalCustomHostname = 'developer.${apimCustomDomainName}'
-var managementBackendEndFQDN = '${apimName}.management.azure-api.net'
-var managementBackendEndCustomHostname = 'management.${apimCustomDomainName}'
+// var apimDevPortalURL = '${apimName}.developer.azure-api.net'
+var apimDevPortalCustomHostname = 'developer.${apimCustomDomainName}'
+// var apimManagementBackendEndURL = '${apimName}.management.azure-api.net'
+var apimManagementBackendEndCustomHostname = 'management.${apimCustomDomainName}'
 
 resource appGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name:     appGatewayIdentityId
@@ -69,23 +78,36 @@ resource appGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@20
 }
 
 module apiGatewayCertificate './appGatewayCertificate.bicep' = {
-  name: 'certificate'
+  name: 'certificate${resourceSuffix}'
   scope: resourceGroup(keyVaultResourceGroupName)
   params: {
-    managedIdentity:    appGatewayIdentity
-    keyVaultName:       keyVaultName
-    location:           location
-    appGatewayFQDN:     appGatewayFQDN
+    managedIdentity: appGatewayIdentity
+    keyVaultName: keyVaultName
+    location: location
+    appGatewayFQDN: appGatewayFQDN
     appGatewayCertType: appGatewayCertType
-    certPassword:       certPassword
-    keyVaultRG:         keyVaultResourceGroupName
+    certPassword: certPassword
+    keyVaultRG: keyVaultResourceGroupName
     deployScriptStorageSubnetId: deployScriptStorageSubnetId
-    environment:       environment
-    workloadName:     workloadName
+    environment: environment
+    workloadName: workloadName
+    deployResources: deployResources
   }
 }
 
-resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
+// This is only supported for WAF_v2
+var webApplicationFirewallConfiguration = sku == 'WAF_v2' ? {
+  enabled: true
+  firewallMode: 'Prevention'
+  ruleSetType: 'OWASP'
+  ruleSetVersion: '3.0'
+  disabledRuleGroups: []
+  requestBodyCheck: true
+  maxRequestBodySizeInKb: 128
+  fileUploadLimitInMb: 100
+} : null
+
+resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = if (deployResources) {
   name: appGatewayName
   location: location
   dependsOn: [
@@ -177,7 +199,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
         properties: {
           backendAddresses: [
             {
-              fqdn: devPortalFQDN
+              fqdn: apimDevPortalFQDN
             }
           ]
         }
@@ -187,7 +209,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
         properties: {
           backendAddresses: [
             {
-              fqdn: managementBackendEndFQDN
+              fqdn: apimManagementBackendEndFQDN
             }
           ]
         }
@@ -225,7 +247,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
           port: 443
           protocol: 'Https'
           cookieBasedAffinity: 'Disabled'
-          hostName: devPortalFQDN
+          hostName: apimDevPortalFQDN
           pickHostNameFromBackendAddress: false
           requestTimeout: 20
           probe: {
@@ -239,7 +261,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
           port: 443
           protocol: 'Https'
           cookieBasedAffinity: 'Disabled'
-          hostName: managementBackendEndFQDN
+          hostName: apimManagementBackendEndFQDN
           pickHostNameFromBackendAddress: false
           requestTimeout: 20
           probe: {
@@ -294,7 +316,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
           sslCertificate: {
             id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGatewayName, appGatewayFQDN)
           }
-          hostName: devPortalCustomHostname
+          hostName: apimDevPortalCustomHostname
           hostnames: []
           requireServerNameIndication: true
         }
@@ -312,7 +334,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
           sslCertificate: {
             id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGatewayName, appGatewayFQDN)
           }
-          hostName: managementBackendEndCustomHostname
+          hostName: apimManagementBackendEndCustomHostname
           hostnames: []
           requireServerNameIndication: true
         }
@@ -389,7 +411,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
         name: 'devportalprobe'
         properties: {
           protocol: 'Https'
-          host: devPortalFQDN
+          host: apimDevPortalFQDN
           path: '/signin-sso'
           interval: 30
           timeout: 30
@@ -407,7 +429,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
         name: 'apimanagementprobe'
         properties: {
           protocol: 'Https'
-          host: managementBackendEndFQDN
+          host: apimManagementBackendEndFQDN
           path: '/ServiceStatus'
           interval: 30
           timeout: 30
@@ -424,16 +446,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
     ]
     rewriteRuleSets: []
     redirectConfigurations: []
-    webApplicationFirewallConfiguration: {
-      enabled: true
-      firewallMode: 'Detection'
-      ruleSetType: 'OWASP'
-      ruleSetVersion: '3.0'
-      disabledRuleGroups: []
-      requestBodyCheck: true
-      maxRequestBodySizeInKb: 128
-      fileUploadLimitInMb: 100
-    }
+    webApplicationFirewallConfiguration: webApplicationFirewallConfiguration
     enableHttp2: true
     autoscaleConfiguration: {
       minCapacity: minCapacity
@@ -443,7 +456,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = {
 }
 
 @description('Upsert the diagnostic settings associated with the application gateway.')
-resource diagnosticSetting 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+resource diagnosticSetting 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (deployResources) {
   name: appGatewayDiagnosticSettingsName
   scope: appGateway
   properties: {

@@ -4,46 +4,56 @@ param workloadName = 'hkdi2'
 param environment = 'dev'
 
 param globalSettings = {
-  networkingSettings:{
+
+  networkingRGSettings:{
+    deployResources:true
     publicIpAvailabilityZones:['1']
+
+    firewallSettings:{
+      firewallSkuName:'Basic'
+      availabilityZones:['1']
+    }
   }
 
-  backendSettings: {
+  backendRGSettings: {
+    deployResources: true
     storageSku: 'Standard_LRS'
   }
 
-  apimSettings:{
-    apimPublisherEmail : 'rmoreirao@microsoft.com'
-    apimPublisherName : 'Contoso'
-    apimCustomDomainName : 'contoso-sandbox-apim.com'
-    apimSkuName: 'Developer'
-    
+  apimRGSettings:{
+    apimSettings:{
+      deployResources: true
+      apimPublisherEmail : 'rmoreirao@microsoft.com'
+      apimPublisherName : 'Contoso Sandbox APIM'
+      apimCustomDomainName : 'contoso-sandbox-apim.com'
+      apimSkuName: 'Developer'
+      
+    }
+    appGatewaySettings:{
+      deployResources: true
+      apimAppGatewayCertificatePassword : ''
+      apimAppGatewayCertType : 'selfsigned'
+      appGatewaySkuName: 'WAF_v2'
+      minCapacity: 1
+      maxCapacity: 2
+      availabilityZones:['1']
+    }
   }
-  appGatewaySettings:{
-    apimAppGatewayCertificatePassword : ''
-    apimAppGatewayCertType : 'selfsigned'
-    appGatewaySkuName: 'WAF_v2'
-    minCapacity: 1
-    maxCapacity: 2
-    availabilityZones:['1']
-  }
+  
+  sharedRGSettings:{
+    deployResources: true
+      // devOpsAgentSettings: {
+    //   devOpsAccountName: 'https://dev.azure.com/rmoreiraoms'
+    //   devOpsCICDAgentType: 'none'
+    //   devOpsPersonalAccessToken: '{{DEVOPS_PAT}}'
+    //   devOpsVmPassword: '{{DEVOPS_VMPASSWORD}}'
+    //   devOpsVmUsername: 'vmadmin'
+    // }
 
-  // devOpsAgentSettings: {
-  //   devOpsAccountName: 'https://dev.azure.com/rmoreiraoms'
-  //   devOpsCICDAgentType: 'none'
-  //   devOpsPersonalAccessToken: '{{DEVOPS_PAT}}'
-  //   devOpsVmPassword: '{{DEVOPS_VMPASSWORD}}'
-  //   devOpsVmUsername: 'vmadmin'
-  // }
-
-  jumpBoxSettings:{
-    jumpBoxVmPassword: '{{JUMPBOX_VMPASSWORD}}'
-    jumpBoxVmUsername: 'vmadmin'
-  }
-
-  firewallSettings:{
-    firewallSkuName:'Basic'
-    availabilityZones:['1']
+    jumpBoxSettings:{
+      jumpBoxVmPassword: '{{JUMPBOX_VMPASSWORD}}'
+      jumpBoxVmUsername: 'vmadmin'
+    }
   }
 }  
 

@@ -6,11 +6,11 @@
 
 ./secrets.ps1
 
-# $BICEPPARAM_FILE = "main.multiregiondev.bicepparam"
-# $BICEPPARAM_TMP_FILE = "main.multiregiondev.tmp.bicepparam"
-$BICEPPARAM_FILE = "main.dev.bicepparam"
-$BICEPPARAM_TMP_FILE = "main.dev.tmp.bicepparam"
-$LOCATION = "westeurope"
+$BICEPPARAM_FILE = "main.multiregiondev.bicepparam"
+$BICEPPARAM_TMP_FILE = "main.multiregiondev.tmp.bicepparam"
+# $BICEPPARAM_FILE = "main.dev.bicepparam"
+# $BICEPPARAM_TMP_FILE = "main.dev.tmp.bicepparam"
+$LOCATION = "uksouth"
 $DEPLOY_NAME="apimDeployment"
 
 # delete a deployment

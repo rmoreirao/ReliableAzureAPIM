@@ -42,6 +42,12 @@ There are 2 different scenarios for Inbound traffic: Internal and External. Thes
 App Gateway is a Regional resource, so Frontdoor is the Global Loadbalancer.  
 FrontDoor is able to do the Load Balance and also DR in case of Regional failure
 
+### External Inbound Traffic to APIM goes via Regional Endpoints
+I am not using the API Management Load Balancer because of the requirement that Consumers will also use specific Regional API Gateways.
+With that requirement, App Gateway will only expose the Regional endpoints. For example:
+- Sample gatewayRegionalUrl of main region (westeurope): 'https://{apim_name}-westeurope-01.regional.azure-api.net'
+- Sample secondary region (germanywestcentral): 'https://{apim_name}-germanywestcentral-01.regional.azure-api.net'
+
 ### Internal Inbound traffic - Global Load Balance & Disaster Recovery using DNS
 Internal Inbound traffic should remain private - so FrontDoor was not an option for that.  
 As of today (Fev 2024) there isn't an Azure Global Load Balancer for Internal traffic with API Management, so there ins't a Load Balancer solution - also not a requirement for now.  

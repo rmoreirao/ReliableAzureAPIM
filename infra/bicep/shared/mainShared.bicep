@@ -34,6 +34,7 @@ param vnetId string
 param keyVaultPrivateEndpointSubnetid string?
 param keyVaultPrivateDnsZoneName string
 param keyVaultPrivateDnsZoneId string
+param deployResources bool
 
 // Resources
 module appInsights './monitoring.bicep' = {
@@ -89,6 +90,7 @@ module keyVault './keyVault.bicep' = if (keyVaultPrivateEndpointSubnetid != null
     location: location
     keyVaultPrivateDnsZoneName: keyVaultPrivateDnsZoneName
     keyVaultPrivateDnsZoneId: keyVaultPrivateDnsZoneId
+    deployResources: deployResources
   }
 }
 

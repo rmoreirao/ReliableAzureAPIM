@@ -68,53 +68,64 @@ type jumpBoxSettingsType = {
 
 @export()
 type globalSettingsType = {
-  networkingSettings : {
+  networkingRGSettings : {
+    @description('Indicates whether the deployment should be done or not. If not, current resources will be used to retrieve the resources settings. The objective of this parameter is to avoid redeploys and speed up testing.')
+    deployResources: bool
     publicIpAvailabilityZones: avalabilityZoneType[]?    
+
+    firewallSettings : {
+      firewallSkuName: 'Basic' | 'Standard'
+      availabilityZones: avalabilityZoneType[]?
+    }?
+  }
+
+  apimRGSettings : {
+    apimSettings : {
+      deployResources: bool
+      apimSkuName: 'Developer' | 'Premium'
+      @description('The email address of the publisher of the APIM resource.')
+      @minLength(1)
+      apimPublisherEmail : string
+      @description('Company name of the publisher of the APIM resource.')
+      @minLength(1)
+      apimPublisherName : string
+      @description('Custom domain for APIM - is used to API Management from the internet. This should also match the Domain name of your Certificate. Example - contoso.com.')
+      apimCustomDomainName : string
+      
+      @description('Client Id for of the Entra ID application for Authorization. Set this to enable Entra ID integration for Developer Portal.')
+      entraIdClientId:string?
+      @description('Client Secret for of the Entra ID application for Authorization.')
+      @secure()
+      entraIdClientSecret: string?
+    }
+  
+    appGatewaySettings: {
+      deployResources: bool
+      @description('The password for the TLS certificate for the Application Gateway.  The pfx file needs to be copied to deployment/bicep/gateway/certs/appgw.pfx')
+      @secure()
+      apimAppGatewayCertificatePassword : string
+    
+      @description('Set to selfsigned if self signed certificates should be used for the Application Gateway. Set to custom and copy the pfx file to deployment/bicep/gateway/certs/appgw.pfx if custom certificates are to be used')
+      apimAppGatewayCertType : 'selfsigned' | 'custom'
+      appGatewaySkuName: 'Standard_v2' | 'WAF_v2'
+      availabilityZones: avalabilityZoneType[]?
+      minCapacity: int
+      maxCapacity: int
+    }
   }
  
-  apimSettings : {
-    apimSkuName: 'Developer' | 'Premium'
-    @description('The email address of the publisher of the APIM resource.')
-    @minLength(1)
-    apimPublisherEmail : string
-    @description('Company name of the publisher of the APIM resource.')
-    @minLength(1)
-    apimPublisherName : string
-    @description('Custom domain for APIM - is used to API Management from the internet. This should also match the Domain name of your Certificate. Example - contoso.com.')
-    apimCustomDomainName : string
-    
-    @description('Client Id for of the Entra ID application for Authorization. Set this to enable Entra ID integration for Developer Portal.')
-    entraIdClientId:string?
-    @description('Client Secret for of the Entra ID application for Authorization.')
-    @secure()
-    entraIdClientSecret: string?
+  sharedRGSettings : {
+    deployResources: bool
+
+    devOpsAgentSettings : devOpsAgentSettingsType?
+
+    jumpBoxSettings : jumpBoxSettingsType?
   }
 
-  appGatewaySettings: {
-    @description('The password for the TLS certificate for the Application Gateway.  The pfx file needs to be copied to deployment/bicep/gateway/certs/appgw.pfx')
-    @secure()
-    apimAppGatewayCertificatePassword : string
-  
-    @description('Set to selfsigned if self signed certificates should be used for the Application Gateway. Set to custom and copy the pfx file to deployment/bicep/gateway/certs/appgw.pfx if custom certificates are to be used')
-    apimAppGatewayCertType : 'selfsigned' | 'custom'
-    appGatewaySkuName: 'Standard_v2' | 'WAF_v2'
-    availabilityZones: avalabilityZoneType[]?
-    minCapacity: int
-    maxCapacity: int
-  }
-
-  firewallSettings : {
-    firewallSkuName: 'Basic' | 'Standard'
-    availabilityZones: avalabilityZoneType[]?
-  }
-
-  devOpsAgentSettings : devOpsAgentSettingsType?
-
-  jumpBoxSettings : jumpBoxSettingsType?
-
-  backendSettings : {
+  backendRGSettings : {
+    deployResources: bool
     storageSku : 'Standard_LRS' | 'Standard_ZRS'
-  }?
+  }
 }
 
 // Types related to the output of the deployment
@@ -147,4 +158,12 @@ type sharedResourcesType = {
   appInsightsInstrumentationKey : string
   logAnalyticsWorkspaceId : string
   keyVaultName : string?
+}
+
+@export()
+type apimRegionalResourcesType = {
+  apimPrivateIpAddress : string
+  apimGatewayURL : string
+  apimDevPortalURL : string?
+  apimManagementBackendEndURL : string?
 }

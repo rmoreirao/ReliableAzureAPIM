@@ -1,4 +1,4 @@
-import {networkingResourcesType, sharedResourcesType, apimRegionalSettingsType , regionalSettingType} from '../bicepParamTypes.bicep'
+import {networkingResourcesType, sharedResourcesType, apimRegionalSettingsType , regionalSettingType, apimRegionalResourcesType} from '../bicepParamTypes.bicep'
 
 targetScope='resourceGroup'
 param resourceSuffix string
@@ -40,6 +40,7 @@ param apimCustomDomainName string?
 param entraIdClientId string?
 @secure()
 param entraIdClientSecret string?
+param deployResources bool
 
 var apimName = 'apima-${resourceSuffix}'
 var keyVaultSecretsUserRoleDefinitionId = '4633458b-17de-408a-b874-0445c86b69e6'
@@ -69,7 +70,7 @@ var hostNameConfigurations = [
   }
 ]
 
-resource apim 'Microsoft.ApiManagement/service@2021-08-01' = {
+resource apim 'Microsoft.ApiManagement/service@2021-08-01' = if (deployResources) {
   name: apimName
   location: primaryRegionSettings.location
   identity: {
@@ -104,7 +105,7 @@ resource apim 'Microsoft.ApiManagement/service@2021-08-01' = {
   }
 }
 
-module kvRoleAssignmentsCert 'kvAppRoleAssignment.bicep' = if(deployCustomDnsNames == false) {
+module kvRoleAssignmentsCert 'kvAppRoleAssignment.bicep' = if(deployResources && deployCustomDnsNames == false) {
   name: 'kvRoleAssignmentsCert'
   scope: resourceGroup(keyVaultRG)
   params: {
@@ -115,7 +116,7 @@ module kvRoleAssignmentsCert 'kvAppRoleAssignment.bicep' = if(deployCustomDnsNam
   }
 }
 
-module kvRoleAssignmentsSecret 'kvAppRoleAssignment.bicep' = if(deployCustomDnsNames == false) {
+module kvRoleAssignmentsSecret 'kvAppRoleAssignment.bicep' = if(deployResources &&deployCustomDnsNames == false) {
   name: 'kvRoleAssignmentsSecret'
   scope: resourceGroup(keyVaultRG)
   params: {
@@ -129,7 +130,7 @@ module kvRoleAssignmentsSecret 'kvAppRoleAssignment.bicep' = if(deployCustomDnsN
   ]
 }
 
-module globalPolicy 'apimConfig.bicep' = if(deployCustomDnsNames == false) {
+module globalPolicy 'apimConfig.bicep' = if(deployResources && deployCustomDnsNames == false) {
   name: 'globalPolicy'
   params: {
     apimServiceName: apim.name
@@ -137,7 +138,7 @@ module globalPolicy 'apimConfig.bicep' = if(deployCustomDnsNames == false) {
   }
 }
 
-resource appInsightsLogger 'Microsoft.ApiManagement/service/loggers@2019-01-01' = if(deployCustomDnsNames == false) {
+resource appInsightsLogger 'Microsoft.ApiManagement/service/loggers@2019-01-01' = if(deployResources && deployCustomDnsNames == false) {
   parent: apim
   name: appInsightsName
   properties: {
@@ -149,7 +150,7 @@ resource appInsightsLogger 'Microsoft.ApiManagement/service/loggers@2019-01-01' 
   }
 }
 
-resource applicationinsights 'Microsoft.ApiManagement/service/diagnostics@2019-01-01' = if(deployCustomDnsNames == false) {
+resource applicationinsights 'Microsoft.ApiManagement/service/diagnostics@2019-01-01' = if(deployResources && deployCustomDnsNames == false) {
   parent: apim
   name: 'applicationinsights'
   properties: {
@@ -162,18 +163,38 @@ resource applicationinsights 'Microsoft.ApiManagement/service/diagnostics@2019-0
   }
 }
 
-resource service_apima_rmo3_dev_uksouth_001_name_aad 'Microsoft.ApiManagement/service/identityProviders@2023-05-01-preview' = if (entraIdClientId != null && deployCustomDnsNames == false) {
+resource entraIdIdentityProvider 'Microsoft.ApiManagement/service/identityProviders@2023-05-01-preview' = if (deployResources && entraIdClientId != null && deployCustomDnsNames == false) {
   parent: apim
   name: 'entraId'
   properties: {
-    clientId: entraIdClientId
+    clientId: entraIdClientId!
     type: 'aad'
     authority: 'login.windows.net'
     allowedTenants: ['MngEnvMCAP124364.onmicrosoft.com']
     clientLibrary: 'MSAL-2'
-    clientSecret: entraIdClientSecret
+    clientSecret: entraIdClientSecret!
   }
 }
 
-output apimPrivateIpAddress string = apim.properties.privateIPAddresses[0]
+resource apimExisting 'Microsoft.ApiManagement/service@2021-08-01' existing = if (!deployResources) {
+  name: apimName
+}
+
+var apimProperties = deployResources ? apim.properties : apimExisting.properties
+
+module getApimPrivateIpsAdditionalRegions 'getApimAdditionalRegions.bicep' = {
+  name: 'getApimPrivateIps'
+  params: {
+    additionalLocations: apimProperties.additionalLocations
+  }
+}
+
+var mainRegionApimResources =   {
+  apimPrivateIpAddress : apimProperties.privateIPAddresses[0]
+  apimGatewayURL : apimProperties.gatewayRegionalUrl
+  apimDevPortalURL : apimProperties.developerPortalUrl
+  apimManagementBackendEndURL : apimProperties.managementApiUrl
+}
+
+output apimRegionalResources apimRegionalResourcesType[] = concat([mainRegionApimResources], getApimPrivateIpsAdditionalRegions.outputs.additionalRegionResources)
 output apimName string = apimName

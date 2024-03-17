@@ -12,15 +12,16 @@ param workloadName string
   'dr'
 ])
 param environment string
-param firewallSku string
+param firewallSku 'Basic' | 'Standard'?
 param firewallAvailabilityZones avalabilityZoneType[]?
 param locationsSettings regionalSettingType[]
 param publicIpAvailabilityZones avalabilityZoneType[]?
+param deployResources bool = true
 
 // Creation of this module is required to return the array of NetworkingResources - this could not be directly done on main.bicep
 
-module networkingModule './mainNetworking.bicep' = [for (locationSetting,i) in locationsSettings: {
-  name: 'networkingresources${workloadName}${environment}${locationSetting.location}'
+module networkingModule './networkingRegional.bicep' = [for (locationSetting,i) in locationsSettings: {
+  name: 'networkingRegional${workloadName}${environment}${locationSetting.location}'
   params: {
     workloadName: workloadName
     environment: environment
@@ -29,6 +30,7 @@ module networkingModule './mainNetworking.bicep' = [for (locationSetting,i) in l
     firewallSku: firewallSku
     firewallAvailabilityZones: firewallAvailabilityZones
     publicIpAvailabilityZones: publicIpAvailabilityZones
+    deployResources: deployResources
   }
 }]
 
