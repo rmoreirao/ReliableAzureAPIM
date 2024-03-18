@@ -28,31 +28,6 @@ var secretName = replace(appGatewayFQDN,'.', '-')
 var certData = appGatewayCertType == 'selfsigned' ? 'null' : loadFileAsBase64('./appGwCerts/appgw.pfx')
 var certPwd = appGatewayCertType == 'selfsigned' ? 'null' : certPassword
 
-module kvRoleAssignmentsCert 'kvAppRoleAssignment.bicep' = if (deployResources) {
-  name: 'kvRoleAssignmentsCert${workloadName}${environment}${location}'
-  scope: resourceGroup(keyVaultRG)
-  params: {
-    keyVaultName: keyVaultName
-    principalId: managedIdentity.properties.principalId
-    // Key Vault Certificates Officer
-    roleId: 'a4417e6f-fecd-4de8-b567-7b0420556985'
-  }
-}
-
-module kvRoleAssignmentsSecret 'kvAppRoleAssignment.bicep' = if (deployResources) {
-  name: 'kvRoleAssignmentsSecret${workloadName}${environment}${location}'
-  scope: resourceGroup(keyVaultRG)
-  params: {
-    keyVaultName: keyVaultName
-    principalId: managedIdentity.properties.principalId
-    // Key Vault Secrets User
-    roleId: '4633458b-17de-408a-b874-0445c86b69e6'
-  }
-  dependsOn: [
-    kvRoleAssignmentsCert
-  ]
-}
-
 var storageAccountName  = toLower(take(replace('stbdscr${workloadName}${environment}${location}', '-',''), 24))
 
 var storageAccountSku  = 'Standard_LRS'
@@ -90,7 +65,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = if (dep
 }
 
 var storageFileDataPrivilegedContributorRoleId =  '69566ab7-960f-475b-8e7c-b3118f30c6bd'
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployResources) {
+resource stgRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployResources) {
   scope: storageAccount
 
   name: guid(storageFileDataPrivilegedContributorRoleId, managedIdentity.properties.principalId, storageAccount.id)
@@ -104,7 +79,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = i
 resource appGatewayCertificate 'Microsoft.Resources/deploymentScripts@2023-08-01' = if (deployResources) {
   name: '${secretName}-certificate-${workloadName}${environment}${location}'
   dependsOn: [
-    kvRoleAssignmentsSecret
+    stgRoleAssignment
   ]
   location: location 
   kind: 'AzurePowerShell'

@@ -357,6 +357,33 @@ resource appGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@20
   location: location
 }
 
+
+module kvRoleAssignmentsCert 'kvAppRoleAssignment.bicep' = if (deployResources) {
+  name: 'kvRoleAssignmentsCert${workloadName}${environment}${location}'
+  scope: resourceGroup(keyVaultResourceGroupName)
+  params: {
+    keyVaultName: keyVaultName
+    principalId: appGatewayIdentity.properties.principalId
+    // Key Vault Certificates Officer
+    roleId: 'a4417e6f-fecd-4de8-b567-7b0420556985'
+  }
+}
+
+module kvRoleAssignmentsSecret 'kvAppRoleAssignment.bicep' = if (deployResources) {
+  name: 'kvRoleAssignmentsSecret${workloadName}${environment}${location}'
+  scope: resourceGroup(keyVaultResourceGroupName)
+  params: {
+    keyVaultName: keyVaultName
+    principalId: appGatewayIdentity.properties.principalId
+    // Key Vault Secrets User
+    roleId: '4633458b-17de-408a-b874-0445c86b69e6'
+  }
+  dependsOn: [
+    kvRoleAssignmentsCert
+  ]
+}
+
+
 module apiGatewayCertificate './appGatewayCertificate.bicep' = {
   name: 'certificate${resourceSuffix}'
   scope: resourceGroup(keyVaultResourceGroupName)

@@ -5,7 +5,7 @@ param workloadName = 'apml2'
 param environment = 'dev'
 param globalSettings = {
   networkingRGSettings:{
-    deployResources:false
+    deployResources: true
     publicIpAvailabilityZones:['1']
 
     firewallSettings:{
@@ -22,7 +22,7 @@ param globalSettings = {
   apimRGSettings:{
     
     apimSettings:{
-      deployResources: false
+      deployResources: true
       apimPublisherEmail : 'rmoreirao@microsoft.com'
       apimPublisherName : 'Contoso Sandbox APIM'
       apimCustomDomainName : 'contoso-sandbox-apim.com'
@@ -41,7 +41,7 @@ param globalSettings = {
   }
 
   sharedRGSettings:{
-    deployResources: false
+    deployResources: true
       // devOpsAgentSettings: {
     //   devOpsAccountName: 'https://dev.azure.com/rmoreiraoms'
     //   devOpsCICDAgentType: 'none'
@@ -62,9 +62,9 @@ param regionalSettings = [
     location: 'uksouth'
     vNetSettings: {
         apimVNetNameAddressPrefix :'10.12.0.0/16'
-        // bastionAddressPrefix : '10.12.1.0/24'
+        bastionAddressPrefix : '10.12.1.0/24'
         // devOpsAgentAddressPrefix : '10.12.2.0/24'
-        // jumpBoxAddressPrefix : '10.12.3.0/24'
+        jumpBoxAddressPrefix : '10.12.3.0/24'
         appGatewayAddressPrefix : '10.12.4.0/24'
         // functionsInboundAddressPrefix : '10.12.5.0/24'
         // functionsOutboundAddressPrefix : '10.12.6.0/24'

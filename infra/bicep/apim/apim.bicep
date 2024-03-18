@@ -61,13 +61,6 @@ var hostNameConfigurations = [
     negotiateClientCertificate: false
     keyVaultId: certificateSecretUriWithoutVersion
   }
-  {
-    type: 'Management'
-    hostName: 'management.${apimCustomDomainName}'
-    defaultSslBinding: false
-    negotiateClientCertificate: false
-    keyVaultId: certificateSecretUriWithoutVersion
-  }
 ]
 
 resource apim 'Microsoft.ApiManagement/service@2021-08-01' = if (deployResources) {
