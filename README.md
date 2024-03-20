@@ -7,7 +7,13 @@
 # Architecture & Design Decisions
 
 This repo is created on the top of APIM Landing Zone Accelerator, and most of the architectural decisions are following best practices of it.
-There are few improvements / changes to the discussed below.
+The main differences / improvements are:
+- All resources are Internal / VNet integrated - including Key Vault, Storage Accounts, Deployment Scripts, Azure Functions and Logic Apps.
+- Uses a Multi-Region approach, with FrontDoor and Application Gateway.
+- Global resources are deployed to the main region, and regional resources to the additional regions.
+- Azure Firewall to protect APIM outbound traffic. 
+- Availability Zones can be defined for all the resources.
+- API Management endpoints have Custom DNS, so users can test the Developer Portal from APIM.
 
 ### Detailed Architecture
 Full detail of the resources can be found [here](docs/ReferenceImplementation.md).
