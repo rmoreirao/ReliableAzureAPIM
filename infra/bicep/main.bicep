@@ -124,7 +124,6 @@ module shared './shared/mainShared.bicep' = [for (locationSetting,i) in regional
   ]
 }]
 
-
 resource apimRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: apimResourceGroupName
   location: location
@@ -140,11 +139,51 @@ module apimPrivateDNSZone 'apim/apimPrivateDNSZonesGlobal.bicep' = if (globalSet
   }
 }
 
+module appGatewayIdentity 'apim/appGatewayManagedIdentity.bicep' = {
+  name: 'appGatewayManagedIdentity${workloadName}${environment}${location}'
+  scope: resourceGroup(apimRG.name)
+  params: {
+    location: location
+  }
+}
+
+var apimName = 'apima-${resourceSuffix}'
+
+module checkResourceAlreadyExists 'apim/checkResourceAlreadyExists.bicep' = {
+  name: 'checkResourceAlreadyExists${workloadName}${environment}${location}'
+  scope: resourceGroup(apimRG.name)
+  params: {
+    identityId: appGatewayIdentity.outputs.appGatewayIdentityId
+    resourceName:apimName
+    location:location
+  }
+}
+
+module apimCertificate 'apim/apimCertificate.bicep' = [for (locationSetting,i) in regionalSettings: {
+  name: 'apimCertificate${workloadName}${environment}${locationSetting.location}${i}'
+  scope: resourceGroup(apimRG.name)
+  params: {
+    appGatewayFQDN: globalSettings.apimRGSettings.apimSettings.apimCustomDomainName
+    location: locationSetting.location
+    keyVaultName: shared[i].outputs.resources.keyVaultName!
+    keyVaultRG: sharedRG.name
+    appGatewayCertType: globalSettings.apimRGSettings.appGatewaySettings.apimAppGatewayCertType
+    certPassword: globalSettings.apimRGSettings.appGatewaySettings.apimAppGatewayCertificatePassword
+    deployScriptStorageSubnetId: networkingModule.outputs.networkingResourcesArray[i].deployScriptStorageSubnetId!
+    environment: environment
+    workloadName: workloadName
+    deployResources: globalSettings.apimRGSettings.appGatewaySettings.deployResources
+    appGatewayIdentityPrincipalId: appGatewayIdentity.outputs.appGatewayIdentityPrincipalId
+    appGatewayIdentityId: appGatewayIdentity.outputs.appGatewayIdentityId
+  }
+}]
+
 module apimModule 'apim/apim.bicep'  = {
   name: 'apimDeploy${workloadName}${environment}${location}'
   scope: resourceGroup(apimRG.name)
   params: {
-    resourceSuffix: resourceSuffix
+    apimName: apimName
+    existsApim: checkResourceAlreadyExists.outputs.exists
     apimSubnetId: networkingModule.outputs.networkingResourcesArray[0].apimSubnetid
     appInsightsName: shared[0].outputs.resources.appInsightsName
     appInsightsId: shared[0].outputs.resources.appInsightsId
@@ -161,8 +200,11 @@ module apimModule 'apim/apim.bicep'  = {
     entraIdClientId: globalSettings.apimRGSettings.apimSettings.?entraIdClientId
     entraIdClientSecret: globalSettings.apimRGSettings.apimSettings.?entraIdClientSecret
     deployResources: globalSettings.apimRGSettings.apimSettings.deployResources
+    apimCustomDomainName: globalSettings.apimRGSettings.apimSettings.apimCustomDomainName
+    certificateSecretUriWithoutVersion: apimCertificate[0].outputs.secretUriWithoutVersion
   }
 }
+
 
 //Creation of private DNS zones for APIM
 module dnsZoneModule 'apim/apimDnsZonesRegional.bicep'  =  [for (locationSetting,i) in regionalSettings: if (globalSettings.apimRGSettings.apimSettings.deployResources){
@@ -216,33 +258,8 @@ module appgwModule 'apim/appGateway.bicep' = [for (locationSetting,i) in regiona
     apimDevPortalURL: apimModule.outputs.apimRegionalResources[i].?apimDevPortalURL
     apimManagementBackendEndURL: apimModule.outputs.apimRegionalResources[i].?apimManagementBackendEndURL
     deployResources: globalSettings.apimRGSettings.appGatewaySettings.deployResources
+    appGatewayIdentityPrincipalId: appGatewayIdentity.outputs.appGatewayIdentityPrincipalId
+    appGatewayIdentityId: appGatewayIdentity.outputs.appGatewayIdentityId
+    apiGatewayCertificateSecretUriWithVersion: apimCertificate[i].outputs.secretUriWithVersion
   }
 }]
-
-// This second deploy of APIM is required to add the custom domain name to the APIM instance
-// Currently APIM can only access KeyVault via VNET integration using System Assigned Managed Identity
-// So we need to deploy the APIM instance first to get the Managed Identity and then deploy the custom domain name
-module apimModuleWithCustomDns 'apim/apim.bicep'  = {
-  name: 'apimModuleWithCustomDns${workloadName}${environment}${location}'
-  scope: resourceGroup(apimRG.name)
-  params: {
-    resourceSuffix: resourceSuffix
-    apimSubnetId: networkingModule.outputs.networkingResourcesArray[0].apimSubnetid
-    appInsightsName: shared[0].outputs.resources.appInsightsName
-    appInsightsId: shared[0].outputs.resources.appInsightsId
-    appInsightsInstrumentationKey: shared[0].outputs.resources.appInsightsInstrumentationKey
-    apimPublicIpId: networkingModule.outputs.networkingResourcesArray[0].apimPublicIpId
-    publisherEmail: globalSettings.apimRGSettings.apimSettings.apimPublisherEmail
-    publisherName: globalSettings.apimRGSettings.apimSettings.apimPublisherName
-    skuName: globalSettings.apimRGSettings.apimSettings.apimSkuName
-    keyVaultName: shared[0].outputs.resources.keyVaultName!
-    keyVaultRG: sharedRG.name
-    primaryRegionSettings: regionalSettings[0]
-    additionalRegionSettings: skip(regionalSettings,1)
-    additionalRegionsNetworkingResources: skip(networkingModule.outputs.networkingResourcesArray,1) 
-    deployCustomDnsNames: true
-    apimCustomDomainName: globalSettings.apimRGSettings.apimSettings.apimCustomDomainName
-    certificateSecretUriWithoutVersion: appgwModule[0].outputs.certificateSecretUriWithoutVersion
-    deployResources: globalSettings.apimRGSettings.apimSettings.deployResources
-  }
-}

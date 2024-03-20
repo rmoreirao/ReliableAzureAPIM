@@ -14,7 +14,8 @@ param environment string
 
 param keyVaultName string
 param keyVaultRG string
-param managedIdentity         object      
+param appGatewayIdentityPrincipalId  string      
+param appGatewayIdentityId string      
 param location                string
 param appGatewayFQDN          string
 @secure()
@@ -36,6 +37,32 @@ var storageAccountKind  = 'StorageV2'
 var storageAccounts_minTLSVersion = 'TLS1_2'
 
 param deployScriptStorageSubnetId string
+
+
+module kvRoleAssignmentsCert 'kvAppRoleAssignment.bicep' = if (deployResources) {
+  name: 'kvRoleAssignmentsCert${workloadName}${environment}${location}'
+  scope: resourceGroup(keyVaultRG)
+  params: {
+    keyVaultName: keyVaultName
+    principalId: appGatewayIdentityPrincipalId
+    // Key Vault Certificates Officer
+    roleId: 'a4417e6f-fecd-4de8-b567-7b0420556985'
+  }
+}
+
+module kvRoleAssignmentsSecret 'kvAppRoleAssignment.bicep' = if (deployResources) {
+  name: 'kvRoleAssignmentsSecret${workloadName}${environment}${location}'
+  scope: resourceGroup(keyVaultRG)
+  params: {
+    keyVaultName: keyVaultName
+    principalId: appGatewayIdentityPrincipalId
+    // Key Vault Secrets User
+    roleId: '4633458b-17de-408a-b874-0445c86b69e6'
+  }
+  dependsOn: [
+    kvRoleAssignmentsCert
+  ]
+}
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = if (deployResources) {
   name: storageAccountName
@@ -68,9 +95,9 @@ var storageFileDataPrivilegedContributorRoleId =  '69566ab7-960f-475b-8e7c-b3118
 resource stgRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployResources) {
   scope: storageAccount
 
-  name: guid(storageFileDataPrivilegedContributorRoleId, managedIdentity.properties.principalId, storageAccount.id)
+  name: guid(storageFileDataPrivilegedContributorRoleId, appGatewayIdentityPrincipalId, storageAccount.id)
   properties: {
-    principalId: managedIdentity.properties.principalId
+    principalId: appGatewayIdentityPrincipalId
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageFileDataPrivilegedContributorRoleId)
     principalType: 'ServicePrincipal'
   }
@@ -80,6 +107,8 @@ resource appGatewayCertificate 'Microsoft.Resources/deploymentScripts@2023-08-01
   name: '${secretName}-certificate-${workloadName}${environment}${location}'
   dependsOn: [
     stgRoleAssignment
+    kvRoleAssignmentsSecret
+    kvRoleAssignmentsCert
   ]
   location: location 
   kind: 'AzurePowerShell'
@@ -105,7 +134,7 @@ resource appGatewayCertificate 'Microsoft.Resources/deploymentScripts@2023-08-01
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '/subscriptions/${managedIdentity.subscriptionId}/resourceGroups/${managedIdentity.resourceGroupName}/providers/${managedIdentity.resourceId}': {}
+      '${appGatewayIdentityId}': {}
     }
   }
 }

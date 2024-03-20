@@ -34,7 +34,8 @@ param appGatewaySubnetId            string
 @description('Set to selfsigned if self signed certificates should be used for the Application Gateway. Set to custom and copy the pfx file to deployment/bicep/gateway/certs/appgw.pfx if custom certificates are to be used')
 param appGatewayCertType string
 
-
+param appGatewayIdentityPrincipalId string
+param appGatewayIdentityId string
 
 @description('The resource id of the Log Analytics Workspace to be used for diagnostics.')
 param logAnalyticsWorkspaceResourceId string
@@ -55,6 +56,7 @@ param apimGatewayURL string
 param apimDevPortalURL string?
 param apimManagementBackendEndURL string?
 param deployResources bool
+param apiGatewayCertificateSecretUriWithVersion string
 
 var apimGatewayFQDN = replace(apimGatewayURL, 'https://', '')
 var apimDevPortalFQDN = apimDevPortalURL == null ? null : replace(apimDevPortalURL!, 'https://', '')
@@ -62,7 +64,6 @@ var apimManagementBackendEndFQDN  = apimManagementBackendEndURL == null ? null :
 
 var resourceSuffix = '${workloadName}-${environment}-${location}-001'
 var appGatewayName = 'appgw-${resourceSuffix}'
-var appGatewayIdentityId            = 'identity-${appGatewayName}'
 var appGatewayDiagnosticSettingsName = 'diag-${appGatewayName}'
 
 // var apimGatewayURL = '${apimName}.azure-api.net'
@@ -352,18 +353,12 @@ var apimManagementProbe = apimManagementBackendEndFQDN == null ? [] : [
 
 var probes = concat(apiGatewayProbe, devPortalProbe, apimManagementProbe)
 
-resource appGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
-  name:     appGatewayIdentityId
-  location: location
-}
-
-
 module kvRoleAssignmentsCert 'kvAppRoleAssignment.bicep' = if (deployResources) {
   name: 'kvRoleAssignmentsCert${workloadName}${environment}${location}'
   scope: resourceGroup(keyVaultResourceGroupName)
   params: {
     keyVaultName: keyVaultName
-    principalId: appGatewayIdentity.properties.principalId
+    principalId: appGatewayIdentityPrincipalId
     // Key Vault Certificates Officer
     roleId: 'a4417e6f-fecd-4de8-b567-7b0420556985'
   }
@@ -374,32 +369,13 @@ module kvRoleAssignmentsSecret 'kvAppRoleAssignment.bicep' = if (deployResources
   scope: resourceGroup(keyVaultResourceGroupName)
   params: {
     keyVaultName: keyVaultName
-    principalId: appGatewayIdentity.properties.principalId
+    principalId: appGatewayIdentityPrincipalId
     // Key Vault Secrets User
     roleId: '4633458b-17de-408a-b874-0445c86b69e6'
   }
   dependsOn: [
     kvRoleAssignmentsCert
   ]
-}
-
-
-module apiGatewayCertificate './appGatewayCertificate.bicep' = {
-  name: 'certificate${resourceSuffix}'
-  scope: resourceGroup(keyVaultResourceGroupName)
-  params: {
-    managedIdentity: appGatewayIdentity
-    keyVaultName: keyVaultName
-    location: location
-    appGatewayFQDN: appGatewayFQDN
-    appGatewayCertType: appGatewayCertType
-    certPassword: certPassword
-    keyVaultRG: keyVaultResourceGroupName
-    deployScriptStorageSubnetId: deployScriptStorageSubnetId
-    environment: environment
-    workloadName: workloadName
-    deployResources: deployResources
-  }
 }
 
 // This is only supported for WAF_v2
@@ -418,12 +394,13 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = if (dep
   name: appGatewayName
   location: location
   dependsOn: [
-    apiGatewayCertificate
+    kvRoleAssignmentsCert
+    kvRoleAssignmentsSecret
   ]
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '${appGatewayIdentity.id}': {}
+      '${appGatewayIdentityId}': {}
     }
   }
   zones: zones
@@ -446,7 +423,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2019-09-01' = if (dep
       {
         name: appGatewayFQDN
         properties: {
-          keyVaultSecretId:  apiGatewayCertificate.outputs.secretUriWithVersion
+          keyVaultSecretId:  apiGatewayCertificateSecretUriWithVersion
         }
       }
     ]
@@ -521,5 +498,3 @@ resource diagnosticSetting 'Microsoft.Insights/diagnosticSettings@2021-05-01-pre
     ]
   }
 }
-
-output certificateSecretUriWithoutVersion string = apiGatewayCertificate.outputs.secretUriWithoutVersion

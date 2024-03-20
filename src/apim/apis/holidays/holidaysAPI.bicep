@@ -2,6 +2,20 @@ param apimServiceName string
 @secure()
 param apiKey string
 
+// create Holiday Data product
+resource holidaysProduct 'Microsoft.ApiManagement/service/products@2021-01-01-preview' = {
+  name: '${apimServiceName}/holidays'
+  properties: {
+    displayName: 'Holiday Data'
+    description: 'Find the dates of public, national and religious holidays for any specific year in more than 200 countries worldwide.'
+    subscriptionRequired: true
+    approvalRequired: true
+    subscriptionsLimit: 1000
+    state: 'published'
+  }
+}
+
+
 resource holidayapiKeyNameValue 'Microsoft.ApiManagement/service/namedValues@2023-05-01-preview' = {
   name: '${apimServiceName}/HolidayAPI-ApiKey'
   properties: {
@@ -11,7 +25,7 @@ resource holidayapiKeyNameValue 'Microsoft.ApiManagement/service/namedValues@202
   }
 }
 
-resource ApimServiceName_holidays_api 'Microsoft.ApiManagement/service/apis@2021-01-01-preview' = {
+resource holidaysApi 'Microsoft.ApiManagement/service/apis@2021-01-01-preview' = {
 
   properties: {
     description: 'This API is used to get the public, local, religious, and other holidays of a particular country through Abstract Holiday API provider.'
@@ -36,7 +50,7 @@ resource ApimServiceName_holidays_api 'Microsoft.ApiManagement/service/apis@2021
 }
 
 resource ApimServiceName_holidays_api_65f2d0c65ddd1724c4ff786f 'Microsoft.ApiManagement/service/apis/schemas@2021-01-01-preview' = {
-  parent: ApimServiceName_holidays_api
+  parent: holidaysApi
   properties: {
     contentType: 'application/vnd.ms-azure-apim.swagger.definitions+json'
     document: {
@@ -47,7 +61,7 @@ resource ApimServiceName_holidays_api_65f2d0c65ddd1724c4ff786f 'Microsoft.ApiMan
 }
 
 resource ApimServiceName_holidays_api_get_holidays_country_country_year_year_month_month_day_day 'Microsoft.ApiManagement/service/apis/operations@2021-01-01-preview' = {
-  parent: ApimServiceName_holidays_api
+  parent: holidaysApi
   properties: {
     templateParameters: [
       {
@@ -176,10 +190,28 @@ resource ApimServiceName_holidays_api_get_holidays_country_country_year_year_mon
 }
 
 resource ApimServiceName_holidays_api_policy 'Microsoft.ApiManagement/service/apis/policies@2021-01-01-preview' = {
-  parent: ApimServiceName_holidays_api
+  parent: holidaysApi
   properties: {
     value: loadTextContent('holidays-api-apiPolicy.xml')
     format: 'xml'
   }
   name: 'policy'
+}
+
+resource openAiProductLink 'Microsoft.ApiManagement/service/products/apiLinks@2023-03-01-preview' = {
+  name: 'holidaysProduct-apilink'
+  parent: holidaysProduct
+  properties: {
+    apiId: holidaysApi.id
+  }
+}
+
+resource openAiSubscription 'Microsoft.ApiManagement/service/subscriptions@2023-03-01-preview' = {
+  name: '${apimServiceName}/holidays-subscription'
+  properties: {
+    scope: holidaysProduct.id
+    displayName: 'Open Ai Subscription'
+    state: 'active'
+    allowTracing: false
+  }
 }

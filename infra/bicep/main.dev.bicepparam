@@ -1,12 +1,12 @@
 using './main.bicep'
 
-param workloadName = 'hkdi2'
+param workloadName = 'rmor2'
 param environment = 'dev'
 
 param globalSettings = {
 
   networkingRGSettings:{
-    deployResources:true
+    deployResources:false
     publicIpAvailabilityZones:['1']
 
     firewallSettings:{
@@ -16,7 +16,7 @@ param globalSettings = {
   }
 
   backendRGSettings: {
-    deployResources: true
+    deployResources: false
     storageSku: 'Standard_LRS'
   }
 
@@ -41,7 +41,7 @@ param globalSettings = {
   }
   
   sharedRGSettings:{
-    deployResources: true
+    deployResources: false
       // devOpsAgentSettings: {
     //   devOpsAccountName: 'https://dev.azure.com/rmoreiraoms'
     //   devOpsCICDAgentType: 'none'
@@ -50,16 +50,16 @@ param globalSettings = {
     //   devOpsVmUsername: 'vmadmin'
     // }
 
-    jumpBoxSettings:{
-      jumpBoxVmPassword: '{{JUMPBOX_VMPASSWORD}}'
-      jumpBoxVmUsername: 'vmadmin'
-    }
+    // jumpBoxSettings:{
+    //   jumpBoxVmPassword: '{{JUMPBOX_VMPASSWORD}}'
+    //   jumpBoxVmUsername: 'vmadmin'
+    // }
   }
 }  
 
 param regionalSettings = [
   {
-    location: 'westeurope'
+    location: 'uksouth'
     vNetSettings: {
         apimVNetNameAddressPrefix :'10.5.0.0/16'
         bastionAddressPrefix : '10.5.1.0/24'

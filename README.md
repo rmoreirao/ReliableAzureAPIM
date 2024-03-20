@@ -245,6 +245,9 @@ Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in 
 ## APIM Developer Portal Customizations
 	- https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-developer-portal-customize
 
+## Frontdoor
+	- https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.cdn/front-door-standard-premium-application-gateway-public
+
 # Others
 
 ## To manually publish the Developer Portal:
