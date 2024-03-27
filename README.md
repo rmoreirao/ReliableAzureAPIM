@@ -243,6 +243,7 @@ Azure DevOps pipeline: "pipeline.bicep.deploy.yml" - configuration described in 
 	- https://techcommunity.microsoft.com/t5/fasttrack-for-azure/end-to-end-logging-with-azure-front-door-application-gateway-and/ba-p/3673671
 
 ## OAuth 2.0
+	- https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-oauth2 
 	- https://learn.microsoft.com/en-us/azure/api-management/api-management-howto-protect-backend-with-aad
 	- https://techcommunity.microsoft.com/t5/azure-paas-blog/protect-api-s-using-oauth-2-0-in-apim/ba-p/2309538
 	- https://azure.github.io/apim-lab/apim-lab/7-security/security-7-2-1-oauth2-apim-integration.html
