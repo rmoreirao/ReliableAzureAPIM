@@ -1,8 +1,8 @@
 # ReliableAzureAPIM
 
 
-## For today:
-	Custom DNS & Msgs to Security!
+## Pending implementation:
+	Frontdoor
 
 # Architecture & Design Decisions
 
