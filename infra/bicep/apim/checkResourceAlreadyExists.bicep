@@ -1,5 +1,4 @@
 // https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.resources/deployment-script-azcli-inputs-outputs
-
 targetScope = 'resourceGroup'
 
 @description('Resource name to check in current scope (resource group)')
@@ -7,13 +6,36 @@ param resourceName string
 
 @description('Resource ID of user managed identity with reader permissions in current scope')
 param identityId string
+param deployManagedIdentityPrincipalId string
 
 param location string = resourceGroup().location
 param utcValue string = utcNow()
 param resourceGroupName string = resourceGroup().name
 
+var subscriptionId = subscription().subscriptionId
+
+// Grant the reader role to the user managed identity in the Resource Group
+// this is required to run the script that checks if the resource exists
+var readerRoleId =  'acdd72a7-3385-48ef-bd42-f606fba81ae7'
+resource roleAssignmentReader 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: resourceGroup()
+
+  name: guid(resourceGroupName, subscriptionId, readerRoleId)
+  properties: {
+    principalId: deployManagedIdentityPrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', readerRoleId)
+    principalType: 'ServicePrincipal'
+  }
+}
+
+var scriptContent = loadTextContent('./scripts/checkResourceExists.sh')
+var arguments = [
+  resourceGroupName
+  resourceName
+  subscriptionId
+]
 // The script below performs an 'az resource list' command to determine whether a resource exists
-resource resource_exists_script 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource script 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: 'resource_exists'
   location: location
   kind: 'AzureCLI'
@@ -25,35 +47,22 @@ resource resource_exists_script 'Microsoft.Resources/deploymentScripts@2020-10-0
   }
   properties: {
     forceUpdateTag: utcValue
-    azCliVersion: '2.15.0'
+    azCliVersion: '2.50.0'
     timeout: 'PT10M'
-    arguments: '\'${resourceGroupName}\' \'${resourceName}\''
-    scriptContent: '''
-      resourceGroupName=${1:?"Missing myBool. ${usage}"}
-      resourceName=${2:?"Missing myInt. ${usage}"}
-      
-      RESOURCE_EXISTE="false"
-
-      output=$(az resource list --resource-group ${resourceGroupName} --name ${resourceName})
-      
-      if echo "$output" | grep -q "id"; then
-          RESOURCE_EXISTS="true"
-      else
-          RESOURCE_EXISTS="false"
-      fi
-      
-      JSON_STRING=$(jq -n \
-            --arg resource_exists "$RESOURCE_EXISTS" \
-            '{RESOURCE_EXISTS: $resource_exists}' )
-      
-      echo $JSON_STRING
-
-      echo $JSON_STRING > $AZ_SCRIPTS_OUTPUT_PATH
-
-    '''
+    arguments: join(arguments, ' ')
+    scriptContent: scriptContent
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
   }
 }
 
-output exists bool = resource_exists_script.properties.outputs.RESOURCE_EXISTS == 'true'
+resource logs 'Microsoft.Resources/deploymentScripts/logs@2020-10-01' existing = {
+  parent: script
+  name: 'default'
+}
+
+@description('The logs written by the script')
+output logs array = split(logs.properties.log, '\n')
+
+@description('Whether the resource exists')
+output exists bool = script.properties.outputs.RESOURCE_EXISTS == 'true'
