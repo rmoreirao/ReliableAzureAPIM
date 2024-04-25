@@ -1,3 +1,5 @@
+// https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.resources/deployment-script-azcli-inputs-outputs
+
 targetScope = 'resourceGroup'
 
 @description('Resource name to check in current scope (resource group)')
@@ -27,6 +29,9 @@ resource resource_exists_script 'Microsoft.Resources/deploymentScripts@2020-10-0
     timeout: 'PT10M'
     arguments: '\'${resourceGroupName}\' \'${resourceName}\''
     scriptContent: '''
+      resourceGroupName=${1:?"Missing myBool. ${usage}"}
+      resourceName=${2:?"Missing myInt. ${usage}"}
+      
       RESOURCE_EXISTE="false"
 
       output=$(az resource list --resource-group ${resourceGroupName} --name ${resourceName})
