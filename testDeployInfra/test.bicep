@@ -1,26 +1,4 @@
+// az deployment sub create --subscription $env:SUBSCRIPTION_ID --location $LOCATION --name $DEPLOY_NAME$LOCATION --template-file ..\infra\bicep\main.bicep --parameters ..\infra\bicep\$BICEPPARAM_TMP_FILE --debug
 
-var subnet1 = null == null ? [] : [{
-  name: 1
-  properties: {
-    addressPrefix: null
-  }
-}]
-
-var subnet2 = 1 == null ? [] : [{
-  name: 2
-  properties: {
-    addressPrefix: 'anything'
-  }
-}]
-
-var subnet3 = 1 == null ? [] : [{
-  name: 3
-  properties: {
-    addressPrefix: 'anything'
-  }
-}]
-
-var subnets = concat(subnet1, subnet2, subnet3)
-
-
-output subnets array = subnets
+output output1 string = 'output subnets string'
+output output2 string = 'output subnets string'

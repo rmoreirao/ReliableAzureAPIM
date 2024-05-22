@@ -1,12 +1,12 @@
 using './main.bicep'
 
-param workloadName = 'rmor2'
+param workloadName = 'apim6'
 param environment = 'dev'
 
 param globalSettings = {
 
   networkingRGSettings:{
-    deployResources:false
+    deployResources:true
     publicIpAvailabilityZones:['1']
 
     firewallSettings:{
@@ -41,7 +41,7 @@ param globalSettings = {
   }
   
   sharedRGSettings:{
-    deployResources: false
+    deployResources: true
       // devOpsAgentSettings: {
     //   devOpsAccountName: 'https://dev.azure.com/rmoreiraoms'
     //   devOpsCICDAgentType: 'none'
@@ -50,10 +50,10 @@ param globalSettings = {
     //   devOpsVmUsername: 'vmadmin'
     // }
 
-    // jumpBoxSettings:{
-    //   jumpBoxVmPassword: '{{JUMPBOX_VMPASSWORD}}'
-    //   jumpBoxVmUsername: 'vmadmin'
-    // }
+    jumpBoxSettings:{
+      jumpBoxVmPassword: '{{JUMPBOX_VMPASSWORD}}'
+      jumpBoxVmUsername: 'vmadmin'
+    }
   }
 }  
 

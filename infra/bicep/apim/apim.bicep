@@ -59,6 +59,13 @@ var hostNameConfigurations = [
     negotiateClientCertificate: false
     keyVaultId: certificateSecretUriWithoutVersion
   }
+  {
+    type: 'Management'
+    hostName: 'management.${apimCustomDomainName}'
+    defaultSslBinding: false
+    negotiateClientCertificate: false
+    keyVaultId: certificateSecretUriWithoutVersion
+  }
 ]
 
 module apimAux 'apimSimpleAux.bicep' = {
@@ -134,7 +141,7 @@ resource apim 'Microsoft.ApiManagement/service@2021-08-01' = if (deployResources
       publicIpAddressId: additionalRegionsNetworkingResources[i].apimPublicIpId
       zones: settings.apimRegionalSettings.?availabilityZones
     }]
-    hostnameConfigurations: (existsApim ? hostNameConfigurations : null)
+    hostnameConfigurations: hostNameConfigurations
   }
   dependsOn: [
     kvRoleAssignmentsSecret

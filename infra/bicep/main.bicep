@@ -3,7 +3,7 @@ import {vNetRegionalSettingsType, regionalSettingType, networkingResourcesType, 
 
 // Parameters
 @description('A short name for the workload being deployed alphanumberic only')
-@maxLength(5)
+@maxLength(6)
 param workloadName string
 
 @description('The environment for which the deployment is being executed')

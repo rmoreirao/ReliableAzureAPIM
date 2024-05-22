@@ -9,13 +9,15 @@ resource appGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@20
 // grant reader role assignement to a resource group calling directly the ARM API
 // This is required because we want to check if the APIM exists runing a deployment script
 // The management identity of the deployment script must have this permission
+// Reader role
+var roleId = 'acdd72a7-3385-48ef-bd42-f606fba81ae7'
 resource rgRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: guid(subscription().subscriptionId, 'rgRoleAssignment', 'appGateway')
+  name: guid(subscription().subscriptionId, appGatewayIdentityName, roleId)
   scope: resourceGroup()
   properties: {
     principalId: appGatewayIdentity.properties.principalId
-    // Reader role
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')
+    
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions',roleId )
     principalType: 'ServicePrincipal'
   }
 }
